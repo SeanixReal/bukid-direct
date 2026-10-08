@@ -38,6 +38,7 @@ export function Shop() {
       (category === 'all' || getProduce(l.produceId).category === category) && (!q || matches(l, q)),
   )
   const fresh = forSale.filter((l) => l.harvestedToday)
+  const featured = forSale.filter((l) => l.featured)
   const listTitle = q
     ? `Results for “${query.trim()}”`
     : category === 'all'
@@ -156,6 +157,23 @@ export function Shop() {
         </section>
       )}
 
+      {/* ---------------- Featured: farms pay for this row ---------------- */}
+      {browsing && featured.length > 0 && (
+        <section className="mt-5">
+          <SectionTitle
+            className="px-5"
+            action={<span className="text-[13px] font-semibold text-ink-muted">Sponsored</span>}
+          >
+            Featured this week
+          </SectionTitle>
+          <div className="no-scrollbar flex gap-3 overflow-x-auto px-5 pb-2">
+            {featured.map((l) => (
+              <ListingCard key={l.id} listing={l} className="w-[172px] shrink-0" />
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* ---------------- Direct Plus ---------------- */}
       {browsing && !member && (
         <div className="px-5 pt-4">
@@ -170,7 +188,7 @@ export function Shop() {
             <span className="min-w-0 flex-1">
               <span className="block text-[17px] font-extrabold text-on-dark">{plusPlan.name}</span>
               <span className="block text-[13.5px] font-semibold leading-snug text-on-dark-muted">
-                No service fee and {Math.round(plusPlan.discount * 100)}% off every harvest.{' '}
+                No service fee, suki deals from farms, and your first delivery free.{' '}
                 {peso(plusPlan.price)}/{plusPlan.period}.
               </span>
             </span>

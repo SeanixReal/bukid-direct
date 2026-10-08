@@ -16,7 +16,8 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { useApp } from '../state/AppState'
-import { getFarm, stagesFor } from '../data/sample'
+import { moneySplit, type Totals } from '../state/pricing'
+import { getFarm, peso, stagesFor } from '../data/sample'
 
 /* --------------------------------------------------------------------------
    Presenter controls. Live OUTSIDE the phone frame, so they never appear in a
@@ -44,7 +45,7 @@ export function DemoPanel({ onClose }: { onClose: () => void }) {
   const canRide = !order || order.shipments.some((s) => s.mode === 'delivery')
 
   return (
-    <aside className="animate-sheet-up fixed bottom-5 right-5 z-[2000] w-[300px] rounded-card bg-panel p-4 text-on-dark shadow-float">
+    <aside className="animate-sheet-up no-scrollbar fixed bottom-5 right-5 z-[2000] max-h-[calc(100vh-40px)] w-[300px] overflow-y-auto rounded-card bg-panel p-4 text-on-dark shadow-float">
       <div className="mb-3 flex items-center justify-between">
         <div>
           <p className="text-[13px] font-extrabold tracking-tight text-on-dark">Presenter controls</p>
@@ -184,11 +185,43 @@ export function DemoPanel({ onClose }: { onClose: () => void }) {
         />
       </div>
 
+      {order && <OrderMoney totals={order.totals} />}
+
       <p className="mt-3 border-t border-on-dark/10 pt-2.5 text-[11px] font-medium leading-snug text-on-dark-muted">
         <span className="font-bold text-on-dark">D</span> controls &middot;{' '}
         <span className="font-bold text-on-dark">S</span> save screenshot
       </p>
     </aside>
+  )
+}
+
+/* For the "how do you make money?" question: where the placed order's pesos go. */
+function OrderMoney({ totals }: { totals: Totals }) {
+  const m = moneySplit(totals)
+  const signed = (n: number) => (n < 0 ? `−${peso(-n)}` : peso(n))
+  return (
+    <div className="mt-3">
+      <Label>This order's money</Label>
+      <div className="space-y-1 rounded-md bg-on-dark/8 p-2.5 text-[12px] font-bold text-on-dark-muted">
+        <MoneyRow label="Farms" value={peso(m.farms)} />
+        <MoneyRow label="Couriers" value={peso(m.couriers)} />
+        <MoneyRow label="Bukid Direct" value={signed(m.us)} strong />
+        <p className="pt-1 text-[11px] font-medium leading-snug">
+          5% commission {peso(m.commission)}
+          {m.serviceFee > 0 && ` + service fee ${peso(m.serviceFee)}`}
+          {m.voucher > 0 && ` − welcome voucher ${peso(m.voucher)}`}. Before payment fees.
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function MoneyRow({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
+  return (
+    <p className={`flex justify-between gap-2 ${strong ? 'text-on-dark' : ''}`}>
+      <span>{label}</span>
+      <span className="tabular">{value}</span>
+    </p>
   )
 }
 

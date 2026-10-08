@@ -22,6 +22,8 @@ export function Checkout() {
   if (basket.length === 0) return <Navigate to="/basket" replace />
 
   const delivering = groups.some((g) => g.mode === 'delivery')
+  /* Before the welcome voucher, which gets its own line. */
+  const delivery = t.delivery + t.deliveryCovered
 
   const submit = () => {
     placeOrder({ payment })
@@ -84,14 +86,21 @@ export function Checkout() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline justify-between gap-2">
                     <p className="truncate text-[16px] font-bold text-ink">{farm.call}</p>
-                    <p className="tabular shrink-0 text-[15px] font-extrabold text-ink">{peso(g.subtotal)}</p>
+                    <p className="tabular shrink-0 text-[15px] font-extrabold text-ink">
+                      {g.suki > 0 && (
+                        <span className="mr-1.5 text-[13px] font-semibold text-ink-faint line-through">
+                          {peso(g.regular)}
+                        </span>
+                      )}
+                      {peso(g.subtotal)}
+                    </p>
                   </div>
                   <div className="flex items-center justify-between gap-2">
                     <FulfilmentRow farm={farm} mode={g.mode} wrap />
                     <span
                       className={`shrink-0 text-[13px] font-bold ${g.fee > 0 ? 'text-ink-muted' : 'text-primary'}`}
                     >
-                      {g.fee > 0 ? `+${peso(g.fee)}` : 'Free'}
+                      {g.voucher ? 'Free · voucher' : g.fee > 0 ? `+${peso(g.fee)}` : 'Free'}
                     </span>
                   </div>
                 </div>
@@ -152,23 +161,30 @@ export function Checkout() {
 
         {/* ---------------- Sums ---------------- */}
         <div className="mt-4 space-y-2 rounded-card border border-line bg-card p-4 shadow-card">
-          <SumRow label="Produce" value={peso(t.subtotal)} />
+          <SumRow label="Produce" value={peso(t.regular)} />
+          {t.sukiOff > 0 && <SumRow label="Suki deals" value={`−${peso(t.sukiOff)}`} tone="primary" />}
           <SumRow
             label="Delivery"
-            value={t.delivery > 0 ? peso(t.delivery) : 'Free'}
-            tone={t.delivery > 0 ? 'ink' : 'primary'}
+            value={delivery > 0 ? peso(delivery) : 'Free'}
+            tone={delivery > 0 ? 'ink' : 'primary'}
           />
+          {t.deliveryCovered > 0 && (
+            <SumRow label="Welcome voucher" value={`−${peso(t.deliveryCovered)}`} tone="primary" />
+          )}
           <SumRow
             label="Service fee"
             value={member ? 'Free' : peso(t.serviceFee)}
             tone={member ? 'primary' : 'ink'}
           />
-          {member && t.savings > 0 && (
-            <SumRow label={<PlusTag label="You saved" />} value={`−${peso(t.savings)}`} tone="primary" />
-          )}
           <div className="border-t border-line pt-2">
             <SumRow label="Total" value={peso(t.total)} strong />
           </div>
+          {member && t.savings > 0 && (
+            <p className="flex items-center justify-between gap-2 pt-1 text-[14px] font-bold text-primary">
+              <PlusTag label="Direct Plus saved you" />
+              <span className="tabular">{peso(t.savings)}</span>
+            </p>
+          )}
         </div>
       </div>
     </Screen>

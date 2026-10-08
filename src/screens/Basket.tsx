@@ -6,12 +6,12 @@ import { FulfilmentRow } from '../components/FarmBits'
 import { Avatar, Button, ModeSwitch, PlusTag, Rating, Stepper, SumRow } from '../components/ui'
 import { useApp } from '../state/AppState'
 import { listingDetails } from '../state/catalog'
-import { lineTotal, plusSavings, unitPrice, type FarmGroup } from '../state/pricing'
-import { getFarm, peso, perUnit, qtyText, schedule } from '../data/sample'
+import { lineTotal, plusSavings, type FarmGroup } from '../state/pricing'
+import { getFarm, peso, perUnit, plusPlan, qtyText, schedule } from '../data/sample'
 
 export function Basket() {
   const navigate = useNavigate()
-  const { basket, groups, basketTotals: t, member, modeOf } = useApp()
+  const { basket, groups, basketTotals: t, member, modeOf, welcomeLeft } = useApp()
 
   if (basket.length === 0) {
     return (
@@ -34,7 +34,14 @@ export function Basket() {
     )
   }
 
-  const saving = plusSavings(basket, modeOf)
+  const saving = plusSavings(basket, modeOf, welcomeLeft)
+  /* Before the welcome voucher, which gets its own line. */
+  const delivery = t.delivery + t.deliveryCovered
+  /* A member still holding the welcome voucher, not yet at its minimum. */
+  const toWelcome =
+    member && welcomeLeft && t.delivery > 0 && t.subtotal < plusPlan.welcome.minSpend
+      ? plusPlan.welcome.minSpend - t.subtotal
+      : 0
 
   return (
     <Screen
@@ -78,23 +85,36 @@ export function Basket() {
 
         {/* ---------------- Sums ---------------- */}
         <div className="space-y-2 rounded-card border border-line bg-card p-4 shadow-card">
-          <SumRow label="Produce" value={peso(t.subtotal)} />
+          <SumRow label="Produce" value={peso(t.regular)} />
+          {t.sukiOff > 0 && <SumRow label="Suki deals" value={`−${peso(t.sukiOff)}`} tone="primary" />}
           <SumRow
             label={`Delivery (${groups.filter((g) => g.mode === 'delivery').length} of ${t.farmCount} farms)`}
-            value={t.delivery > 0 ? peso(t.delivery) : 'Free'}
-            tone={t.delivery > 0 ? 'ink' : 'primary'}
+            value={delivery > 0 ? peso(delivery) : 'Free'}
+            tone={delivery > 0 ? 'ink' : 'primary'}
           />
+          {t.deliveryCovered > 0 && (
+            <SumRow label="Welcome voucher" value={`−${peso(t.deliveryCovered)}`} tone="primary" />
+          )}
+          {toWelcome > 0 && (
+            <p className="text-[12.5px] font-semibold text-ink-muted">
+              Add <b className="font-extrabold text-ink">{peso(toWelcome)}</b> more to use your welcome
+              free delivery
+            </p>
+          )}
           <SumRow
             label="Service fee"
             value={member ? 'Free' : peso(t.serviceFee)}
             tone={member ? 'primary' : 'ink'}
           />
-          {member && t.savings > 0 && (
-            <SumRow label={<PlusTag label="You saved" />} value={`−${peso(t.savings)}`} tone="primary" />
-          )}
           <div className="border-t border-line pt-2">
             <SumRow label="Total" value={peso(t.total)} strong />
           </div>
+          {member && t.savings > 0 && (
+            <p className="flex items-center justify-between gap-2 pt-1 text-[14px] font-bold text-primary">
+              <PlusTag label="Direct Plus saved you" />
+              <span className="tabular">{peso(t.savings)}</span>
+            </p>
+          )}
         </div>
 
         {!member && saving > 0 && (
@@ -118,12 +138,30 @@ export function Basket() {
   )
 }
 
+interface Nudge {
+  gap: number
+  share: number
+  label: string
+}
+
 /* One farm's part of the basket: its items, Delivery or Pick-up, and its fee. */
 function FarmGroupCard({ group: g, member }: { group: FarmGroup; member: boolean }) {
   const navigate = useNavigate()
   const { setQty, setFarmMode } = useApp()
   const farm = getFarm(g.farmId)
-  const freeShare = g.mode === 'delivery' && g.toFree > 0 ? g.subtotal / (g.subtotal + g.toFree) : 1
+  const deal = farm.sukiDeal
+  /* The nearest thing to aim for from this farm: its own free delivery or,
+     for members, its suki deal. */
+  const nudge = [
+    g.mode === 'delivery' && g.fee > 0 && g.toFree > 0
+      ? { gap: g.toFree, share: g.regular / (g.regular + g.toFree), label: 'for free delivery' }
+      : null,
+    member && deal && g.suki === 0
+      ? { gap: deal.minSpend - g.regular, share: g.regular / deal.minSpend, label: `for a ${peso(deal.off)} suki deal` }
+      : null,
+  ]
+    .filter((n): n is Nudge => n !== null)
+    .sort((a, b) => a.gap - b.gap)[0]
 
   return (
     <section className="overflow-hidden rounded-card border border-line bg-card shadow-card">
@@ -174,12 +212,10 @@ function FarmGroupCard({ group: g, member }: { group: FarmGroup; member: boolean
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline justify-between gap-2">
                   <p className="truncate text-[16px] font-bold text-ink">{item.name}</p>
-                  <p className="tabular shrink-0 text-[16px] font-extrabold text-ink">
-                    {peso(lineTotal(line, member))}
-                  </p>
+                  <p className="tabular shrink-0 text-[16px] font-extrabold text-ink">{peso(lineTotal(line))}</p>
                 </div>
                 <p className="truncate text-[13px] font-semibold text-ink-muted">
-                  {peso(unitPrice(listing.price, member))} / {perUnit(item)}
+                  {peso(listing.price)} / {perUnit(item)}
                 </p>
                 <Stepper
                   size="sm"
@@ -196,24 +232,35 @@ function FarmGroupCard({ group: g, member }: { group: FarmGroup; member: boolean
         })}
       </ul>
 
-      {/* How it gets to you */}
+      {/* Deals, and how it gets to you */}
       <div className="border-t border-line bg-surface/60 px-4 py-3">
+        {g.suki > 0 && (
+          <div className="mb-2.5 flex items-center justify-between gap-3">
+            <PlusTag label="Suki deal" />
+            <span className="tabular text-[15px] font-extrabold text-primary">−{peso(g.suki)}</span>
+          </div>
+        )}
         <div className="flex items-center justify-between gap-3">
           <FulfilmentRow farm={farm} mode={g.mode} />
           <span
             className={`shrink-0 text-[15px] font-extrabold ${g.fee > 0 ? 'text-ink' : 'text-primary'}`}
           >
+            {g.voucher && (
+              <span className="mr-1.5 text-[13px] font-semibold text-ink-faint line-through">
+                {peso(farm.delivery.fee)}
+              </span>
+            )}
             {g.fee > 0 ? peso(g.fee) : 'Free'}
           </span>
         </div>
-        {g.mode === 'delivery' && g.toFree > 0 && (
+        {nudge && (
           <div className="mt-2.5">
             <div className="h-[6px] overflow-hidden rounded-full bg-surface-2">
-              <div className="h-full rounded-full bg-secondary" style={{ width: `${freeShare * 100}%` }} />
+              <div className="h-full rounded-full bg-secondary" style={{ width: `${nudge.share * 100}%` }} />
             </div>
             <p className="mt-1.5 text-[12.5px] font-semibold text-ink-muted">
-              Add <b className="font-extrabold text-ink">{peso(g.toFree)}</b> more from {farm.call} for free
-              delivery
+              Add <b className="font-extrabold text-ink">{peso(nudge.gap)}</b> more from {farm.call}{' '}
+              {nudge.label}
             </p>
           </div>
         )}

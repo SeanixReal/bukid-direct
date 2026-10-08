@@ -1,11 +1,12 @@
 import { useNavigate } from 'react-router-dom'
-import { Check, PackageCheck, Plus, Store, Truck, Wallet } from 'lucide-react'
+import { BadgePercent, Check, Megaphone, PackageCheck, Plus, Store, Truck, Wallet } from 'lucide-react'
 import { Screen, ScreenFooter, SectionTitle, TopBar } from '../components/Screen'
 import { ProducePicture } from '../components/ProduceArt'
 import { Avatar, Button, HarvestedBadge, ReadyBadge } from '../components/ui'
 import { useApp, type SellerStep } from '../state/AppState'
 import { allListings, getListing } from '../state/catalog'
 import {
+  boost,
   couriers,
   farmerShare,
   getFarm,
@@ -21,7 +22,8 @@ import {
 /* --------------------------------------------------------------------------
    The seller's side of the marketplace - what Nong Romy sees. Tomorrow's
    orders from different buyers, then harvest, pack, and one shared courier
-   trip for every city delivery. Plus his listings and what he earns.
+   trip for every city delivery. Plus his listings, the paid extras that
+   help them sell, and what he earns.
    -------------------------------------------------------------------------- */
 
 interface SellerOrder {
@@ -35,7 +37,7 @@ interface SellerOrder {
 
 export function Seller() {
   const navigate = useNavigate()
-  const { order, sellerStep, setSellerStep, showToast } = useApp()
+  const { order, sellerStep, setSellerStep, featureListing, showToast } = useApp()
   const farm = getFarm(sellerView.farmId)
   const courier = couriers[farm.delivery.courier].name
 
@@ -68,6 +70,8 @@ export function Seller() {
   const weeks = [...sellerView.pastWeeks, { label: 'This wk', amount: earnings }]
   const top = Math.max(...weeks.map((w) => w.amount))
   const listings = allListings().filter((l) => l.farmId === farm.id)
+  const boosted = getListing(sellerView.boostListingId)
+  const boostedItem = boosted && getProduce(boosted.produceId)
 
   const next: Record<SellerStep, { label: string; run: () => void } | null> = {
     new: {
@@ -227,6 +231,57 @@ export function Seller() {
           <Plus size={18} strokeWidth={2.8} />
           Add a listing
         </Button>
+
+        {/* ---------------- Paid extras ---------------- */}
+        <SectionTitle className="mt-7">Grow your sales</SectionTitle>
+        <div className="divide-y divide-line rounded-card border border-line bg-card px-4 shadow-card">
+          {boosted && boostedItem && (
+            <div className="py-4">
+              <p className="flex items-center gap-2 text-[16px] font-extrabold text-ink">
+                <Megaphone size={18} strokeWidth={2.4} className="text-primary" />
+                Feature a listing
+              </p>
+              <p className="mt-1 text-[14px] font-medium leading-snug text-ink-muted">
+                Show it in the shop's Featured row for {peso(boost.price)} a {boost.period}, taken
+                from Saturday's pay-out.
+              </p>
+              {boosted.featured ? (
+                <p className="mt-2.5 flex items-center gap-2 rounded-md bg-primary-soft px-3 py-2 text-[13.5px] font-bold text-primary">
+                  <Check size={16} strokeWidth={3} />
+                  {boostedItem.name} featured for 7 days
+                </p>
+              ) : (
+                <Button
+                  variant="secondary"
+                  size="md"
+                  className="mt-3"
+                  onClick={() => {
+                    featureListing(boosted.id)
+                    showToast(`Now featured: ${boostedItem.name}`, {
+                      label: 'See it',
+                      to: '/shop',
+                    })
+                  }}
+                >
+                  <Megaphone size={17} strokeWidth={2.5} />
+                  Feature {boostedItem.name.toLowerCase()} · {peso(boost.price)}
+                </Button>
+              )}
+            </div>
+          )}
+          {farm.sukiDeal && (
+            <div className="py-4">
+              <p className="flex items-center gap-2 text-[16px] font-extrabold text-ink">
+                <BadgePercent size={18} strokeWidth={2.4} className="text-primary" />
+                Your suki deal
+              </p>
+              <p className="mt-1 text-[14px] font-medium leading-snug text-ink-muted">
+                {peso(farm.sukiDeal.off)} off orders of {peso(farm.sukiDeal.minSpend)} or more, for
+                Direct Plus members. It comes off your sale only when a member uses it.
+              </p>
+            </div>
+          )}
+        </div>
 
         {/* ---------------- Earnings ---------------- */}
         <SectionTitle className="mt-7">Earnings</SectionTitle>

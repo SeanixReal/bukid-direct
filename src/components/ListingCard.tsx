@@ -3,7 +3,6 @@ import { Minus, Plus, Star } from 'lucide-react'
 import { ProducePicture } from './ProduceArt'
 import { HarvestedBadge, SoldOutBadge } from './ui'
 import { useApp } from '../state/AppState'
-import { unitPrice } from '../state/pricing'
 import { getFarm, getProduce, peso, perUnit, qtyText, type Listing } from '../data/sample'
 
 /* --------------------------------------------------------------------------
@@ -22,11 +21,10 @@ export function ListingCard({
   pictureClass?: string
 }) {
   const navigate = useNavigate()
-  const { member, qtyOf, setQty, addToBasket, showToast } = useApp()
+  const { qtyOf, setQty, addToBasket, showToast } = useApp()
   const item = getProduce(listing.produceId)
   const farm = getFarm(listing.farmId)
   const qty = qtyOf(listing.id)
-  const price = unitPrice(listing.price, member)
   const open = () => navigate(`/listing/${listing.id}`)
 
   const add = () => {
@@ -103,10 +101,10 @@ export function ListingCard({
         <span className="mt-2 flex items-baseline gap-1">
           <span
             className={`text-[20px] font-extrabold leading-none tracking-tight ${
-              listing.outOfStock ? 'text-ink-faint' : member ? 'text-primary' : 'text-ink'
+              listing.outOfStock ? 'text-ink-faint' : 'text-ink'
             }`}
           >
-            {peso(price)}
+            {peso(listing.price)}
           </span>
           <span className="truncate text-[12.5px] font-semibold text-ink-muted">/ {perUnit(item)}</span>
         </span>

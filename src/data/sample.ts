@@ -69,26 +69,39 @@ export const schedule = {
   day: 'Tomorrow',
 }
 
-/* --- Money ------------------------------------------------------------------ */
+/* --- Money ------------------------------------------------------------------
+   How Bukid Direct earns - kept small on purpose, because the point is
+   selling without paying a middleman. All PLACEHOLDERS: check them against
+   real payment-gateway and courier rates before the pitch. The worked-out
+   maths per buyer and per month is in the README. */
 
 /* Share of every produce peso that goes to the farm. Bukid Direct's only cut
-   from farmers is a 5% commission - the whole point is selling without
-   paying a middleman. PLACEHOLDER until the model is agreed. */
+   from farmers is a 5% commission. */
 export const farmerShare = 0.95
 
 export const fees = {
-  /* Paid by the buyer, once per order however many farms it comes from.
-     Waived for Direct Plus members. */
+  /* Paid by the buyer, once per order however many farms it comes from -
+     roughly what the payment fee on an order costs us. Waived for Direct
+     Plus members. */
   service: 10,
+}
+
+/* A farm can pay to show a listing in the shop's Featured row. Optional,
+   and taken from the farm's weekly pay-out. */
+export const boost = {
+  price: 99,
+  period: 'week',
 }
 
 export const plusPlan = {
   name: 'Direct Plus',
   price: 49,
   period: 'month',
-  /* Member prices are this much lower on every item. Bukid Direct pays the
-     difference, so the farmer still gets their full price. */
-  discount: 0.05,
+  /* Welcome voucher, once per member: Bukid Direct pays one farm's delivery
+     fee (the biggest) on the first order of ₱200 or more. Once, not every
+     month - at a 5% commission, monthly free delivery would cost more than a
+     member brings in. */
+  welcome: { minSpend: 200 },
   perks: [
     {
       id: 'fee',
@@ -96,9 +109,14 @@ export const plusPlan = {
       detail: 'Save ₱10 on every order.',
     },
     {
-      id: 'prices',
-      title: '5% off every harvest',
-      detail: 'Paid by us, not the farmer - they still get their full price.',
+      id: 'welcome',
+      title: 'Free delivery on your first order',
+      detail: "One farm's delivery is on us, on any order of ₱200 or more.",
+    },
+    {
+      id: 'suki',
+      title: 'Suki deals from farms',
+      detail: 'Members-only vouchers that farms post for their regulars.',
     },
     {
       id: 'early',
@@ -163,6 +181,9 @@ export interface Farm {
     at: LatLng
     hours: string
   }
+  /* A members-only voucher the farm chooses to post for its regulars - its
+     suki. Paid by the farm, like a seller voucher on Shopee. */
+  sukiDeal?: { off: number; minSpend: number }
   reviews: { name: string; stars: number; text: string }[]
 }
 
@@ -195,6 +216,7 @@ export const farms: Farm[] = [
       at: [10.29296, 123.90033],
       hours: '1 – 6 PM',
     },
+    sukiDeal: { off: 15, minSpend: 150 },
     reviews: [
       { name: 'Marites C.', stars: 5, text: 'Tomatoes lasted a whole week. Packed well too.' },
       { name: 'Jun T.', stars: 5, text: 'Sweetest carrots I have bought in the city.' },
@@ -228,6 +250,7 @@ export const farms: Farm[] = [
       at: [10.37153, 123.8745],
       hours: '7 AM – 5 PM',
     },
+    sukiDeal: { off: 10, minSpend: 150 },
     reviews: [
       { name: 'Liza P.', stars: 5, text: 'The lettuce was still cold when it arrived.' },
       { name: 'Ernie L.', stars: 4, text: 'Fresh pechay, generous bundles.' },
@@ -282,6 +305,7 @@ export const farms: Farm[] = [
       from: [10.26092, 123.87211],
       rider: { name: 'Arnel P.', plate: 'GBV 1184' },
     },
+    sukiDeal: { off: 20, minSpend: 300 },
     reviews: [
       { name: 'Mila G.', stars: 5, text: 'Eggs with bright orange yolks. Will reorder.' },
       { name: 'Boy S.', stars: 5, text: 'Talong was young and tender.' },
@@ -406,6 +430,8 @@ export interface Listing {
   /* Orange badge. "Harvested today" is one of only two uses of orange. */
   harvestedToday?: boolean
   outOfStock?: boolean
+  /* The farm pays to show it in the shop's Featured row (see `boost`). */
+  featured?: boolean
   about: string
 }
 
@@ -433,7 +459,7 @@ export const listings: Listing[] = [
   { id: 'ernie-eggplant', produceId: 'eggplant', farmId: 'ernie', price: 80, about: 'Long, glossy talong for tortang talong or adobo. Picked young, so never bitter.' },
   { id: 'ernie-sitaw', produceId: 'sitaw', farmId: 'ernie', price: 40, about: 'A generous bundle of long beans. Good in utan bisaya or stir-fried with garlic.' },
   { id: 'ernie-squash', produceId: 'squash', farmId: 'ernie', price: 50, about: 'Sweet, deep-orange flesh. Sold by weight - ask for half if you only need a little.' },
-  { id: 'ernie-eggs', produceId: 'eggs', farmId: 'ernie', price: 120, about: "From hens that roam Nong Ernie's yard. Collected the day before delivery." },
+  { id: 'ernie-eggs', produceId: 'eggs', farmId: 'ernie', price: 120, featured: true, about: "From hens that roam Nong Ernie's yard. Collected the day before delivery." },
   { id: 'ernie-rice', produceId: 'rice', farmId: 'ernie', price: 150, about: 'Unpolished brown rice, milled in small batches. Nutty, filling and good for you.' },
 
   /* Nong Jun - mixed farm above Talisay */
@@ -441,7 +467,7 @@ export const listings: Listing[] = [
   { id: 'jun-eggplant', produceId: 'eggplant', farmId: 'jun', price: 75, harvestedToday: true, about: 'Round purple talong, picked this morning. Great grilled for ensaladang talong.' },
   { id: 'jun-eggs', produceId: 'eggs', farmId: 'jun', price: 110, about: 'Native-chicken eggs, a little smaller with rich yolks.' },
   { id: 'jun-calamansi', produceId: 'calamansi', farmId: 'jun', price: 28, about: 'Calamansi from the trees along the farm path. Extra juicy this month.' },
-  { id: 'jun-mangoes', produceId: 'mangoes', farmId: 'jun', price: 170, about: 'Talisay mangoes, a touch smaller than the Balamban ones, just as sweet.' },
+  { id: 'jun-mangoes', produceId: 'mangoes', farmId: 'jun', price: 170, featured: true, about: 'Talisay mangoes, a touch smaller than the Balamban ones, just as sweet.' },
 ]
 
 /* What "Fill basket" in the presenter panel puts in the basket: three farms,
@@ -588,6 +614,8 @@ export const sellerView = {
   ],
   thisWeekSales: 10570,
   payout: 'Paid every Saturday to GCash',
+  /* What "Feature a listing" in the Seller Center puts in the Featured row. */
+  boostListingId: 'romy-tomatoes',
 }
 
 /* ==========================================================================

@@ -15,7 +15,6 @@ import {
 } from '../components/ui'
 import { useApp } from '../state/AppState'
 import { allListings, listingDetails } from '../state/catalog'
-import { unitPrice } from '../state/pricing'
 import { categories, getFarm, peso, perUnit, qtyText } from '../data/sample'
 
 export function ListingScreen() {
@@ -34,8 +33,8 @@ function ListingDetail({ id }: { id: string }) {
   const inBasket = qtyOf(listing.id)
   const [qty, setLocalQty] = useState(inBasket > 0 ? inBasket : item.unit === 'kg' ? 1 : item.step)
 
-  const price = unitPrice(listing.price, member)
-  const lineTotal = Math.round(price * qty)
+  const lineTotal = Math.round(listing.price * qty)
+  const deal = farm.sukiDeal
   const favorite = favorites.includes(listing.id)
   const category = categories.find((c) => c.id === item.category)?.label
   /* Same produce from other farms - the heart of a marketplace. */
@@ -107,30 +106,28 @@ function ListingDetail({ id }: { id: string }) {
 
         {/* ---------------- Price ---------------- */}
         <p className="mt-4 flex items-baseline gap-1.5">
-          <span
-            className={`text-[32px] font-extrabold leading-none tracking-tight ${
-              member ? 'text-primary' : 'text-ink'
-            }`}
-          >
-            {peso(price)}
+          <span className="text-[32px] font-extrabold leading-none tracking-tight text-ink">
+            {peso(listing.price)}
           </span>
           <span className="text-[16px] font-semibold text-ink-muted">/ {perUnit(item)}</span>
         </p>
-        {member ? (
-          <p className="mt-2 flex items-center gap-2 text-[14px] font-semibold text-ink-muted">
-            <PlusTag label="Member price" />
-            <span className="line-through">{peso(listing.price)}</span>
-          </p>
-        ) : (
-          <button
-            type="button"
-            onClick={() => navigate('/plus')}
-            className="tappable mt-2 flex items-center gap-2 text-[14px] font-bold text-primary"
-          >
-            <PlusTag />
-            {peso(unitPrice(listing.price, true))} / {perUnit(item)} for members
-          </button>
-        )}
+        {/* The farm's own deal for Direct Plus members, when it has one. */}
+        {deal &&
+          (member ? (
+            <p className="mt-2 flex items-center gap-2 text-[14px] font-semibold text-ink-muted">
+              <PlusTag label="Suki deal" />
+              {peso(deal.off)} off {peso(deal.minSpend)}+ from {farm.call}
+            </p>
+          ) : (
+            <button
+              type="button"
+              onClick={() => navigate('/plus')}
+              className="tappable mt-2 flex items-center gap-2 text-[14px] font-bold text-primary"
+            >
+              <PlusTag />
+              Suki deal: {peso(deal.off)} off {peso(deal.minSpend)}+
+            </button>
+          ))}
 
         {/* ---------------- How much ---------------- */}
         {!listing.outOfStock && (
@@ -233,10 +230,10 @@ function ListingDetail({ id }: { id: string }) {
                       <span className="text-right">
                         <span
                           className={`block text-[17px] font-extrabold ${
-                            o.outOfStock ? 'text-ink-faint' : member ? 'text-primary' : 'text-ink'
+                            o.outOfStock ? 'text-ink-faint' : 'text-ink'
                           }`}
                         >
-                          {peso(unitPrice(o.price, member))}
+                          {peso(o.price)}
                         </span>
                         <span className="block text-[12px] font-semibold text-ink-muted">
                           {o.outOfStock ? 'Sold out' : `/ ${perUnit(item)}`}

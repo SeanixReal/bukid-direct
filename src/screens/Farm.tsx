@@ -1,5 +1,5 @@
 import { Navigate, useParams } from 'react-router-dom'
-import { CalendarDays, MapPin, Star, Store, Truck } from 'lucide-react'
+import { BadgePercent, CalendarDays, MapPin, Star, Store, Truck } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Screen, SectionTitle, TopBar } from '../components/Screen'
 import { Hills } from '../components/ProduceArt'
@@ -8,7 +8,7 @@ import { deliveryLine, pickupLine } from '../components/FarmBits'
 import { Avatar, Rating } from '../components/ui'
 import { useApp } from '../state/AppState'
 import { allListings } from '../state/catalog'
-import { distanceKm, distanceText, farms, peso, type Farm } from '../data/sample'
+import { distanceKm, distanceText, farms, peso, plusPlan, type Farm } from '../data/sample'
 
 export function FarmScreen() {
   const { id } = useParams()
@@ -67,6 +67,15 @@ export function FarmScreen() {
                 </Sub>
               )}
             </Fact>
+            {farm.sukiDeal && (
+              <Fact Icon={BadgePercent}>
+                Suki deal for {plusPlan.name} members
+                <Sub>
+                  {peso(farm.sukiDeal.off)} off when you buy {peso(farm.sukiDeal.minSpend)} or more from{' '}
+                  {farm.call}
+                </Sub>
+              </Fact>
+            )}
             <Fact Icon={CalendarDays}>{farm.since}</Fact>
           </ul>
           <p className="mt-4 border-t border-line pt-4 text-[16px] font-medium leading-relaxed text-ink">

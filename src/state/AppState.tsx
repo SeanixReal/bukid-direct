@@ -23,8 +23,8 @@ import {
   type PaymentId,
   type StageId,
 } from '../data/sample'
-import { addListing, getListing, resetListings } from './catalog'
-import { groupByFarm, totals, type FarmGroup, type Line, type Totals } from './pricing'
+import { addListing, featureListing, getListing, resetListings } from './catalog'
+import { priceBasket, type FarmGroup, type Line, type Priced, type Totals } from './pricing'
 
 /* --------------------------------------------------------------------------
    One small store for the whole prototype. No backend, no persistence - the
@@ -91,6 +91,8 @@ interface AppStateValue {
   basket: Line[]
   groups: FarmGroup[]
   basketTotals: Totals
+  /* The Direct Plus welcome voucher (free delivery once) is still unused. */
+  welcomeLeft: boolean
   qtyOf: (listingId: string) => number
   setQty: (listingId: string, qty: number) => void
   addToBasket: (listingId: string, qty?: number) => void
@@ -115,6 +117,8 @@ interface AppStateValue {
   /* Bumped when a farmer publishes, so lists re-read the catalog. */
   listingsVersion: number
   publishListing: (listing: Omit<Listing, 'id'>) => Listing
+  /* A farm pays to put a listing in the shop's Featured row. */
+  featureListing: (listingId: string) => void
 
   /* Little confirmation pill over the bottom of the screen. */
   toast: Toast | null
@@ -166,6 +170,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [elapsed, setElapsed] = useState(0)
   const [sellerStep, setSellerStep] = useState<SellerStep>('new')
   const [listingsVersion, setListingsVersion] = useState(0)
+  const [welcomeLeft, setWelcomeLeft] = useState(true)
   const [toast, setToast] = useState<Toast | null>(null)
   const [demoKey, setDemoKey] = useState(0)
   const toastSeq = useRef(0)
@@ -251,18 +256,19 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setFarmModes({ ...demoModes })
   }, [])
 
-  const groups = useMemo(
-    () => groupByFarm(basket, member, modeOf),
+  const priced = useMemo(
+    () => priceBasket(basket, member, modeOf, welcomeLeft),
     // listingsVersion: a newly published listing can be in the basket.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [basket, member, modeOf, listingsVersion],
+    [basket, member, modeOf, welcomeLeft, listingsVersion],
   )
-  const basketTotals = useMemo(() => totals(groups, member), [groups, member])
+  const groups = priced.groups
+  const basketTotals = priced.totals
 
   /* --- The order ---------------------------------------------------------------- */
 
   const startOrder = useCallback(
-    (orderGroups: FarmGroup[], payment: PaymentId) => {
+    ({ groups: orderGroups, totals: orderTotals, usedWelcome }: Priced, payment: PaymentId) => {
       const placed: Order = {
         id: demoOrder.id,
         code: demoOrder.code,
@@ -278,30 +284,31 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           fee: g.fee,
           stage: 0,
         })),
-        totals: totals(orderGroups, member),
+        totals: orderTotals,
       }
       setSimRunning(false)
       setElapsed(0)
       setOrder(placed)
       setBasket([])
+      if (usedWelcome) setWelcomeLeft(false)
       return placed
     },
     [member],
   )
 
   const placeOrder = useCallback(
-    ({ payment }: { payment: PaymentId }) => startOrder(groups, payment),
-    [groups, startOrder],
+    ({ payment }: { payment: PaymentId }) => startOrder(priced, payment),
+    [priced, startOrder],
   )
 
   /* For the presenter: an order straight away, from whatever is in the
      basket or else the demo basket (three farms, one of them pick-up). */
   const placeDemoOrder = useCallback(() => {
-    if (basket.length) return startOrder(groups, 'gcash')
+    if (basket.length) return startOrder(priced, 'gcash')
     const demoModeOf = (farmId: string): Mode =>
       getFarm(farmId).pickup ? (demoModes[farmId] ?? 'delivery') : 'delivery'
-    return startOrder(groupByFarm(demoBasket, member, demoModeOf), 'gcash')
-  }, [basket.length, groups, member, startOrder])
+    return startOrder(priceBasket(demoBasket, member, demoModeOf, welcomeLeft), 'gcash')
+  }, [basket.length, priced, member, welcomeLeft, startOrder])
 
   const stageOf = useCallback((s: Shipment) => stagesFor[s.mode][s.stage], [])
 
@@ -381,6 +388,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     return listing
   }, [])
 
+  const feature = useCallback((listingId: string) => {
+    featureListing(listingId)
+    setListingsVersion((v) => v + 1)
+  }, [])
+
   /* --- Everything else ------------------------------------------------------------------ */
 
   const updateProfile = useCallback((patch: Partial<Profile>) => {
@@ -411,6 +423,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setOrder(null)
     setSellerStep('new')
     setListingsVersion((v) => v + 1)
+    setWelcomeLeft(true)
     setToast(null)
     setDemoKey((k) => k + 1)
   }, [])
@@ -430,6 +443,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       basket,
       groups,
       basketTotals,
+      welcomeLeft,
       qtyOf,
       setQty,
       addToBasket,
@@ -448,6 +462,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       setSellerStep,
       listingsVersion,
       publishListing,
+      featureListing: feature,
       toast,
       showToast,
       dismissToast,
@@ -467,6 +482,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       basket,
       groups,
       basketTotals,
+      welcomeLeft,
       qtyOf,
       setQty,
       addToBasket,
@@ -484,6 +500,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       sellerStep,
       listingsVersion,
       publishListing,
+      feature,
       toast,
       showToast,
       dismissToast,

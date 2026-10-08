@@ -65,9 +65,15 @@ files**, allow it once so every press of S saves a file.
    farmer's side: tomorrow's orders from several buyers, *Mark all as
    harvested* → *Mark packed* → **one shared Lalamove trip for all the city
    stops**. Then **Add a listing**: pick a produce, set a price (other farms'
-   prices are shown as a guide), publish - and it is in the shop.
+   prices are shown as a guide), publish - and it is in the shop. Under
+   *Grow your sales*, **Feature tomatoes · ₱99** puts them in the shop's
+   *Featured this week* row.
 8. Extras for Q&A: **Farms** tab, a farm's store page with reviews, **Direct
-   Plus** (join, and every price turns green).
+   Plus** (join, then *Fill basket*: the service fee goes, Nong Romy's suki
+   deal comes off, and the welcome voucher pays Lito & Grace's delivery).
+9. **"How do you make money?"** - after an order is placed, the presenter
+   panel shows *This order's money*: what the farms, the couriers and Bukid
+   Direct each get from it. The full maths is [below](#how-bukid-direct-makes-money).
 
 **Reset everything** in the panel puts it back to the splash screen.
 
@@ -93,6 +99,96 @@ All of this lives in `farms` in [`src/data/sample.ts`](src/data/sample.ts):
 courier, fee, free-delivery mark, delivery window, whether the trip is shared,
 the rider, and the optional pickup point. Courier names are text only - no
 logos - and nothing implies a partnership.
+
+---
+
+## How Bukid Direct makes money
+
+Small cuts, on purpose - the point is that farmers sell without paying a
+middleman. Every number lives in [`src/data/sample.ts`](src/data/sample.ts)
+and every total in the app is worked out from them.
+
+| Stream | Who pays | Sample value | Where it shows |
+| --- | --- | --- | --- |
+| Commission | the farm | **5%** of each sale (`farmerShare` = 0.95) | Seller Center: *You keep 95%* |
+| Service fee | the buyer | **₱10** per order, however many farms (`fees.service`) | Basket, Checkout |
+| Direct Plus | the buyer | **₱49/month** (`plusPlan.price`) | Direct Plus screen |
+| Featured listing | the farm, if it wants | **₱99/week** (`boost.price`), taken from its weekly pay-out | Seller Center, Shop |
+
+Delivery fees are not income: the buyer pays them and the farm passes them
+on to its Lalamove or Maxim rider.
+
+### What Direct Plus gives, and who pays for it
+
+| Perk | Paid by | Cost to Bukid Direct |
+| --- | --- | --- |
+| No service fee | Bukid Direct | ₱10 per order, not collected |
+| Welcome voucher: one farm's delivery free on the first order of ₱200 or more | Bukid Direct | once per member, ₱69–99 in the sample data |
+| Suki deals - members-only vouchers a farm posts for its regulars (e.g. ₱15 off ₱150) | the farm | nothing |
+| First pick of new harvests, farm visit days | - | nothing |
+
+**Why free delivery only once, not every month.** At a 5% commission a ₱500
+order earns ₱25, and one farm's delivery costs ₱69–99. Free delivery every
+month would cost more than a member brings in. The first draft - four free
+deliveries a month, two ₱20 vouchers and 5% off everything - would have cost
+about ₱460 a month per member against ₱149 coming in (₱49 + 5% of four ₱500
+orders).
+
+### The maths per buyer
+
+These are **our assumptions, to test in a pilot** - not market data:
+
+- an average order is ₱500 of produce plus ₱80 delivery;
+- payment processing costs about 2.5% of what the buyer pays (check your
+  gateway's current GCash and card rates);
+- non-members order twice a month, members four times.
+
+| Per order | Non-member | Member |
+| --- | --- | --- |
+| Buyer pays | ₱590 (₱500 + ₱80 + ₱10) | ₱580 (no service fee) |
+| Farm keeps | ₱475 | ₱475 |
+| Courier gets | ₱80 | ₱80 |
+| Bukid Direct earns | ₱35 (₱25 + ₱10) | ₱25 |
+| Payment fee, 2.5% | −₱15 | −₱15 |
+| **Left per order** | **₱20** | **₱10** |
+
+| Per month | Non-member | Member |
+| --- | --- | --- |
+| From orders | 2 × ₱20 = ₱40 | 4 × ₱10 = ₱40 |
+| Direct Plus, after its payment fee | - | ₱48 |
+| **Left per buyer** | **₱40** | **₱88** |
+| Welcome voucher, once | - | about −₱80, paid back in the first month |
+
+So a member is worth about twice a non-member, and Direct Plus never loses
+money: even a member who orders once a month leaves ₱58. It only earns less
+than the service fee would once a member orders five or more times a month -
+and those are the buyers worth keeping.
+
+### A month at pilot size (example)
+
+1,000 active buyers, 200 of them members - an example, not a forecast:
+
+| | |
+| --- | --- |
+| Orders | 800 × 2 + 200 × 4 = 2,400 |
+| Produce sold | 2,400 × ₱500 = ₱1,200,000 - farms keep ₱1,140,000 |
+| Commission, 5% | ₱60,000 |
+| Service fees | 1,600 × ₱10 = ₱16,000 |
+| Direct Plus | 200 × ₱49 = ₱9,800 |
+| Featured listings | e.g. 20 farms × ₱99 × 4 weeks = ₱7,920 |
+| **Revenue** | **₱93,720** |
+| Payment fees, about 2.5% | −₱35,400 |
+| Welcome vouchers | e.g. 40 new members × ₱80 = −₱3,200 |
+| **Left for running costs** | **about ₱55,000**, or about ₱55 per active buyer |
+
+Running costs - hosting, SMS order updates, support, signing up farms,
+marketing - come out of that. **Break-even** = monthly running costs ÷ ₱55
+per active buyer. For example, ₱40,000 a month of running costs (a
+placeholder - use your own budget) needs about 730 active buyers.
+
+Placeholders worth settling before the pitch: the four prices above, the
+2.5% payment fee, and each farm's `delivery.fee` and `delivery.freeOver` -
+get real Lalamove / Maxim quotes for the actual routes.
 
 ---
 
@@ -173,29 +269,14 @@ the water/rain tokens are gone.
 ## Changing the sample data
 
 **All invented content lives in [`src/data/sample.ts`](src/data/sample.ts):**
-the buyer and her address, the five farms and their delivery terms, the 17
-kinds of produce, the 23 listings (several farms sell the same produce at
-different prices), the order stages and their timing, past orders, Direct
-Plus, and the Seller Center. Every total in the app is worked out from those
-numbers.
-
-How Bukid Direct makes money - kept small on purpose, because the point is
-selling without paying a middleman:
-
-| | Who pays | Sample value |
-| --- | --- | --- |
-| Commission | the farm | **5%** of each sale (`farmerShare` = 0.95) |
-| Service fee | the buyer | **₱10** per order, however many farms (`fees.service`) |
-| Direct Plus | the buyer | **₱49/month** (`plusPlan.price`): no service fee, 5% off every harvest, first pick, farm visit days |
-
-The 5% member discount is paid by Bukid Direct, never by the farmer - farms
-always get their share of their full price.
-
-Placeholders worth settling before the pitch: all three numbers above, and
-each farm's `delivery.fee` and `delivery.freeOver` - illustrative; get real
-Lalamove / Maxim quotes for the actual routes.
+the buyer and her address, the five farms with their delivery terms and suki
+deals, the 17 kinds of produce, the 23 listings (several farms sell the same
+produce at different prices, two are featured), the order stages and their
+timing, past orders, the fees, Direct Plus, and the Seller Center. Every
+total in the app is worked out from those numbers.
 
 House rule: no invented statistics about Cebu or about farming in general.
+The money maths above uses our own assumptions, labelled as such.
 
 ---
 

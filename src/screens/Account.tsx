@@ -20,7 +20,7 @@ import { brand, languages, notifyChannels, peso, plusPlan, user } from '../data/
 
 export function Account() {
   const navigate = useNavigate()
-  const { member, profile, updateProfile, favorites, prefMode, setPrefMode, showToast } = useApp()
+  const { member, welcomeLeft, profile, updateProfile, favorites, prefMode, setPrefMode, showToast } = useApp()
 
   return (
     <Screen nav>
@@ -46,7 +46,9 @@ export function Account() {
             <div className="min-w-0 flex-1">
               <PlusTag label="Member" />
               <p className="mt-1 text-[15px] font-semibold leading-snug text-ink">
-                Member prices are on. Renews next month for {peso(plusPlan.price)}.
+                No service fee on your orders, and suki deals from farms.
+                {welcomeLeft && ' Your free first delivery is waiting.'} Renews next month for{' '}
+                {peso(plusPlan.price)}.
               </p>
             </div>
           </div>
@@ -62,7 +64,7 @@ export function Account() {
             <span className="min-w-0 flex-1">
               <span className="block text-[17px] font-extrabold text-on-dark">Join {plusPlan.name}</span>
               <span className="block text-[14px] font-semibold text-on-dark-muted">
-                No service fee, {Math.round(plusPlan.discount * 100)}% off every harvest
+                No service fee, suki deals, first delivery free
               </span>
             </span>
             <ChevronRight size={20} strokeWidth={2.6} className="shrink-0 text-on-dark" />

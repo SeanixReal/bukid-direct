@@ -23,6 +23,15 @@ export function addListing(listing: Listing) {
   index.set(listing.id, listing)
 }
 
+/** Puts a listing in the shop's Featured row - a farm paid for it. */
+export function featureListing(id: string) {
+  const listing = index.get(id)
+  if (!listing || listing.featured) return
+  const featured = { ...listing, featured: true }
+  all = all.map((l) => (l.id === id ? featured : l))
+  index.set(id, featured)
+}
+
 export function resetListings() {
   all = [...sampleListings]
   index = new Map(all.map((l) => [l.id, l]))
