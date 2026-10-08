@@ -1,0 +1,224 @@
+@import "tailwindcss";
+@import "./theme.css";
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: var(--stage);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-synthesis-weight: none;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    /* Native checkboxes, radios and sliders follow the brand, not the
+       browser's default blue. */
+    accent-color: var(--primary);
+  }
+
+  ::selection {
+    background: var(--primary-soft);
+    color: var(--primary-deep);
+  }
+
+  /* Keyboard focus is green too - the browser default ring is blue. */
+  :focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--primary) 55%, transparent);
+    outline-offset: 2px;
+  }
+
+  /* The demo is a phone UI; text selection and long-press callouts get in the
+     way when you are tapping through it on a projector. */
+  button,
+  a,
+  [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  button:disabled {
+    cursor: default;
+  }
+
+  input,
+  select,
+  textarea {
+    font-family: inherit;
+    font-size: inherit;
+    color: inherit;
+    caret-color: var(--primary);
+  }
+
+  input::placeholder {
+    color: var(--ink-faint);
+  }
+}
+
+@layer utilities {
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .bg-grad-brand {
+    background-image: var(--grad-brand);
+  }
+
+  /* Subtle press feedback, applied to every tappable card and button. */
+  .tappable {
+    transition: transform 140ms ease, box-shadow 140ms ease, background-color 140ms ease,
+      color 140ms ease;
+  }
+  .tappable:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Motion
+   -------------------------------------------------------------------------- */
+@keyframes screen-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes sheet-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes bump {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.28);
+  }
+}
+
+@keyframes halo {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.55;
+  }
+  70% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+@keyframes bar-grow {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes sway {
+  from {
+    transform: rotate(-3deg);
+  }
+  to {
+    transform: rotate(3deg);
+  }
+}
+
+.animate-screen-in {
+  animation: screen-in 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.animate-rise-in {
+  animation: rise-in 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.animate-fade-in {
+  animation: fade-in 420ms ease both;
+}
+.animate-sheet-up {
+  animation: sheet-up 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.animate-pop {
+  animation: pop 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.animate-bump {
+  animation: bump 320ms ease;
+}
+.animate-halo {
+  animation: halo 2.4s ease-out infinite;
+}
+.animate-sway {
+  transform-origin: 50% 100%;
+  animation: sway 2.8s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

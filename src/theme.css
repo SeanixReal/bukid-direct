@@ -1,0 +1,172 @@
+/* ==========================================================================
+   Bukid Direct - design tokens
+   --------------------------------------------------------------------------
+   THIS IS THE ONLY FILE IN THE APP THAT CONTAINS COLOR VALUES.
+   Change a value here and it changes everywhere: screens, logo, produce art,
+   the hub map, the phone frame - and the brand files, because
+   `npm run export:brand` reads this file too.
+
+   Two blocks below:
+     1. :root   - the palette, shadows and corner radii. Edit these.
+     2. @theme  - maps the palette onto Tailwind class names
+                  (--primary  ->  bg-primary / text-primary / ring-primary ...).
+                  You normally do NOT need to touch this block.
+
+   Coming from FloodWatch? The old status tokens map like this:
+     safe  -> primary      alert -> accent      water / rain -> removed
+   ========================================================================== */
+
+:root {
+  /* --- Brand greens ----------------------------------------------------- */
+  --primary: #1F7A4D;        /* emerald green: headers, primary buttons   */
+  --primary-hover: #196640;
+  --primary-deep: #14513A;   /* darkest green, gradient ends              */
+  --primary-soft: #E8F5EE;   /* pale green surface / selected rows        */
+  --on-primary: #FFFFFF;
+
+  --secondary: #6DBE6B;      /* leaf green: accents, chips, highlights    */
+  --secondary-soft: #EFF8EE;
+  --on-secondary: #0F2E1D;
+
+  /* --- Status ----------------------------------------------------------- */
+  --accent: #F29F3D;         /* warm orange: ONLY "ready for pickup" and
+                                "harvested today". Never decoration.      */
+  --accent-strong: #C97A18;
+  --accent-soft: #FEF3E2;
+  --on-accent: #3B2408;
+
+  --danger: #C8442F;         /* errors, out of stock                      */
+  --danger-soft: #FBEAE7;
+  --on-danger: #FFFFFF;
+
+  /* --- Neutrals --------------------------------------------------------- */
+  --canvas: #FAFAF6;         /* warm off-white screen background          */
+  --card: #FFFFFF;
+  --surface: #F3F6F1;
+  --surface-2: #E6ECE2;
+  --line: #E1E8DD;
+
+  --ink: #1B2A21;            /* body text                                 */
+  --ink-muted: #53655A;
+  --ink-faint: #8A9A90;
+  --on-dark: #FFFFFF;
+  --on-dark-muted: #CFE5D6;
+
+  /* --- App chrome (demo shell, not part of the product UI) -------------- */
+  --stage: #E7E8E2;          /* soft neutral stage behind the phone       */
+  --frame: #1A1D1B;          /* dark phone bezel                          */
+  --panel: #17201B;          /* presenter demo panel                      */
+
+  /* --- Produce art -------------------------------------------------------
+     Natural food colours for the flat illustrations in ProduceArt.tsx. They
+     only ever appear inside a product's picture - never on buttons, badges
+     or text. Leaves and stems reuse the brand greens above. */
+  --art-tomato: #E2523C;
+  --art-tomato-dark: #BF3D2B;
+  --art-carrot: #E8762C;
+  --art-carrot-dark: #C9601D;
+  --art-squash: #3F7D47;
+  --art-squash-light: #6E9F5E;
+  --art-squash-flesh: #E8862F;
+  --art-eggplant: #66468A;
+  --art-eggplant-dark: #4C326C;
+  --art-yellow: #F3C43F;
+  --art-yellow-dark: #D9A526;
+  --art-potato: #D3A66C;
+  --art-potato-dark: #AE834A;
+  --art-kamote: #A3485C;
+  --art-kamote-dark: #803448;
+  --art-lime: #A7D16C;
+  --art-pale: #D3EBBE;
+  --art-cream: #F7EEDF;
+  --art-brown: #C98F62;
+  --art-sack: #E3D3B1;
+  --art-sack-dark: #C7B088;
+  --art-twine: #B5864F;
+  --art-shadow: rgb(27 42 33 / 0.09);
+
+  /* Picture backgrounds behind the produce art. */
+  --tint-cream: #F8F2E7;
+  --tint-sand: #F2EEE4;
+
+  /* --- Gradients -------------------------------------------------------- */
+  --grad-brand: linear-gradient(165deg, var(--primary) 0%, var(--primary-deep) 100%);
+
+  /* --- Shadows: soft and slightly green, never grey-blue ---------------- */
+  --shadow-rgb: 20 46 31;    /* shadow tint, as R G B                     */
+  --sh-card: 0 1px 2px rgb(var(--shadow-rgb) / 0.05),
+             0 12px 28px -16px rgb(var(--shadow-rgb) / 0.22);
+  --sh-float: 0 2px 8px rgb(var(--shadow-rgb) / 0.08),
+              0 22px 44px -18px rgb(var(--shadow-rgb) / 0.34);
+  --sh-frame: 0 50px 100px -34px rgb(var(--shadow-rgb) / 0.55);
+
+  /* --- Shape: large, friendly corners ------------------------------------ */
+  --r-xl: 28px;              /* sheets and hero panels                    */
+  --r-card: 22px;            /* cards                                     */
+  --r-lg: 18px;              /* picture areas, inputs                     */
+  --r-md: 14px;              /* small tiles, thumbnails                   */
+  --r-sm: 10px;
+  --r-pill: 999px;           /* chips and buttons                         */
+}
+
+/* ==========================================================================
+   Tailwind bridge - exposes the palette above as utility classes.
+   Tailwind's built-in colours are switched off first, so a stray
+   `bg-blue-500` simply does not exist: every colour on screen comes from
+   the palette above.
+   ========================================================================== */
+@theme inline {
+  --color-*: initial;
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-deep: var(--primary-deep);
+  --color-primary-soft: var(--primary-soft);
+  --color-on-primary: var(--on-primary);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-soft: var(--secondary-soft);
+  --color-on-secondary: var(--on-secondary);
+
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
+
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-on-danger: var(--on-danger);
+
+  --color-canvas: var(--canvas);
+  --color-card: var(--card);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+  --color-on-dark: var(--on-dark);
+  --color-on-dark-muted: var(--on-dark-muted);
+
+  --color-tint-cream: var(--tint-cream);
+  --color-tint-sand: var(--tint-sand);
+
+  --color-stage: var(--stage);
+  --color-frame: var(--frame);
+  --color-panel: var(--panel);
+
+  --shadow-card: var(--sh-card);
+  --shadow-float: var(--sh-float);
+  --shadow-frame: var(--sh-frame);
+
+  --radius-xl: var(--r-xl);
+  --radius-card: var(--r-card);
+  --radius-lg: var(--r-lg);
+  --radius-md: var(--r-md);
+  --radius-sm: var(--r-sm);
+  --radius-pill: var(--r-pill);
+
+  --font-sans: "Plus Jakarta Sans Variable", "Plus Jakarta Sans", ui-sans-serif,
+    system-ui, -apple-system, "Segoe UI", sans-serif;
+}

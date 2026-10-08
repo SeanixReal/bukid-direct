@@ -1,0 +1,29 @@
+Bukid Direct - colour palette (from src/theme.css)
+Fresh from the Farm.
+Typeface: Plus Jakarta Sans (ExtraBold for headings and "Bukid", Regular for "Direct")
+
+BRAND GREENS
+  #1F7A4D  Emerald         Main brand colour. Logo, headers, primary buttons.
+  #6DBE6B  Leaf            Accents, category chips, highlights.
+  #14513A  Deep Green      Darkest green. Gradient ends, dark panels.
+  #E8F5EE  Pale Green      Pale surfaces and selected rows.
+  #EFF8EE  Leaf Mist       Soft highlight panels.
+
+STATUS - USE ONLY FOR THEIR MEANING
+  #F29F3D  Harvest Orange  ONLY "Ready for pickup" and "Harvested today".
+  #C97A18  Orange Text     Orange wording on light backgrounds.
+  #C8442F  Alert Red       Errors and "Out of stock" only.
+
+NEUTRALS
+  #1B2A21  Ink             Body text.
+  #53655A  Muted Ink       Secondary text.
+  #FAFAF6  Canvas          Warm off-white screen background.
+  #FFFFFF  White           Cards.
+  #F3F6F1  Surface         Soft panels.
+  #E1E8DD  Line            Borders and dividers.
+
+GRADIENT
+  #1F7A4D -> #14513A  Brand gradient - Splash screen, headers, title slides.
+
+Rule: orange is ONLY for "Ready for pickup" and "Harvested today". Never decoration.
+No blue anywhere.
