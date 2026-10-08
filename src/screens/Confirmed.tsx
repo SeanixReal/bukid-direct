@@ -53,7 +53,7 @@ export function Confirmed() {
             className="animate-rise-in mt-1 max-w-[310px] text-[16px] font-medium leading-snug text-ink-muted"
             style={{ animationDelay: '140ms' }}
           >
-            {farmers} will harvest it {schedule.day.toLowerCase()} morning.
+            {farmers} will pack it fresh {schedule.day.toLowerCase()} morning.
           </p>
         </div>
 

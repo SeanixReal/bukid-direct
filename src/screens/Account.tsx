@@ -46,8 +46,7 @@ export function Account() {
             <div className="min-w-0 flex-1">
               <PlusTag label="Member" />
               <p className="mt-1 text-[15px] font-semibold leading-snug text-ink">
-                No service fee on your orders, and suki deals from farms.
-                {welcomeLeft && ' Your free first delivery is waiting.'} Renews next month for{' '}
+                {welcomeLeft && 'Your first delivery is free. '}Renews next month for{' '}
                 {peso(plusPlan.price)}.
               </p>
             </div>
@@ -64,7 +63,7 @@ export function Account() {
             <span className="min-w-0 flex-1">
               <span className="block text-[17px] font-extrabold text-on-dark">Join {plusPlan.name}</span>
               <span className="block text-[14px] font-semibold text-on-dark-muted">
-                No service fee, suki deals, first delivery free
+                No service fee · free first delivery
               </span>
             </span>
             <ChevronRight size={20} strokeWidth={2.6} className="shrink-0 text-on-dark" />

@@ -8,7 +8,7 @@ import { Avatar, Button } from '../components/ui'
 import { riderProgress, useApp, useSimClock } from '../state/AppState'
 import { getListing } from '../state/catalog'
 import { pathLength, route } from '../data/route'
-import { couriers, fillText, getFarm, getProduce, homeAt, stageText } from '../data/sample'
+import { courier, fillText, getFarm, getProduce, homeAt, stageText } from '../data/sample'
 
 /* Average speed across the city, for the "arriving in" estimate. */
 const CITY_KMH = 22
@@ -38,9 +38,8 @@ function TrackShipment({ id }: { id: string }) {
   const stage = stageOf(shipment)
   const copy = stageText.delivery[stage]
   const rider = farm.delivery.rider
-  const courier = couriers[farm.delivery.courier].name
 
-  const path = useMemo(() => route(farm.delivery.from, homeAt), [farm])
+  const path = useMemo(() => route(farm.delivery.handover.at, homeAt), [farm])
   const moving = stage === 'onTheWay'
   const progress = stage === 'done' ? 1 : moving ? riderProgress(elapsed) : 0
   const tripMin = (pathLength(path) / 1000 / CITY_KMH) * 60
@@ -80,11 +79,11 @@ function TrackShipment({ id }: { id: string }) {
                 <div>
                   <h1 className="text-[22px] font-extrabold tracking-tight text-ink">Delivered!</h1>
                   <p className="text-[14px] font-semibold text-ink-muted">
-                    {farm.call}'s harvest is at your door. Salamat!
+                    {farm.call}'s order is at your door. Salamat!
                   </p>
                 </div>
               </div>
-              <p className="mt-4 text-[15px] font-bold text-ink">How was {farm.call}'s harvest?</p>
+              <p className="mt-4 text-[15px] font-bold text-ink">How was {farm.call}'s order?</p>
               <div className="mt-2 flex gap-2">
                 {[1, 2, 3, 4, 5].map((n) => (
                   <button
@@ -117,7 +116,7 @@ function TrackShipment({ id }: { id: string }) {
                   </h1>
                   <p className="mt-0.5 text-[14px] font-semibold text-ink-muted">
                     {moving
-                      ? `Bringing ${farm.call}'s order from ${farm.place.split(', ').pop()}`
+                      ? `Bringing ${farm.call}'s order from ${farm.delivery.handover.place}`
                       : fillText(copy.detail, farm)}
                   </p>
                 </div>
@@ -129,7 +128,7 @@ function TrackShipment({ id }: { id: string }) {
                 )}
               </div>
 
-              {/* Rider - booked by the farm once the order is packed */}
+              {/* Rider - booked when the order was paid */}
               {moving || stage === 'ready' ? (
                 <div className="mt-4 flex items-center gap-3 rounded-card bg-surface p-3">
                   <Avatar initials={rider.name.charAt(0)} size={46} tone="primary" />
@@ -158,7 +157,7 @@ function TrackShipment({ id }: { id: string }) {
                 </div>
               ) : (
                 <p className="mt-4 rounded-card bg-surface p-3 text-[14px] font-semibold leading-snug text-ink-muted">
-                  {farm.call} books a {courier} rider as soon as your order is packed.
+                  {courier} rider booked · collects at {farm.delivery.handover.place}
                 </p>
               )}
 

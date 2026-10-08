@@ -6,13 +6,16 @@
    farmers, listings, prices, couriers, riders, orders, people - is invented.
 
    How the marketplace works:
-     - Every farm is a seller with its own shop, prices and delivery terms.
-     - The same produce can be sold by several farms at different prices.
-     - Each farm delivers its own part of an order by courier (Lalamove or
-       Maxim, booked by the farmer), or lets the buyer pick it up at the
-       farm's own pickup point - like Delivery / Pick-up on Grab or foodpanda.
-     - Far farms batch the day's city orders into one shared courier trip, so
-       each buyer pays a share instead of a whole trip.
+     - Every seller - a farm or a fishing family - has its own shop, prices
+       and delivery terms.
+     - The same produce can be sold by several sellers at different prices.
+     - Each farm's part of an order is delivered by Lalamove, or picked up
+       at the farm's own pickup point - like Delivery / Pick-up on Grab or
+       foodpanda.
+     - Bukid Direct books the Lalamove rider when the buyer pays, at
+       Lalamove's own price. The farmer only packs and hands over.
+     - Far farms bring the day's orders into the city, and the riders
+       collect them there.
 
    House rules for anything written in this file:
      - Plain English, with the occasional Bisaya touch in labels
@@ -103,46 +106,30 @@ export const plusPlan = {
      member brings in. */
   welcome: { minSpend: 200 },
   perks: [
-    {
-      id: 'fee',
-      title: 'No service fee',
-      detail: 'Save ₱10 on every order.',
-    },
-    {
-      id: 'welcome',
-      title: 'Free delivery on your first order',
-      detail: "One farm's delivery is on us, on any order of ₱200 or more.",
-    },
-    {
-      id: 'suki',
-      title: 'Suki deals from farms',
-      detail: 'Members-only vouchers that farms post for their regulars.',
-    },
-    {
-      id: 'early',
-      title: 'First pick of the harvest',
-      detail: 'Shop new harvests a day before everyone else.',
-    },
-    {
-      id: 'visit',
-      title: 'Farm visit days',
-      detail: 'Meet the farmers on their land, twice a year.',
-    },
+    { id: 'fee', title: 'No service fee', detail: 'Save ₱10 every order' },
+    { id: 'welcome', title: 'Free first delivery', detail: 'On an order of ₱200 or more' },
+    { id: 'suki', title: 'Suki deals', detail: 'Members-only vouchers from sellers' },
+    { id: 'early', title: 'First pick', detail: 'New harvests a day early' },
+    { id: 'visit', title: 'Farm visit days', detail: 'Twice a year' },
   ],
 }
 
-/* --- Couriers ----------------------------------------------------------------
-   Third-party couriers the farmers book. Names only - the app does not show
-   their logos, and nothing here implies a partnership. */
+/* --- Delivery ----------------------------------------------------------------
+   Bukid Direct books every delivery with Lalamove's business API: at
+   checkout it asks Lalamove for the trip's price and shows exactly that -
+   no markup - then books the rider when the buyer pays. Name only: no logo,
+   and nothing here implies a partnership. */
 
-export type CourierId = 'lalamove' | 'maxim'
+export const courier = 'Lalamove'
 
-export const couriers: Record<CourierId, { name: string }> = {
-  lalamove: { name: 'Lalamove' },
-  maxim: { name: 'Maxim' },
+/* Lalamove's published motorcycle rates for Cebu: ₱49 base, ₱6 a km for the
+   first 5 km, ₱5 a km after that. Traffic and demand surcharges can apply -
+   the real app shows the live quote. */
+export function lalamoveFare(km: number) {
+  return Math.round(49 + 6 * Math.min(km, 5) + 5 * Math.max(0, km - 5))
 }
 
-/* --- Farms (the sellers) ------------------------------------------------------ */
+/* --- Sellers: farms and fisherfolk ------------------------------------------- */
 
 export type Mode = 'delivery' | 'pickup'
 
@@ -161,17 +148,17 @@ export interface Farm {
   reviewCount: number
   sold: string
   delivery: {
-    courier: CourierId
-    /* What the buyer pays for this farm's part of an order. */
+    /* Lalamove's fare from the hand-over point to the buyer - here Joy, at
+       the road distance on the city map. */
     fee: number
-    /* Free delivery from this farm at or above this subtotal. */
+    /* Free delivery from this farm at or above this subtotal - the farm
+       pays the rider. */
     freeOver: number
     /* Arrival window, the day after ordering. */
     window: string
-    /* One courier trip carries all of the day's city orders. */
-    shared: boolean
-    /* Where the courier enters the map on the way to the buyer. */
-    from: LatLng
+    /* Where the rider collects the order: the farm, or for far farms, the
+       city spot they bring the day's orders to. */
+    handover: { place: string; at: LatLng }
     rider: { name: string; plate: string }
   }
   /* Farms that also let buyers collect. */
@@ -196,18 +183,15 @@ export const farms: Farm[] = [
     place: 'Mantalongon, Dalaguete',
     kmToCity: 85,
     since: 'Selling since 2025',
-    story:
-      'Romy farms the cool highland slopes his father farmed before him. He plants in small batches so something is always ready, and picks only what has been ordered.',
+    story: 'Highland vegetables from the slopes his father farmed. He picks only what has been ordered.',
     rating: 4.9,
     reviewCount: 312,
     sold: '1.2k sold',
     delivery: {
-      courier: 'lalamove',
-      fee: 79,
+      fee: lalamoveFare(5.0),
       freeOver: 800,
       window: '11 AM – 1 PM',
-      shared: true,
-      from: [10.26092, 123.87211],
+      handover: { place: 'Carbon Market stall', at: [10.29296, 123.90033] },
       rider: { name: 'Rhea M.', plate: 'GAJ 2716' },
     },
     pickup: {
@@ -216,7 +200,7 @@ export const farms: Farm[] = [
       at: [10.29296, 123.90033],
       hours: '1 – 6 PM',
     },
-    sukiDeal: { off: 15, minSpend: 150 },
+    sukiDeal: { off: 10, minSpend: 200 },
     reviews: [
       { name: 'Marites C.', stars: 5, text: 'Tomatoes lasted a whole week. Packed well too.' },
       { name: 'Jun T.', stars: 5, text: 'Sweetest carrots I have bought in the city.' },
@@ -230,18 +214,15 @@ export const farms: Farm[] = [
     place: 'Busay, Cebu City',
     kmToCity: 9,
     since: 'Selling since 2025',
-    story:
-      'Fe grows leafy greens on terraces above the city. Everything is cut at first light and packed in the shade, so it arrives still crisp.',
+    story: 'Leafy greens from terraces above the city, cut at first light so they arrive crisp.',
     rating: 4.8,
     reviewCount: 208,
     sold: '860 sold',
     delivery: {
-      courier: 'maxim',
-      fee: 69,
-      freeOver: 500,
+      fee: lalamoveFare(9.6),
+      freeOver: 700,
       window: '8 – 10 AM',
-      shared: false,
-      from: [10.37153, 123.8745],
+      handover: { place: 'the farm gate', at: [10.37153, 123.8745] },
       rider: { name: 'Jomar Y.', plate: 'NDC 4821' },
     },
     pickup: {
@@ -264,18 +245,15 @@ export const farms: Farm[] = [
     place: 'Balamban',
     kmToCity: 45,
     since: 'Selling since 2026',
-    story:
-      'A family orchard with mango trees older than the couple. Between the trees they grow saba, calamansi and kamote, and they pick fruit just before it ripens.',
+    story: 'A family orchard of old mango trees, with saba, calamansi and kamote in between.',
     rating: 4.7,
     reviewCount: 145,
     sold: '540 sold',
     delivery: {
-      courier: 'lalamove',
-      fee: 89,
+      fee: lalamoveFare(3.1),
       freeOver: 900,
       window: '10 AM – 12 NN',
-      shared: true,
-      from: [10.42245, 123.79576],
+      handover: { place: 'Fuente Osmeña Circle', at: [10.31, 123.89249] },
       rider: { name: 'Dennis A.', plate: 'KAB 5530' },
     },
     reviews: [
@@ -291,21 +269,18 @@ export const farms: Farm[] = [
     place: 'Carcar',
     kmToCity: 40,
     since: 'Selling since 2025',
-    story:
-      'Lowland vegetables and a yard of free-range hens. Ernie collects the eggs the day before delivery and picks his vegetables the same morning.',
+    story: 'Lowland vegetables and free-range hens. Eggs are collected the day before delivery.',
     rating: 4.8,
     reviewCount: 176,
     sold: '700 sold',
     delivery: {
-      courier: 'lalamove',
-      fee: 85,
+      fee: lalamoveFare(6.8),
       freeOver: 800,
       window: '10 AM – 12 NN',
-      shared: true,
-      from: [10.26092, 123.87211],
+      handover: { place: 'N. Bacalso Avenue', at: [10.29158, 123.87803] },
       rider: { name: 'Arnel P.', plate: 'GBV 1184' },
     },
-    sukiDeal: { off: 20, minSpend: 300 },
+    sukiDeal: { off: 15, minSpend: 250 },
     reviews: [
       { name: 'Mila G.', stars: 5, text: 'Eggs with bright orange yolks. Will reorder.' },
       { name: 'Boy S.', stars: 5, text: 'Talong was young and tender.' },
@@ -319,18 +294,15 @@ export const farms: Farm[] = [
     place: 'Manipis, Talisay City',
     kmToCity: 18,
     since: 'Selling since 2026',
-    story:
-      'A mixed farm in the hills above Talisay. Jun sells from his stall at Pardo Market most mornings, and now delivers to the city too.',
+    story: 'A mixed farm in the hills above Talisay. Jun also sells at his Pardo Market stall.',
     rating: 4.6,
     reviewCount: 98,
     sold: '410 sold',
     delivery: {
-      courier: 'maxim',
-      fee: 99,
+      fee: lalamoveFare(10.3),
       freeOver: 700,
       window: '9 – 11 AM',
-      shared: false,
-      from: [10.27429, 123.85005],
+      handover: { place: 'Pardo Market stall', at: [10.27429, 123.85005] },
       rider: { name: 'Kim L.', plate: 'NAC 7302' },
     },
     pickup: {
@@ -344,13 +316,43 @@ export const farms: Farm[] = [
       { name: 'Dodong M.', stars: 4, text: 'Easy pick-up at Pardo on my way home.' },
     ],
   },
+  {
+    id: 'berto',
+    farmer: 'Berto Ompad',
+    call: 'Nong Berto',
+    initials: 'BO',
+    place: 'Cordova, Mactan',
+    kmToCity: 20,
+    since: 'Selling since 2026',
+    story: 'A fishing family from Cordova. The catch comes in at dawn and leaves the same morning.',
+    rating: 4.8,
+    reviewCount: 87,
+    sold: '320 sold',
+    delivery: {
+      fee: lalamoveFare(5.5),
+      freeOver: 1000,
+      window: '8 – 10 AM',
+      handover: { place: 'Pasil Fish Market stall', at: [10.2915, 123.8935] },
+      rider: { name: 'Mae C.', plate: 'GBC 3391' },
+    },
+    pickup: {
+      place: 'Pasil Fish Market stall',
+      detail: 'Stall 4, near the main gate',
+      at: [10.2915, 123.8935],
+      hours: '5 – 10 AM',
+    },
+    reviews: [
+      { name: 'Annie R.', stars: 5, text: 'The squid still had its shine. So fresh.' },
+      { name: 'Oscar D.', stars: 5, text: 'Bangus came cleaned and scaled, as asked.' },
+    ],
+  },
 ]
 
 /* --- Produce types -------------------------------------------------------------
    What can be sold. Each has a flat illustration in ProduceArt.tsx, a unit
    it is sold in, and how much one tap of + adds. */
 
-export type CategoryId = 'vegetables' | 'leafy' | 'root' | 'fruits' | 'pantry'
+export type CategoryId = 'vegetables' | 'leafy' | 'root' | 'fruits' | 'seafood' | 'pantry'
 
 export const categories: { id: CategoryId | 'all'; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -358,6 +360,7 @@ export const categories: { id: CategoryId | 'all'; label: string }[] = [
   { id: 'leafy', label: 'Leafy greens' },
   { id: 'root', label: 'Root crops' },
   { id: 'fruits', label: 'Fruits' },
+  { id: 'seafood', label: 'Fish & seafood' },
   { id: 'pantry', label: 'Eggs & rice' },
 ]
 
@@ -380,6 +383,9 @@ export type ProduceId =
   | 'mangoes'
   | 'saba'
   | 'calamansi'
+  | 'bangus'
+  | 'squid'
+  | 'shrimp'
   | 'eggs'
   | 'rice'
 
@@ -414,21 +420,26 @@ export const produce: Produce[] = [
   { id: 'mangoes', name: 'Mangoes', local: 'Mangga', category: 'fruits', tint: 'cream', unit: 'kg', step: 0.5 },
   { id: 'saba', name: 'Saba bananas', local: 'Saging saba', category: 'fruits', tint: 'cream', unit: 'bunch', size: 'about 10 pieces', step: 1 },
   { id: 'calamansi', name: 'Calamansi', local: 'Lemonsito', category: 'fruits', tint: 'leaf', unit: 'pack', size: '250 g', step: 1 },
+  { id: 'bangus', name: 'Milkfish', local: 'Bangus', category: 'seafood', tint: 'mint', unit: 'kg', step: 0.5 },
+  { id: 'squid', name: 'Squid', local: 'Nokus', category: 'seafood', tint: 'cream', unit: 'kg', step: 0.5 },
+  { id: 'shrimp', name: 'Shrimp', local: 'Pasayan', category: 'seafood', tint: 'sand', unit: 'kg', step: 0.5 },
   { id: 'eggs', name: 'Free-range eggs', local: 'Itlog', category: 'pantry', tint: 'mint', unit: 'dozen', step: 1 },
   { id: 'rice', name: 'Brown rice', local: 'Bugas', category: 'pantry', tint: 'sand', unit: 'bag', size: '2 kg', step: 1 },
 ]
 
 /* --- Listings -------------------------------------------------------------------
-   What each farm is selling right now. Several farms can sell the same
-   produce - the product page shows the other offers side by side. */
+   What each seller has right now. Several sellers can offer the same
+   produce - the product page shows the other offers side by side. Prices sit
+   a little under typical Cebu market prices: no middleman's cut. */
 
 export interface Listing {
   id: string
   produceId: ProduceId
   farmId: string
   price: number
-  /* Orange badge. "Harvested today" is one of only two uses of orange. */
-  harvestedToday?: boolean
+  /* "Fresh today" - picked, laid or caught today. Marked in orange, one of
+     only two uses of orange. */
+  freshToday?: boolean
   outOfStock?: boolean
   /* The farm pays to show it in the shop's Featured row (see `boost`). */
   featured?: boolean
@@ -437,47 +448,53 @@ export interface Listing {
 
 export const listings: Listing[] = [
   /* Nong Romy - highland vegetables */
-  { id: 'romy-tomatoes', produceId: 'tomatoes', farmId: 'romy', price: 90, harvestedToday: true, about: 'Firm, sweet highland tomatoes, picked just as they turn red so they finish ripening on your counter, not in a truck.' },
-  { id: 'romy-carrots', produceId: 'carrots', farmId: 'romy', price: 95, harvestedToday: true, about: 'Sweet highland carrots, pulled the morning they ship. Twist the tops off at home to keep them crisp.' },
-  { id: 'romy-cabbage', produceId: 'cabbage', farmId: 'romy', price: 70, about: 'Tight, heavy heads from the cool Mantalongon slopes. Keeps for a week in the fridge.' },
-  { id: 'romy-potatoes', produceId: 'potatoes', farmId: 'romy', price: 110, about: 'Floury potatoes for mashing, frying and nilaga. Store them somewhere dark and dry.' },
-  { id: 'romy-lettuce', produceId: 'lettuce', farmId: 'romy', price: 60, about: 'Highland romaine with a good crunch. Big heads, cut the morning they ship.' },
-  { id: 'romy-bellpepper', produceId: 'bellpepper', farmId: 'romy', price: 220, outOfStock: true, about: 'Thick-walled red peppers. Sold out for this week - the next batch is a few days away.' },
+  { id: 'romy-tomatoes', produceId: 'tomatoes', farmId: 'romy', price: 60, freshToday: true, about: 'Firm, sweet highland tomatoes, picked just as they turn red so they finish ripening on your counter, not in a truck.' },
+  { id: 'romy-carrots', produceId: 'carrots', farmId: 'romy', price: 70, freshToday: true, about: 'Sweet highland carrots, pulled the morning they ship. Twist the tops off at home to keep them crisp.' },
+  { id: 'romy-cabbage', produceId: 'cabbage', farmId: 'romy', price: 50, about: 'Tight, heavy heads from the cool Mantalongon slopes. Keeps for a week in the fridge.' },
+  { id: 'romy-potatoes', produceId: 'potatoes', farmId: 'romy', price: 75, about: 'Floury potatoes for mashing, frying and nilaga. Store them somewhere dark and dry.' },
+  { id: 'romy-lettuce', produceId: 'lettuce', farmId: 'romy', price: 35, about: 'Highland romaine with a good crunch. Big heads, cut the morning they ship.' },
+  { id: 'romy-bellpepper', produceId: 'bellpepper', farmId: 'romy', price: 160, outOfStock: true, about: 'Thick-walled red peppers. Sold out for this week - the next batch is a few days away.' },
 
   /* Nang Fe - leafy greens from Busay */
-  { id: 'fe-lettuce', produceId: 'lettuce', farmId: 'fe', price: 55, harvestedToday: true, about: 'Crisp green-leaf lettuce from Busay, cut at dawn and kept cool all the way to you.' },
-  { id: 'fe-pechay', produceId: 'pechay', farmId: 'fe', price: 35, harvestedToday: true, about: 'Tender pechay with thick white stems. Cook it the day it arrives for the best crunch.' },
-  { id: 'fe-malunggay', produceId: 'malunggay', farmId: 'fe', price: 20, about: 'Fresh moringa sprigs for tinola and soups. Strip the leaves just before cooking.' },
+  { id: 'fe-lettuce', produceId: 'lettuce', farmId: 'fe', price: 30, freshToday: true, about: 'Crisp green-leaf lettuce from Busay, cut at dawn and kept cool all the way to you.' },
+  { id: 'fe-pechay', produceId: 'pechay', farmId: 'fe', price: 20, freshToday: true, about: 'Tender pechay with thick white stems. Cook it the day it arrives for the best crunch.' },
+  { id: 'fe-malunggay', produceId: 'malunggay', farmId: 'fe', price: 10, about: 'Fresh moringa sprigs for tinola and soups. Strip the leaves just before cooking.' },
 
   /* Lito & Grace - orchard fruit from Balamban */
-  { id: 'ybanez-mangoes', produceId: 'mangoes', farmId: 'ybanez', price: 180, about: 'Sweet carabao mangoes from old Balamban trees. Ready to eat in a day or two.' },
-  { id: 'ybanez-saba', produceId: 'saba', farmId: 'ybanez', price: 65, about: 'Firm cooking bananas for banana cue, turon, or simply boiled as a merienda.' },
-  { id: 'ybanez-calamansi', produceId: 'calamansi', farmId: 'ybanez', price: 30, about: 'Juicy little limes for juice, pancit and sawsawan.' },
-  { id: 'ybanez-kamote', produceId: 'kamote', farmId: 'ybanez', price: 60, about: 'Purple-skinned kamote with sweet yellow flesh. Boil it, roast it or make kamote cue.' },
+  { id: 'ybanez-mangoes', produceId: 'mangoes', farmId: 'ybanez', price: 110, about: 'Sweet carabao mangoes from old Balamban trees. Ready to eat in a day or two.' },
+  { id: 'ybanez-saba', produceId: 'saba', farmId: 'ybanez', price: 45, about: 'Firm cooking bananas for banana cue, turon, or simply boiled as a merienda.' },
+  { id: 'ybanez-calamansi', produceId: 'calamansi', farmId: 'ybanez', price: 18, about: 'Juicy little limes for juice, pancit and sawsawan.' },
+  { id: 'ybanez-kamote', produceId: 'kamote', farmId: 'ybanez', price: 40, about: 'Purple-skinned kamote with sweet yellow flesh. Boil it, roast it or make kamote cue.' },
 
   /* Nong Ernie - lowland vegetables, eggs and rice from Carcar */
-  { id: 'ernie-eggplant', produceId: 'eggplant', farmId: 'ernie', price: 80, about: 'Long, glossy talong for tortang talong or adobo. Picked young, so never bitter.' },
-  { id: 'ernie-sitaw', produceId: 'sitaw', farmId: 'ernie', price: 40, about: 'A generous bundle of long beans. Good in utan bisaya or stir-fried with garlic.' },
-  { id: 'ernie-squash', produceId: 'squash', farmId: 'ernie', price: 50, about: 'Sweet, deep-orange flesh. Sold by weight - ask for half if you only need a little.' },
-  { id: 'ernie-eggs', produceId: 'eggs', farmId: 'ernie', price: 120, featured: true, about: "From hens that roam Nong Ernie's yard. Collected the day before delivery." },
-  { id: 'ernie-rice', produceId: 'rice', farmId: 'ernie', price: 150, about: 'Unpolished brown rice, milled in small batches. Nutty, filling and good for you.' },
+  { id: 'ernie-eggplant', produceId: 'eggplant', farmId: 'ernie', price: 55, about: 'Long, glossy talong for tortang talong or adobo. Picked young, so never bitter.' },
+  { id: 'ernie-sitaw', produceId: 'sitaw', farmId: 'ernie', price: 20, about: 'A generous bundle of long beans. Good in utan bisaya or stir-fried with garlic.' },
+  { id: 'ernie-squash', produceId: 'squash', farmId: 'ernie', price: 30, about: 'Sweet, deep-orange flesh. Sold by weight - ask for half if you only need a little.' },
+  { id: 'ernie-eggs', produceId: 'eggs', farmId: 'ernie', price: 110, featured: true, about: "From hens that roam Nong Ernie's yard. Collected the day before delivery." },
+  { id: 'ernie-rice', produceId: 'rice', farmId: 'ernie', price: 120, about: 'Unpolished brown rice, milled in small batches. Nutty, filling and good for you.' },
 
   /* Nong Jun - mixed farm above Talisay */
-  { id: 'jun-tomatoes', produceId: 'tomatoes', farmId: 'jun', price: 85, about: 'Smaller lowland tomatoes with plenty of flavour. Good for sauces and sawsawan.' },
-  { id: 'jun-eggplant', produceId: 'eggplant', farmId: 'jun', price: 75, harvestedToday: true, about: 'Round purple talong, picked this morning. Great grilled for ensaladang talong.' },
-  { id: 'jun-eggs', produceId: 'eggs', farmId: 'jun', price: 110, about: 'Native-chicken eggs, a little smaller with rich yolks.' },
-  { id: 'jun-calamansi', produceId: 'calamansi', farmId: 'jun', price: 28, about: 'Calamansi from the trees along the farm path. Extra juicy this month.' },
-  { id: 'jun-mangoes', produceId: 'mangoes', farmId: 'jun', price: 170, featured: true, about: 'Talisay mangoes, a touch smaller than the Balamban ones, just as sweet.' },
+  { id: 'jun-tomatoes', produceId: 'tomatoes', farmId: 'jun', price: 55, about: 'Smaller lowland tomatoes with plenty of flavour. Good for sauces and sawsawan.' },
+  { id: 'jun-eggplant', produceId: 'eggplant', farmId: 'jun', price: 50, freshToday: true, about: 'Round purple talong, picked this morning. Great grilled for ensaladang talong.' },
+  { id: 'jun-eggs', produceId: 'eggs', farmId: 'jun', price: 100, about: 'Native-chicken eggs, a little smaller with rich yolks.' },
+  { id: 'jun-calamansi', produceId: 'calamansi', farmId: 'jun', price: 16, about: 'Calamansi from the trees along the farm path. Extra juicy this month.' },
+  { id: 'jun-mangoes', produceId: 'mangoes', farmId: 'jun', price: 100, featured: true, about: 'Talisay mangoes, a touch smaller than the Balamban ones, just as sweet.' },
+
+  /* Nong Berto - the morning's catch from Cordova */
+  { id: 'berto-bangus', produceId: 'bangus', farmId: 'berto', price: 170, freshToday: true, about: 'Silvery bangus from the family fish pens. Cleaned and scaled if you ask.' },
+  { id: 'berto-squid', produceId: 'squid', farmId: 'berto', price: 250, freshToday: true, about: "Small, tender nokus from last night's catch. Grill it, or cook it in its ink." },
+  { id: 'berto-shrimp', produceId: 'shrimp', farmId: 'berto', price: 350, about: 'Medium pasayan. Sweet in sinigang, or steamed with garlic.' },
 ]
 
-/* What "Fill basket" in the presenter panel puts in the basket: three farms,
-   one of them set to Pick-up, so both ways of getting an order show. */
+/* What "Fill basket" in the presenter panel puts in the basket: two farms and
+   a fishing family, one of them set to Pick-up, so both ways of getting an
+   order show. */
 export const demoBasket: { listingId: string; qty: number }[] = [
   { listingId: 'romy-tomatoes', qty: 1 },
-  { listingId: 'romy-carrots', qty: 1 },
+  { listingId: 'romy-potatoes', qty: 2 },
   { listingId: 'fe-lettuce', qty: 1 },
   { listingId: 'fe-pechay', qty: 2 },
-  { listingId: 'ybanez-mangoes', qty: 1 },
+  { listingId: 'berto-bangus', qty: 1 },
 ]
 export const demoModes: Record<string, Mode> = { fe: 'pickup' }
 
@@ -506,17 +523,17 @@ export const stagesFor: Record<Mode, StageId[]> = {
 export const stageText: Record<Mode, Record<StageId, { label: string; detail: string }>> = {
   delivery: {
     placed: { label: 'Order placed', detail: 'Sent to {farm}.' },
-    packing: { label: 'Harvesting & packing', detail: '{farm} is picking your order this morning.' },
+    packing: { label: 'Packing', detail: '{farm} is getting your order ready.' },
     ready: { label: 'Ready for pickup', detail: 'Packed and waiting for the {courier} rider.' },
     onTheWay: { label: 'On the way', detail: '{rider} is bringing it to your door.' },
-    done: { label: 'Delivered', detail: 'Enjoy your harvest. Salamat for buying direct!' },
+    done: { label: 'Delivered', detail: 'Salamat for buying direct!' },
   },
   pickup: {
     placed: { label: 'Order placed', detail: 'Sent to {farm}.' },
-    packing: { label: 'Harvesting & packing', detail: '{farm} is picking your order this morning.' },
+    packing: { label: 'Packing', detail: '{farm} is getting your order ready.' },
     ready: { label: 'Ready for pickup', detail: 'Packed and waiting for you at {place}.' },
     onTheWay: { label: 'On the way', detail: '' },
-    done: { label: 'Picked up', detail: 'Enjoy your harvest. Salamat for buying direct!' },
+    done: { label: 'Picked up', detail: 'Salamat for buying direct!' },
   },
 }
 
@@ -599,20 +616,20 @@ export const sellerView = {
   /* Other buyers' orders for tomorrow. Joy's order joins this list when it
      includes something from Nong Romy. */
   orders: [
-    { buyer: 'Mark T.', area: 'Banilad', mode: 'delivery' as Mode, items: 'Tomatoes 2 kg, Cabbage 1 kg', total: 250 },
-    { buyer: 'Liza P.', area: 'Mabolo', mode: 'delivery' as Mode, items: 'Carrots 1 kg, Potatoes 2 kg', total: 315 },
-    { buyer: 'Cora M.', area: 'Carbon Market', mode: 'pickup' as Mode, items: 'Tomatoes 3 kg, Lettuce 2 heads', total: 390 },
-    { buyer: 'Rico D.', area: 'Labangon', mode: 'delivery' as Mode, items: 'Cabbage 2 kg, Carrots 1 kg', total: 235 },
+    { buyer: 'Mark T.', area: 'Banilad', mode: 'delivery' as Mode, items: 'Tomatoes 2 kg, Cabbage 1 kg', total: 170 },
+    { buyer: 'Liza P.', area: 'Mabolo', mode: 'delivery' as Mode, items: 'Carrots 1 kg, Potatoes 2 kg', total: 220 },
+    { buyer: 'Cora M.', area: 'Carbon Market', mode: 'pickup' as Mode, items: 'Tomatoes 3 kg, Lettuce 2 heads', total: 250 },
+    { buyer: 'Rico D.', area: 'Labangon', mode: 'delivery' as Mode, items: 'Cabbage 2 kg, Carrots 1 kg', total: 170 },
   ],
   /* Earlier weeks' pay-outs. This week's is worked out from the orders. */
   pastWeeks: [
-    { label: 'Wk 1', amount: 6150 },
-    { label: 'Wk 2', amount: 7020 },
-    { label: 'Wk 3', amount: 6780 },
-    { label: 'Wk 4', amount: 7930 },
-    { label: 'Wk 5', amount: 8420 },
+    { label: 'Wk 1', amount: 4300 },
+    { label: 'Wk 2', amount: 4900 },
+    { label: 'Wk 3', amount: 4750 },
+    { label: 'Wk 4', amount: 5550 },
+    { label: 'Wk 5', amount: 5900 },
   ],
-  thisWeekSales: 10570,
+  thisWeekSales: 7400,
   payout: 'Paid every Saturday to GCash',
   /* What "Feature a listing" in the Seller Center puts in the Featured row. */
   boostListingId: 'romy-tomatoes',
@@ -693,7 +710,7 @@ export function listNames(names: string[]) {
 export function fillText(text: string, farm: Farm) {
   return text
     .replace('{farm}', farm.call)
-    .replace('{courier}', couriers[farm.delivery.courier].name)
+    .replace('{courier}', courier)
     .replace('{rider}', farm.delivery.rider.name)
     .replace('{place}', farm.pickup?.place ?? 'the farm')
 }

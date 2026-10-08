@@ -1,10 +1,10 @@
-import { Package, ShoppingBasket, Store, Tractor, User } from 'lucide-react'
+import { Package, ShoppingBasket, Store, User, Users } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import { useApp } from '../state/AppState'
 
 const items = [
   { to: '/shop', label: 'Shop', Icon: Store },
-  { to: '/farms', label: 'Farms', Icon: Tractor },
+  { to: '/farms', label: 'Sellers', Icon: Users },
   { to: '/basket', label: 'Basket', Icon: ShoppingBasket },
   { to: '/orders', label: 'Orders', Icon: Package },
   { to: '/account', label: 'Account', Icon: User },

@@ -114,7 +114,7 @@ export function DemoPanel({ onClose }: { onClose: () => void }) {
         </div>
       )}
       <p className="mb-3 text-[11px] font-medium leading-snug text-on-dark-muted">
-        Harvest, packing and courier in about 25 seconds. The live map opens by itself when a
+        Packing and delivery in about 25 seconds. The live map opens by itself when a
         rider sets off.
       </p>
 
@@ -203,8 +203,8 @@ function OrderMoney({ totals }: { totals: Totals }) {
     <div className="mt-3">
       <Label>This order's money</Label>
       <div className="space-y-1 rounded-md bg-on-dark/8 p-2.5 text-[12px] font-bold text-on-dark-muted">
-        <MoneyRow label="Farms" value={peso(m.farms)} />
-        <MoneyRow label="Couriers" value={peso(m.couriers)} />
+        <MoneyRow label="Sellers" value={peso(m.farms)} />
+        <MoneyRow label="Lalamove" value={peso(m.delivery)} />
         <MoneyRow label="Bukid Direct" value={signed(m.us)} strong />
         <p className="pt-1 text-[11px] font-medium leading-snug">
           5% commission {peso(m.commission)}

@@ -8,7 +8,7 @@ import type { Mode } from '../data/sample'
    Colour rules these pieces enforce:
      - primary green  : the ONE main button on a screen
      - secondary green: category chips and highlights
-     - orange accent  : ONLY "Ready for pickup" and "Harvested today"
+     - orange accent  : ONLY "Ready for pickup" and "Fresh today"
      - red            : only errors and "Out of stock"
    -------------------------------------------------------------------------- */
 
@@ -117,8 +117,9 @@ const badgeSize = {
   md: 'h-[30px] gap-1.5 px-3 text-[13px]',
 }
 
-/** Orange: one of the two places the accent is allowed. */
-export function HarvestedBadge({
+/** "Fresh today" - picked, laid or caught today. A quiet white pill with an
+    orange sunrise: one of the two places the accent is allowed. */
+export function FreshBadge({
   size = 'md',
   className = '',
 }: {
@@ -127,10 +128,10 @@ export function HarvestedBadge({
 }) {
   return (
     <span
-      className={`inline-flex shrink-0 items-center rounded-pill bg-accent font-extrabold text-on-accent ${badgeSize[size]} ${className}`}
+      className={`inline-flex shrink-0 items-center rounded-pill bg-card font-bold text-ink shadow-card ${badgeSize[size]} ${className}`}
     >
-      <Sunrise size={size === 'sm' ? 13 : 15} strokeWidth={2.6} />
-      Harvested today
+      <Sunrise size={size === 'sm' ? 13 : 15} strokeWidth={2.6} className="text-accent-strong" />
+      Fresh today
     </span>
   )
 }

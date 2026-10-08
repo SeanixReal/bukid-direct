@@ -44,7 +44,7 @@ export function Checkout() {
     >
       <TopBar
         title="Checkout"
-        subtitle={`${t.count} items from ${t.farmCount} ${t.farmCount === 1 ? 'farm' : 'farms'}`}
+        subtitle={`${t.count} items from ${t.farmCount} ${t.farmCount === 1 ? 'seller' : 'sellers'}`}
         fallback="/basket"
       />
 
@@ -75,7 +75,7 @@ export function Checkout() {
 
         {/* ---------------- Each farm ---------------- */}
         <SectionTitle className={delivering ? 'mt-6' : ''}>
-          {t.farmCount === 1 ? 'Your farm' : `Your ${t.farmCount} farms`}
+          {t.farmCount === 1 ? 'Your seller' : `Your ${t.farmCount} sellers`}
         </SectionTitle>
         <ul className="divide-y divide-line rounded-card border border-line bg-card px-4 shadow-card">
           {groups.map((g) => {
@@ -151,11 +151,10 @@ export function Checkout() {
           })}
         </ul>
 
-        <div className="mt-4 flex items-start gap-3 rounded-card bg-surface p-4">
-          <MessageSquare size={19} strokeWidth={2.3} className="mt-0.5 shrink-0 text-primary" />
-          <p className="text-[14px] font-semibold leading-snug text-ink-muted">
-            We'll text <b className="font-extrabold text-ink">{user.mobile}</b> as each farm packs,
-            hands over to the rider, or is ready for you to collect.
+        <div className="mt-4 flex items-center gap-3 rounded-card bg-surface p-4">
+          <MessageSquare size={19} strokeWidth={2.3} className="shrink-0 text-primary" />
+          <p className="text-[14px] font-semibold text-ink-muted">
+            Updates by SMS to <b className="font-extrabold text-ink">{user.mobile}</b>
           </p>
         </div>
 
@@ -164,7 +163,7 @@ export function Checkout() {
           <SumRow label="Produce" value={peso(t.regular)} />
           {t.sukiOff > 0 && <SumRow label="Suki deals" value={`−${peso(t.sukiOff)}`} tone="primary" />}
           <SumRow
-            label="Delivery"
+            label="Delivery · Lalamove's price"
             value={delivery > 0 ? peso(delivery) : 'Free'}
             tone={delivery > 0 ? 'ink' : 'primary'}
           />

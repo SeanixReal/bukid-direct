@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { ChevronRight, Store, Truck } from 'lucide-react'
 import { Avatar, Rating } from './ui'
-import { couriers, distanceKm, distanceText, peso, schedule, type Farm, type Mode } from '../data/sample'
+import { courier, distanceKm, distanceText, peso, schedule, type Farm, type Mode } from '../data/sample'
 
 /* --------------------------------------------------------------------------
    Small pieces that describe a farm as a seller: how it delivers, where it
@@ -10,7 +10,7 @@ import { couriers, distanceKm, distanceText, peso, schedule, type Farm, type Mod
 
 /** "Lalamove · tomorrow 11 AM – 1 PM" */
 export function deliveryLine(farm: Farm) {
-  return `${couriers[farm.delivery.courier].name} · ${schedule.day.toLowerCase()} ${farm.delivery.window}`
+  return `${courier} · ${schedule.day.toLowerCase()} ${farm.delivery.window}`
 }
 
 /** "Carbon Market stall · tomorrow 1 – 6 PM" */

@@ -64,18 +64,18 @@ export function Onboarding() {
 const steps: { Icon: LucideIcon; title: string; detail: string }[] = [
   {
     Icon: Users,
-    title: 'Shop from Cebu farmers',
-    detail: 'Compare prices and fill one basket from as many farms as you like.',
+    title: 'Order with a tap',
+    detail: 'No market trip. One basket, many sellers.',
   },
   {
     Icon: Sunrise,
-    title: 'They harvest it for you',
-    detail: 'Picked the morning it leaves the farm, not days before.',
+    title: 'Straight from the source',
+    detail: 'Farmers and fishers, no middlemen.',
   },
   {
     Icon: Truck,
     title: 'Delivered, or pick it up',
-    detail: 'Farms send it by Lalamove or Maxim, or you collect it from their stall.',
+    detail: 'By Lalamove, or from their stall.',
   },
 ]
 
@@ -84,10 +84,10 @@ function HowItWorks() {
     <>
       <Logo size={44} className="text-primary" />
       <h1 className="mt-4 text-[30px] font-extrabold leading-[1.12] tracking-tight text-ink">
-        Fresh from the farm, straight to you
+        Fresh food, straight from the source
       </h1>
       <p className="mt-2 text-[16px] font-medium leading-snug text-ink-muted">
-        A market where Cebu farmers sell directly to you - no middlemen.
+        Fruit, vegetables and fish from Cebu farmers and fishers.
       </p>
 
       <ol className="mt-6 space-y-3">
@@ -115,8 +115,8 @@ function HowItWorks() {
       <div className="mt-4 flex items-center gap-3 rounded-card bg-secondary-soft p-4">
         <HandCoins size={22} strokeWidth={2.3} className="shrink-0 text-primary" />
         <p className="text-[14px] font-semibold leading-snug text-on-secondary">
-          <b className="font-extrabold">{Math.round(farmerShare * 100)}%</b> of every peso you spend
-          on produce goes straight to the farm.
+          <b className="font-extrabold">{Math.round(farmerShare * 100)}%</b> of what you pay for food goes
+          straight to the seller.
         </p>
       </div>
     </>
@@ -135,7 +135,7 @@ function WhereToDeliver() {
         Delivery or pick-up?
       </h1>
       <p className="mt-1.5 text-[16px] font-medium leading-snug text-ink-muted">
-        Choose your usual. You can switch any time, even farm by farm in your basket.
+        You can switch any time, even per farm.
       </p>
 
       <ModeSwitch value={prefMode} onChange={setPrefMode} className="mt-4" />
@@ -169,8 +169,8 @@ function WhereToDeliver() {
         )}
         <p className="text-[14px] font-semibold leading-snug text-ink-muted">
           {prefMode === 'pickup'
-            ? `${withPickup} farms have a stall or farm gate you can collect from - pick-up is always free.`
-            : 'Each farm books a Lalamove or Maxim rider and you can follow it live. Far farms share one trip for the whole city, so delivery stays cheap.'}
+            ? `${withPickup} sellers have a stall or gate to collect from. Always free.`
+            : "Lalamove brings it, at Lalamove's own price. Follow your rider live."}
         </p>
       </div>
     </>

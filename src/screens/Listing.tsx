@@ -3,11 +3,10 @@ import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { Bell, ChevronRight, Heart, Store, Truck, Users } from 'lucide-react'
 import { BackButton, Screen, ScreenFooter } from '../components/Screen'
 import { ProducePicture, tintClass } from '../components/ProduceArt'
-import { deliveryLine, pickupLine } from '../components/FarmBits'
 import {
   Avatar,
   Button,
-  HarvestedBadge,
+  FreshBadge,
   PlusTag,
   Rating,
   SoldOutBadge,
@@ -94,7 +93,7 @@ function ListingDetail({ id }: { id: string }) {
 
       <div className="relative -mt-7 rounded-t-xl bg-canvas px-5 pb-6 pt-5">
         <div className="flex flex-wrap items-center gap-2">
-          {listing.harvestedToday && <HarvestedBadge />}
+          {listing.freshToday && <FreshBadge />}
           {listing.outOfStock && <SoldOutBadge />}
           <span className="rounded-pill bg-surface px-3 py-[5px] text-[13px] font-bold text-ink-muted">
             {category}
@@ -154,8 +153,8 @@ function ListingDetail({ id }: { id: string }) {
 
         {listing.outOfStock && (
           <div className="mt-4 rounded-card bg-danger-soft p-4 text-[14px] font-semibold leading-snug text-danger">
-            Sold out at {farm.call}'s farm this week.
-            {others.length > 0 && ' Other farms still have some - see below.'}
+            {farm.call} is sold out this week.
+            {others.length > 0 && ' Other sellers still have some - see below.'}
           </div>
         )}
 
@@ -180,27 +179,18 @@ function ListingDetail({ id }: { id: string }) {
             <ChevronRight size={20} strokeWidth={2.6} className="shrink-0 text-ink-faint" />
           </span>
           <span className="block space-y-2 border-t border-line px-3.5 py-3">
-            <span className="flex items-start gap-2.5 text-[14px] font-semibold text-ink">
-              <Truck size={17} strokeWidth={2.4} className="mt-[1px] shrink-0 text-primary" />
-              <span>
-                Delivery by {deliveryLine(farm)}
-                <span className="block text-[13px] text-ink-muted">
-                  {peso(farm.delivery.fee)} · free over {peso(farm.delivery.freeOver)}
-                  {farm.delivery.shared && ' · shared city run'}
-                </span>
-              </span>
+            <span className="flex items-center gap-2.5 text-[14px] font-semibold text-ink">
+              <Truck size={17} strokeWidth={2.4} className="shrink-0 text-primary" />
+              Delivery {peso(farm.delivery.fee)} · free over {peso(farm.delivery.freeOver)}
             </span>
-            <span className="flex items-start gap-2.5 text-[14px] font-semibold text-ink">
-              <Store size={17} strokeWidth={2.4} className="mt-[1px] shrink-0 text-primary" />
-              <span>
-                {farm.pickup ? `Pick up at ${pickupLine(farm)}` : 'Delivery only - no pick-up'}
-                {farm.pickup && <span className="block text-[13px] text-ink-muted">Free</span>}
-              </span>
+            <span className="flex items-center gap-2.5 text-[14px] font-semibold text-ink">
+              <Store size={17} strokeWidth={2.4} className="shrink-0 text-primary" />
+              {farm.pickup ? `Free pick-up at ${farm.pickup.place}` : 'Delivery only'}
             </span>
           </span>
         </button>
 
-        {/* ---------------- Other farms ---------------- */}
+        {/* ---------------- Other sellers ---------------- */}
         {others.length > 0 && (
           <>
             <h2 className="mt-6 flex items-center gap-2 text-[18px] font-extrabold tracking-tight text-ink">

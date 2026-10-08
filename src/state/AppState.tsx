@@ -31,8 +31,8 @@ import { priceBasket, type FarmGroup, type Line, type Priced, type Totals } from
    presenter can reset it at any time from the demo panel (D).
 
    An order is split into one "shipment" per farm, because each farm packs
-   its own part and either books a courier or hands it over at its pickup
-   point. Each shipment walks through stagesFor[mode].
+   its own part and hands it to a Lalamove rider, or to the buyer at its
+   pickup point. Each shipment walks through stagesFor[mode].
    -------------------------------------------------------------------------- */
 
 interface Profile {
@@ -68,8 +68,8 @@ export interface Toast {
   action?: { label: string; to: string }
 }
 
-/* Nong Romy's side of tomorrow: harvest, pack, book the courier. */
-export type SellerStep = 'new' | 'harvested' | 'ready' | 'booked'
+/* Nong Romy's side of tomorrow: harvest, pack, hand over to the riders. */
+export type SellerStep = 'new' | 'harvested' | 'ready' | 'handedOver'
 
 interface AppStateValue {
   /* Buyer ---------------------------------------------------------------- */

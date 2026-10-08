@@ -1,14 +1,14 @@
 import { Navigate, useParams } from 'react-router-dom'
-import { BadgePercent, CalendarDays, MapPin, Star, Store, Truck } from 'lucide-react'
+import { BadgePercent, MapPin, Star, Store, Truck } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Screen, SectionTitle, TopBar } from '../components/Screen'
 import { Hills } from '../components/ProduceArt'
 import { ListingCard } from '../components/ListingCard'
-import { deliveryLine, pickupLine } from '../components/FarmBits'
+import { deliveryLine } from '../components/FarmBits'
 import { Avatar, Rating } from '../components/ui'
 import { useApp } from '../state/AppState'
 import { allListings } from '../state/catalog'
-import { distanceKm, distanceText, farms, peso, plusPlan, type Farm } from '../data/sample'
+import { farms, peso, plusPlan, schedule, type Farm } from '../data/sample'
 
 export function FarmScreen() {
   const { id } = useParams()
@@ -48,35 +48,23 @@ export function FarmScreen() {
           <ul className="space-y-3">
             <Fact Icon={MapPin}>{farm.place}</Fact>
             <Fact Icon={Truck}>
-              Delivers by {deliveryLine(farm)}
-              <Sub>
-                {peso(farm.delivery.fee)} delivery · free over {peso(farm.delivery.freeOver)}
-              </Sub>
-              {farm.delivery.shared && (
-                <Sub>
-                  Shared city run: one courier trip carries all of the day's city orders, so you
-                  pay a share, not a whole trip.
-                </Sub>
-              )}
+              Delivery {peso(farm.delivery.fee)} · free over {peso(farm.delivery.freeOver)}
+              <Sub>{deliveryLine(farm)}</Sub>
             </Fact>
             <Fact Icon={Store}>
-              {farm.pickup ? `Pick up at ${pickupLine(farm)}` : 'Delivery only'}
+              {farm.pickup ? `Pick up at ${farm.pickup.place}` : 'Delivery only'}
               {farm.pickup && (
                 <Sub>
-                  {farm.pickup.detail} · {distanceText(distanceKm(farm.pickup.at))} from you
+                  Free · {schedule.day.toLowerCase()} {farm.pickup.hours}
                 </Sub>
               )}
             </Fact>
             {farm.sukiDeal && (
               <Fact Icon={BadgePercent}>
-                Suki deal for {plusPlan.name} members
-                <Sub>
-                  {peso(farm.sukiDeal.off)} off when you buy {peso(farm.sukiDeal.minSpend)} or more from{' '}
-                  {farm.call}
-                </Sub>
+                Suki deal: {peso(farm.sukiDeal.off)} off {peso(farm.sukiDeal.minSpend)}+
+                <Sub>For {plusPlan.name} members</Sub>
               </Fact>
             )}
-            <Fact Icon={CalendarDays}>{farm.since}</Fact>
           </ul>
           <p className="mt-4 border-t border-line pt-4 text-[16px] font-medium leading-relaxed text-ink">
             {farm.story}

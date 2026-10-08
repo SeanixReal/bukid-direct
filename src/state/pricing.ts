@@ -10,7 +10,7 @@
      - Suki deals are posted and paid for by the farm, so the farm's share is
        worked out on what the buyer actually pays for its produce.
      - The Direct Plus welcome voucher is paid by Bukid Direct, never the
-       farm: the farm still gets its full delivery fee for the courier.
+       farm: Lalamove still gets its full price.
    ========================================================================== */
 
 import { farmerShare, fees, getFarm, plusPlan, type Mode } from '../data/sample'
@@ -180,14 +180,14 @@ function totals(groups: FarmGroup[], member: boolean, deliveryCovered: number): 
   }
 }
 
-/** Where an order's money goes. Delivery fees pass through the farms to the
-    couriers; Bukid Direct keeps the commission and the service fee, and pays
+/** Where an order's money goes. Delivery is paid to Lalamove at its own
+    price; Bukid Direct keeps the commission and the service fee, and pays
     for the welcome voucher. Before payment fees. */
 export function moneySplit(t: Totals) {
   const commission = t.subtotal - t.toFarmers
   return {
     farms: t.toFarmers,
-    couriers: t.delivery + t.deliveryCovered,
+    delivery: t.delivery + t.deliveryCovered,
     commission,
     serviceFee: t.serviceFee,
     voucher: t.deliveryCovered,

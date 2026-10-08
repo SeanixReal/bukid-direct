@@ -4,7 +4,7 @@ import { Screen } from '../components/Screen'
 import { Avatar, Rating } from '../components/ui'
 import { useApp } from '../state/AppState'
 import { allListings } from '../state/catalog'
-import { couriers, distanceKm, distanceText, farms, peso } from '../data/sample'
+import { distanceKm, distanceText, farms, peso } from '../data/sample'
 
 /* Every seller on the marketplace, with how each one gets an order to you. */
 export function Farms() {
@@ -14,9 +14,9 @@ export function Farms() {
   return (
     <Screen nav>
       <div className="px-5 pb-4 pt-2">
-        <h1 className="text-[28px] font-extrabold tracking-tight text-ink">Farms</h1>
+        <h1 className="text-[28px] font-extrabold tracking-tight text-ink">Sellers</h1>
         <p className="text-[15px] font-semibold text-ink-muted">
-          {farms.length} Cebu farms selling this week
+          {farms.length} farmers and fishers selling this week
         </p>
       </div>
 
@@ -47,8 +47,7 @@ export function Farms() {
                 <span className="mt-3 block space-y-1.5 rounded-md bg-surface px-3 py-2.5 text-[13px] font-semibold text-ink-muted">
                   <span className="flex items-center gap-2">
                     <Truck size={15} strokeWidth={2.4} className="shrink-0 text-primary" />
-                    {couriers[farm.delivery.courier].name} · {peso(farm.delivery.fee)} · free over{' '}
-                    {peso(farm.delivery.freeOver)}
+                    Delivery {peso(farm.delivery.fee)} · free over {peso(farm.delivery.freeOver)}
                   </span>
                   <span className="flex items-center gap-2">
                     <Store size={15} strokeWidth={2.4} className="shrink-0 text-primary" />
@@ -74,9 +73,9 @@ export function Farms() {
             <Tractor size={24} strokeWidth={2.2} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[17px] font-extrabold text-on-dark">Are you a farmer?</span>
+            <span className="block text-[17px] font-extrabold text-on-dark">Farmer or fisher?</span>
             <span className="block text-[13.5px] font-semibold leading-snug text-on-dark-muted">
-              Sell your harvest here. List produce in minutes and book couriers from the app.
+              Sell direct. List in minutes, we book the riders.
             </span>
           </span>
           <ChevronRight size={20} strokeWidth={2.6} className="shrink-0 text-on-dark" />

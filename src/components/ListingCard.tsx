@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { Minus, Plus, Star } from 'lucide-react'
 import { ProducePicture } from './ProduceArt'
-import { HarvestedBadge, SoldOutBadge } from './ui'
+import { FreshBadge, SoldOutBadge } from './ui'
 import { useApp } from '../state/AppState'
 import { getFarm, getProduce, peso, perUnit, qtyText, type Listing } from '../data/sample'
 
@@ -46,8 +46,8 @@ export function ListingCard({
           aria-label={`Open ${item.name} from ${farm.call}`}
           className="absolute inset-0"
         />
-        {listing.harvestedToday && (
-          <HarvestedBadge size="sm" className="pointer-events-none absolute left-2 top-2" />
+        {listing.freshToday && (
+          <FreshBadge size="sm" className="pointer-events-none absolute left-2 top-2" />
         )}
         {listing.outOfStock && (
           <SoldOutBadge size="sm" className="pointer-events-none absolute left-2 top-2" />

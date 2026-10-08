@@ -15,7 +15,7 @@ import { Logo } from '../components/Logo'
 import { Avatar, Button } from '../components/ui'
 import { useApp } from '../state/AppState'
 import { plusSavingsOver } from '../state/pricing'
-import { farms, pastOrders, peso, plusPlan, user } from '../data/sample'
+import { farms, pastOrders, peso, plusPlan } from '../data/sample'
 
 const perkIcon: Record<string, LucideIcon> = {
   fee: Ticket,
@@ -73,7 +73,7 @@ export function Plus() {
             {plusPlan.name}
           </h1>
           <p className="mt-2.5 max-w-[300px] text-[17px] font-semibold leading-snug text-on-dark-muted">
-            No service fee, suki deals from farms, and your first delivery on us.
+            No service fee, suki deals and a free first delivery.
           </p>
           <p className="mt-5 flex items-baseline gap-2 text-on-dark">
             <span className="text-[36px] font-extrabold leading-none tracking-tight">
@@ -109,7 +109,6 @@ export function Plus() {
         {/* ---------------- The farms' own deals ---------------- */}
         <div className="rounded-card border border-line bg-card px-4 pb-1.5 pt-4 shadow-card">
           <p className="text-[16px] font-extrabold text-ink">This week's suki deals</p>
-          <p className="text-[13px] font-medium text-ink-muted">Posted, and paid for, by the farms.</p>
           <ul className="mt-1 divide-y divide-line">
             {deals.map(({ farm, deal }) => (
               <li key={farm.id}>
@@ -135,9 +134,9 @@ export function Plus() {
             <PiggyBank size={21} strokeWidth={2.3} />
           </span>
           <p className="text-[15px] font-semibold leading-snug text-ink">
-            On your last {pastOrders.length} orders, {user.firstName}, Direct Plus would have saved
-            you <b className="font-extrabold text-primary">{peso(saved)}</b>, welcome delivery
-            included.
+            Direct Plus would have saved you{' '}
+            <b className="font-extrabold text-primary">{peso(saved)}</b> on your last{' '}
+            {pastOrders.length} orders.
           </p>
         </div>
       </div>

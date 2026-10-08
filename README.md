@@ -2,16 +2,16 @@
 
 > Fresh from the Farm.
 
-A clickable **interface prototype** of a farm-to-table marketplace for Cebu,
-built for a Technopreneurship pitch. Farmers sell directly to buyers, each from
-their own shop. A buyer fills one basket from several farms, and each farm
-either **delivers** its part - booking a Lalamove or Maxim rider - or lets the
-buyer **pick it up** at the farm's stall or gate, like Delivery / Pick-up on
-Grab and foodpanda.
+A clickable **interface prototype** of a local food marketplace for Cebu,
+built for a Technopreneurship pitch. Farmers and fishers sell fruit,
+vegetables and fish directly to buyers - no middleman, no trip to the market,
+just a tap on the phone. A buyer fills one basket from several sellers, and
+each seller's part is either **delivered** by Lalamove or **picked up** at the
+seller's stall or gate, like Delivery / Pick-up on Grab and foodpanda.
 
 It is a demo of the UI only: no backend, no accounts, no payments, no courier
-integration. Every farm, farmer, listing, price, fee, rider and order in it is
-invented. The street map is real, though, and the whole thing works with the
+integration. Every seller, listing, rider and order in it is invented, and the
+prices are illustrative. The street map is real, though, and the whole thing works with the
 Wi-Fi off.
 
 ---
@@ -46,59 +46,66 @@ files**, allow it once so every press of S saves a file.
 1. **Splash** → moves on by itself after about 2 seconds.
 2. **Onboarding** — how the marketplace works, then *Delivery or Pick-up?*
    with her address on the map.
-3. **Shop** — the Delivery | Pick-up switch, *Farms selling this week*,
-   *Picked this morning*, and every listing showing which farm sells it.
-   Open the tomatoes: Nong Romy sells them for ₱90, and *Also sold by* shows
-   Nong Jun's for ₱85.
+3. **Shop** — the Delivery | Pick-up switch, *Selling this week*, *Fresh this
+   morning*, the *Fish & seafood* chip, and every listing showing who sells it.
+   Open the tomatoes: Nong Romy sells them for ₱60, and *Also sold by* shows
+   Nong Jun's for ₱55.
 4. **Basket** (press **D** → *Fill basket* for the prepared one) — grouped by
-   farm like Shopee. Nong Romy and Lito & Grace deliver by Lalamove, Nang Fe is
-   set to Pick-up at her farm gate. Each farm shows its own fee and an
-   *Add ₱X more for free delivery* nudge.
+   seller like Shopee. Nong Romy's vegetables and Nong Berto's bangus come by
+   Lalamove, Nang Fe's greens are set to Pick-up at her farm gate. Each seller
+   shows its delivery fee - Lalamove's fare for the trip - and an *Add ₱X
+   more* nudge.
 5. **Checkout** → **Place order** → **"Salamat!"**, with a pick-up code for
    Nang Fe's part.
 6. **Track my order**, then **D** → **Play delivery day**. Over about 25
-   seconds every farm harvests and packs; Nang Fe's part turns orange -
-   *Ready for pickup* - and when the riders set off, the **live map** takes
-   over: Nong Romy's Lalamove rider moving along real Cebu streets to Joy's
-   door, then *Delivered!* and a star rating for the farm.
+   seconds every seller packs; Nang Fe's part turns orange - *Ready for
+   pickup* - and when the riders set off, the **live map** takes over: Nong
+   Romy's Lalamove rider going from his Carbon Market stall to Joy's door on
+   real Cebu streets, then *Delivered!* and a star rating.
 7. **Seller Center** (Account → *Sell on Bukid Direct*, or the panel) — the
    farmer's side: tomorrow's orders from several buyers, *Mark all as
-   harvested* → *Mark packed* → **one shared Lalamove trip for all the city
-   stops**. Then **Add a listing**: pick a produce, set a price (other farms'
-   prices are shown as a guide), publish - and it is in the shop. Under
-   *Grow your sales*, **Feature tomatoes · ₱99** puts them in the shop's
-   *Featured this week* row.
-8. Extras for Q&A: **Farms** tab, a farm's store page with reviews, **Direct
+   harvested* → *Mark packed* → **Hand over to the riders**. Bukid Direct
+   booked the riders when the buyers paid, so the farmer books nothing. Then
+   **Add a listing**: pick a produce, set a price (other sellers' prices are
+   shown as a guide), publish - and it is in the shop. Under *Grow your
+   sales*, **Feature tomatoes · ₱99** puts them in the shop's *Featured this
+   week* row.
+8. Extras for Q&A: **Sellers** tab, a seller's page with reviews, **Direct
    Plus** (join, then *Fill basket*: the service fee goes, Nong Romy's suki
-   deal comes off, and the welcome voucher pays Lito & Grace's delivery).
+   deal comes off, and the welcome voucher pays Nong Berto's delivery).
 9. **"How do you make money?"** - after an order is placed, the presenter
-   panel shows *This order's money*: what the farms, the couriers and Bukid
+   panel shows *This order's money*: what the sellers, Lalamove and Bukid
    Direct each get from it. The full maths is [below](#how-bukid-direct-makes-money).
 
 **Reset everything** in the panel puts it back to the splash screen.
 
 > The delivery day is **accelerated** - 25 seconds stands in for a morning of
-> harvesting and a courier trip. Say so on stage if anyone asks.
+> packing and a Lalamove trip. Say so on stage if anyone asks.
 
 ---
 
 ## How delivery works (and why)
 
-- **Farms book the courier.** Each farm packs its own part of an order and
-  books a Lalamove or Maxim rider; there are no warehouses or hubs to run.
-- **Far farms share one trip.** A farm in Dalaguete or Balamban puts all of
-  the day's city orders into one multi-stop courier booking, so each buyer
-  pays a share (₱79–89 in the sample data) instead of a whole trip.
-- **Near farms deliver on demand**, e.g. Nang Fe in Busay by Maxim.
-- **Every farm sets a free-delivery mark** and the basket nudges buyers
-  towards it.
-- **Pick-up is free** at farms that have a stall or farm gate in reach (Carbon
-  Market, Pardo Market, Busay).
+- **Bukid Direct books Lalamove for the seller.** At checkout the app asks
+  Lalamove's business API for the trip's price and shows exactly that - no
+  markup. When the buyer pays, the rider is booked for the next morning, and
+  Bukid Direct pays Lalamove out of the buyer's payment. The seller only packs
+  and hands over; no warehouses or hubs to run.
+- **Far sellers hand over in the city.** Farms in Dalaguete, Balamban or
+  Carcar bring the day's orders to a city spot - Nong Romy's Carbon Market
+  stall, for example - and the riders collect them there, so each buyer pays
+  a short city trip.
+- **Fees follow Lalamove's published Cebu motorcycle rates** - ₱49 base, ₱6 a
+  km for the first 5 km, ₱5 a km after - applied to the road distance on the
+  map (`lalamoveFare` in `sample.ts`), so ₱68–106 in the demo. The real app
+  shows the live quote, which can include traffic or demand surcharges.
+- **Every seller sets a free-delivery mark** (the seller then pays the rider),
+  and the basket nudges buyers towards it.
+- **Pick-up is free** at sellers with a stall or gate in reach (Carbon Market,
+  Pasil Fish Market, Pardo Market, Busay).
 
-All of this lives in `farms` in [`src/data/sample.ts`](src/data/sample.ts):
-courier, fee, free-delivery mark, delivery window, whether the trip is shared,
-the rider, and the optional pickup point. Courier names are text only - no
-logos - and nothing implies a partnership.
+Lalamove is named in text only - no logo - and nothing implies a partnership.
+Maxim and other couriers could be added if they offer a business account.
 
 ---
 
@@ -115,20 +122,20 @@ and every total in the app is worked out from them.
 | Direct Plus | the buyer | **₱49/month** (`plusPlan.price`) | Direct Plus screen |
 | Featured listing | the farm, if it wants | **₱99/week** (`boost.price`), taken from its weekly pay-out | Seller Center, Shop |
 
-Delivery fees are not income: the buyer pays them and the farm passes them
-on to its Lalamove or Maxim rider.
+Delivery fees are not income: the buyer pays Lalamove's fare and Bukid Direct
+passes it on to Lalamove.
 
 ### What Direct Plus gives, and who pays for it
 
 | Perk | Paid by | Cost to Bukid Direct |
 | --- | --- | --- |
 | No service fee | Bukid Direct | ₱10 per order, not collected |
-| Welcome voucher: one farm's delivery free on the first order of ₱200 or more | Bukid Direct | once per member, ₱69–99 in the sample data |
+| Welcome voucher: one seller's delivery free on the first order of ₱200 or more | Bukid Direct | once per member, ₱68–106 in the sample data |
 | Suki deals - members-only vouchers a farm posts for its regulars (e.g. ₱15 off ₱150) | the farm | nothing |
 | First pick of new harvests, farm visit days | - | nothing |
 
 **Why free delivery only once, not every month.** At a 5% commission a ₱500
-order earns ₱25, and one farm's delivery costs ₱69–99. Free delivery every
+order earns ₱25, and one Lalamove trip costs ₱68–106. Free delivery every
 month would cost more than a member brings in. The first draft - four free
 deliveries a month, two ₱20 vouchers and 5% off everything - would have cost
 about ₱460 a month per member against ₱149 coming in (₱49 + 5% of four ₱500
@@ -188,7 +195,8 @@ placeholder - use your own budget) needs about 730 active buyers.
 
 Placeholders worth settling before the pitch: the four prices above, the
 2.5% payment fee, and each farm's `delivery.fee` and `delivery.freeOver` -
-get real Lalamove / Maxim quotes for the actual routes.
+check Lalamove's current Cebu rates, and check the produce prices against
+DA-7's market price monitoring.
 
 ---
 
@@ -244,7 +252,7 @@ brand files.
   --primary: #1F7A4D;    /* emerald green: headers, primary buttons    */
   --secondary: #6DBE6B;  /* leaf green: accents, chips, highlights     */
   --accent: #F29F3D;     /* warm orange: ONLY "ready for pickup" and
-                            "harvested today". Never decoration.       */
+                            "fresh today". Never decoration.           */
   --danger: #C8442F;     /* errors, out of stock                        */
   --canvas: #FAFAF6;     /* warm off-white screen background            */
   /* ...plus soft/strong variants, neutrals, shadows and corner radii    */
@@ -255,7 +263,7 @@ House rules the app follows:
 
 - **One clear primary button per screen.**
 - **Orange means exactly two things:** *Ready for pickup* (packed and waiting -
-  for the rider, or for the buyer to collect) and *Harvested today*.
+  for the rider, or for the buyer to collect) and *Fresh today*.
 - **No blue anywhere.** Tailwind's built-in colours are switched off in the
   `@theme` block, so a stray `bg-blue-500` simply does not exist.
 
@@ -269,9 +277,10 @@ the water/rain tokens are gone.
 ## Changing the sample data
 
 **All invented content lives in [`src/data/sample.ts`](src/data/sample.ts):**
-the buyer and her address, the five farms with their delivery terms and suki
-deals, the 17 kinds of produce, the 23 listings (several farms sell the same
-produce at different prices, two are featured), the order stages and their
+the buyer and her address, the six sellers (five farms and a fishing family)
+with their delivery terms and suki deals, the 20 kinds of produce, the 26
+listings (several sellers offer the same produce at different prices, two are
+featured), the order stages and their
 timing, past orders, the fees, Direct Plus, and the Seller Center. Every
 total in the app is worked out from those numbers.
 

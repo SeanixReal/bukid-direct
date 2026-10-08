@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Check, Sunrise } from 'lucide-react'
 import { Screen, ScreenFooter, SectionTitle, TopBar } from '../components/Screen'
 import { ProducePicture } from '../components/ProduceArt'
-import { Button, HarvestedBadge } from '../components/ui'
+import { Button, FreshBadge } from '../components/ui'
 import { useApp } from '../state/AppState'
 import { allListings } from '../state/catalog'
 import { farmerShare, getFarm, getProduce, peso, perUnit, produce, sellerView, type ProduceId } from '../data/sample'
@@ -40,7 +40,7 @@ export function NewListing() {
       produceId,
       farmId: farm.id,
       price: Math.round(amount),
-      harvestedToday: harvested,
+      freshToday: harvested,
       about: `Fresh from ${farm.call}'s farm in ${farm.place}. Listed today.`,
     })
     showToast(`Your ${item.name.toLowerCase()} is live on Bukid Direct`, {
@@ -109,12 +109,12 @@ export function NewListing() {
               Other farms are asking <b className="font-extrabold text-ink">{range}</b>.
             </>
           ) : (
-            'No other farm is selling this yet - you set the price.'
+            'No one else is selling this yet - you set the price.'
           )}{' '}
           You keep {Math.round(farmerShare * 100)}% of every sale.
         </p>
 
-        {/* ---------------- Harvested today ---------------- */}
+        {/* ---------------- Fresh today ---------------- */}
         <button
           type="button"
           onClick={() => setHarvested((h) => !h)}
@@ -125,10 +125,8 @@ export function NewListing() {
             <Sunrise size={20} strokeWidth={2.4} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[16px] font-bold text-ink">Picked this morning</span>
-            <span className="block text-[13px] font-medium text-ink-muted">
-              Shows the orange "Harvested today" badge
-            </span>
+            <span className="block text-[16px] font-bold text-ink">Fresh today</span>
+            <span className="block text-[13px] font-medium text-ink-muted">Picked this morning</span>
           </span>
           <span
             className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${harvested ? 'bg-primary' : 'bg-surface-2'}`}
@@ -144,7 +142,7 @@ export function NewListing() {
         <div className="flex items-center gap-3 rounded-card border border-line bg-card p-3 shadow-card">
           <ProducePicture item={item} className="h-[76px] w-[76px] shrink-0 rounded-md" />
           <div className="min-w-0 flex-1">
-            {harvested && <HarvestedBadge size="sm" />}
+            {harvested && <FreshBadge size="sm" />}
             <p className="mt-1 truncate text-[16px] font-bold text-ink">{item.name}</p>
             <p className="text-[13px] font-semibold text-ink-muted">{farm.call}</p>
             <p className="mt-1 text-[18px] font-extrabold leading-none text-ink">

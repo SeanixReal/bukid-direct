@@ -37,7 +37,7 @@ export function Shop() {
     (l) =>
       (category === 'all' || getProduce(l.produceId).category === category) && (!q || matches(l, q)),
   )
-  const fresh = forSale.filter((l) => l.harvestedToday)
+  const fresh = forSale.filter((l) => l.freshToday)
   const featured = forSale.filter((l) => l.featured)
   const listTitle = q
     ? `Results for “${query.trim()}”`
@@ -82,7 +82,7 @@ export function Shop() {
           {greeting()}, {user.firstName}!
         </p>
         <h1 className="mt-0.5 text-[28px] font-extrabold leading-[1.12] tracking-tight text-ink">
-          Buy straight from Cebu farmers
+          Fresh from the source. No middlemen.
         </h1>
 
         <label className="mt-4 flex h-[52px] items-center gap-2.5 rounded-pill bg-card px-4 shadow-card ring-1 ring-inset ring-line focus-within:ring-2 focus-within:ring-primary">
@@ -90,7 +90,7 @@ export function Shop() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search produce or farms"
+            placeholder="Search food or sellers"
             className="min-w-0 flex-1 bg-transparent text-[16px] font-semibold outline-none"
           />
           {query && (
@@ -130,7 +130,7 @@ export function Shop() {
               </button>
             }
           >
-            {pickup ? 'Farms with pick-up' : 'Farms selling this week'}
+            {pickup ? 'Sellers with pick-up' : 'Selling this week'}
           </SectionTitle>
           <div className="no-scrollbar flex gap-3 overflow-x-auto px-5 pb-2">
             {sellers.map((f) => (
@@ -140,14 +140,14 @@ export function Shop() {
         </section>
       )}
 
-      {/* ---------------- Harvested today ---------------- */}
+      {/* ---------------- Fresh today ---------------- */}
       {browsing && fresh.length > 0 && (
         <section className="mt-5">
           <SectionTitle
             className="px-5"
             action={<span className="text-[13px] font-semibold text-ink-muted">{fresh.length} items</span>}
           >
-            Picked this morning
+            Fresh this morning
           </SectionTitle>
           <div className="no-scrollbar flex gap-3 overflow-x-auto px-5 pb-2">
             {fresh.map((l) => (
@@ -188,8 +188,7 @@ export function Shop() {
             <span className="min-w-0 flex-1">
               <span className="block text-[17px] font-extrabold text-on-dark">{plusPlan.name}</span>
               <span className="block text-[13.5px] font-semibold leading-snug text-on-dark-muted">
-                No service fee, suki deals from farms, and your first delivery free.{' '}
-                {peso(plusPlan.price)}/{plusPlan.period}.
+                No service fee · free first delivery · {peso(plusPlan.price)}/{plusPlan.period}
               </span>
             </span>
             <ChevronRight size={20} strokeWidth={2.6} className="shrink-0 text-on-dark" />
