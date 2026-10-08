@@ -158,6 +158,11 @@ export function Checkout() {
             value={t.delivery > 0 ? peso(t.delivery) : 'Free'}
             tone={t.delivery > 0 ? 'ink' : 'primary'}
           />
+          <SumRow
+            label="Service fee"
+            value={member ? 'Free' : peso(t.serviceFee)}
+            tone={member ? 'primary' : 'ink'}
+          />
           {member && t.savings > 0 && (
             <SumRow label={<PlusTag label="You saved" />} value={`−${peso(t.savings)}`} tone="primary" />
           )}

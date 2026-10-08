@@ -257,7 +257,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [basket, member, modeOf, listingsVersion],
   )
-  const basketTotals = useMemo(() => totals(groups), [groups])
+  const basketTotals = useMemo(() => totals(groups, member), [groups, member])
 
   /* --- The order ---------------------------------------------------------------- */
 
@@ -278,7 +278,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           fee: g.fee,
           stage: 0,
         })),
-        totals: totals(orderGroups),
+        totals: totals(orderGroups, member),
       }
       setSimRunning(false)
       setElapsed(0)

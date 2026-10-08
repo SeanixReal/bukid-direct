@@ -71,29 +71,34 @@ export const schedule = {
 
 /* --- Money ------------------------------------------------------------------ */
 
-/* Share of every produce peso that goes to the farm. PLACEHOLDER - set the
-   real number once the model is agreed. */
-export const farmerShare = 0.85
+/* Share of every produce peso that goes to the farm. Bukid Direct's only cut
+   from farmers is a 5% commission - the whole point is selling without
+   paying a middleman. PLACEHOLDER until the model is agreed. */
+export const farmerShare = 0.95
+
+export const fees = {
+  /* Paid by the buyer, once per order however many farms it comes from.
+     Waived for Direct Plus members. */
+  service: 10,
+}
 
 export const plusPlan = {
   name: 'Direct Plus',
-  /* PLACEHOLDER price - change freely. */
-  price: 99,
+  price: 49,
   period: 'month',
-  /* Member prices are this much lower on every item. */
-  discount: 0.1,
-  /* Pesos off every farm's delivery fee. */
-  deliveryDiscount: 50,
+  /* Member prices are this much lower on every item. Bukid Direct pays the
+     difference, so the farmer still gets their full price. */
+  discount: 0.05,
   perks: [
     {
-      id: 'prices',
-      title: '10% off every harvest',
-      detail: 'Member prices show in green across the shop.',
+      id: 'fee',
+      title: 'No service fee',
+      detail: 'Save ₱10 on every order.',
     },
     {
-      id: 'delivery',
-      title: '₱50 off delivery from every farm',
-      detail: 'On every order, however many farms you buy from.',
+      id: 'prices',
+      title: '5% off every harvest',
+      detail: 'Paid by us, not the farmer - they still get their full price.',
     },
     {
       id: 'early',

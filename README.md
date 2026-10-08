@@ -179,14 +179,21 @@ different prices), the order stages and their timing, past orders, Direct
 Plus, and the Seller Center. Every total in the app is worked out from those
 numbers.
 
-Placeholders worth settling before the pitch:
+How Bukid Direct makes money - kept small on purpose, because the point is
+selling without paying a middleman:
 
-- `plusPlan.price` - **₱99/month**, and `plusPlan.deliveryDiscount` - ₱50 off
-  each farm's delivery.
-- `farmerShare` - **85%** of the produce price going to the farm; the app
-  quotes it in onboarding, the basket and the Seller Center.
-- Each farm's `delivery.fee` and `delivery.freeOver` - illustrative; get real
-  Lalamove / Maxim quotes for the actual routes.
+| | Who pays | Sample value |
+| --- | --- | --- |
+| Commission | the farm | **5%** of each sale (`farmerShare` = 0.95) |
+| Service fee | the buyer | **₱10** per order, however many farms (`fees.service`) |
+| Direct Plus | the buyer | **₱49/month** (`plusPlan.price`): no service fee, 5% off every harvest, first pick, farm visit days |
+
+The 5% member discount is paid by Bukid Direct, never by the farmer - farms
+always get their share of their full price.
+
+Placeholders worth settling before the pitch: all three numbers above, and
+each farm's `delivery.fee` and `delivery.freeOver` - illustrative; get real
+Lalamove / Maxim quotes for the actual routes.
 
 House rule: no invented statistics about Cebu or about farming in general.
 

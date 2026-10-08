@@ -4,9 +4,13 @@
 
    A basket is split by farm: each farm packs and sends (or hands over) its
    own part, so each farm has its own delivery fee and free-delivery mark.
+   On top sits one small service fee per order, waived for Direct Plus.
+
+   Member discounts are paid by Bukid Direct, not the farmer, so a farm's
+   share is always worked out on its full price.
    ========================================================================== */
 
-import { farmerShare, getFarm, plusPlan, type Mode } from '../data/sample'
+import { farmerShare, fees, getFarm, plusPlan, type Mode } from '../data/sample'
 import { getListing } from './catalog'
 
 export interface Line {
@@ -28,11 +32,10 @@ export interface FarmGroup {
   farmId: string
   mode: Mode
   lines: Line[]
-  /* At regular prices. */
+  /* At the farm's own prices. */
   regular: number
+  /* What the buyer pays for the produce. */
   subtotal: number
-  /* The farm's delivery fee before any discount. */
-  baseFee: number
   /* What the buyer pays for this farm's delivery. */
   fee: number
   /* Pesos more from this farm for free delivery; 0 when free or picking up. */
@@ -57,7 +60,6 @@ export function groupByFarm(
         lines: [],
         regular: 0,
         subtotal: 0,
-        baseFee: 0,
         fee: 0,
         toFree: 0,
       }
@@ -68,13 +70,13 @@ export function groupByFarm(
     group.subtotal += lineTotal(line, member)
   }
 
+  /* Free delivery is the farm's own offer, so it counts the farm's prices. */
   for (const group of groups.values()) {
     if (group.mode === 'pickup') continue
     const delivery = getFarm(group.farmId).delivery
-    const free = group.subtotal >= delivery.freeOver
-    group.baseFee = delivery.fee
-    group.toFree = free ? 0 : delivery.freeOver - group.subtotal
-    group.fee = free ? 0 : Math.max(0, delivery.fee - (member ? plusPlan.deliveryDiscount : 0))
+    const free = group.regular >= delivery.freeOver
+    group.toFree = free ? 0 : delivery.freeOver - group.regular
+    group.fee = free ? 0 : delivery.fee
   }
 
   return [...groups.values()]
@@ -87,28 +89,30 @@ export interface Totals {
   regular: number
   subtotal: number
   delivery: number
-  /* Member prices plus the member delivery discount. */
+  serviceFee: number
+  /* Member prices plus the waived service fee. */
   savings: number
   total: number
-  /* The farms' share of the produce price. */
+  /* The farms' share of their full price. */
   toFarmers: number
   farmIds: string[]
 }
 
-export function totals(groups: FarmGroup[]): Totals {
+export function totals(groups: FarmGroup[], member: boolean): Totals {
   let count = 0
   let regular = 0
   let subtotal = 0
   let delivery = 0
-  let deliverySaved = 0
 
   for (const g of groups) {
     count += g.lines.length
     regular += g.regular
     subtotal += g.subtotal
     delivery += g.fee
-    if (g.mode === 'delivery' && g.toFree > 0) deliverySaved += g.baseFee - g.fee
   }
+
+  const serviceFee = count > 0 && !member ? fees.service : 0
+  const waived = count > 0 && member ? fees.service : 0
 
   return {
     count,
@@ -116,9 +120,10 @@ export function totals(groups: FarmGroup[]): Totals {
     regular,
     subtotal,
     delivery,
-    savings: regular - subtotal + deliverySaved,
-    total: subtotal + delivery,
-    toFarmers: Math.round(subtotal * farmerShare),
+    serviceFee,
+    savings: regular - subtotal + waived,
+    total: subtotal + delivery + serviceFee,
+    toFarmers: Math.round(regular * farmerShare),
     farmIds: groups.map((g) => g.farmId),
   }
 }
@@ -126,10 +131,10 @@ export function totals(groups: FarmGroup[]): Totals {
 /** What a basket would save with Direct Plus. Past orders count as
     delivered; the live basket passes its own Delivery / Pick-up choices. */
 export function plusSavings(lines: Line[], modeOf: (farmId: string) => Mode = () => 'delivery') {
-  return totals(groupByFarm(lines, true, modeOf)).savings
+  return totals(groupByFarm(lines, true, modeOf), true).savings
 }
 
 /** A basket's total at regular prices, everything delivered. */
 export function regularTotal(lines: Line[]) {
-  return totals(groupByFarm(lines, false, () => 'delivery')).total
+  return totals(groupByFarm(lines, false, () => 'delivery'), false).total
 }

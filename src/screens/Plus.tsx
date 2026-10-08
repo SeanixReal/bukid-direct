@@ -1,4 +1,4 @@
-import { BadgePercent, Check, PiggyBank, Sparkles, Tractor, Truck, type LucideIcon } from 'lucide-react'
+import { BadgePercent, Check, PiggyBank, Sparkles, Ticket, Tractor, type LucideIcon } from 'lucide-react'
 import { Screen, ScreenFooter, TopBar } from '../components/Screen'
 import { Logo } from '../components/Logo'
 import { Button } from '../components/ui'
@@ -8,7 +8,7 @@ import { pastOrders, peso, plusPlan, user } from '../data/sample'
 
 const perkIcon: Record<string, LucideIcon> = {
   prices: BadgePercent,
-  delivery: Truck,
+  fee: Ticket,
   early: Sparkles,
   visit: Tractor,
 }
@@ -58,7 +58,7 @@ export function Plus() {
             {plusPlan.name}
           </h1>
           <p className="mt-2.5 max-w-[300px] text-[17px] font-semibold leading-snug text-on-dark-muted">
-            Member prices on every harvest, and cheaper delivery from every farm.
+            No service fee, and member prices on every harvest.
           </p>
           <p className="mt-5 flex items-baseline gap-2 text-on-dark">
             <span className="text-[36px] font-extrabold leading-none tracking-tight">

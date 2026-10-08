@@ -170,7 +170,7 @@ export function Shop() {
             <span className="min-w-0 flex-1">
               <span className="block text-[17px] font-extrabold text-on-dark">{plusPlan.name}</span>
               <span className="block text-[13.5px] font-semibold leading-snug text-on-dark-muted">
-                10% off every harvest and {peso(plusPlan.deliveryDiscount)} off delivery.{' '}
+                No service fee and {Math.round(plusPlan.discount * 100)}% off every harvest.{' '}
                 {peso(plusPlan.price)}/{plusPlan.period}.
               </span>
             </span>

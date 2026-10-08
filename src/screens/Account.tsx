@@ -62,7 +62,7 @@ export function Account() {
             <span className="min-w-0 flex-1">
               <span className="block text-[17px] font-extrabold text-on-dark">Join {plusPlan.name}</span>
               <span className="block text-[14px] font-semibold text-on-dark-muted">
-                10% off every harvest, {peso(plusPlan.deliveryDiscount)} off delivery
+                No service fee, {Math.round(plusPlan.discount * 100)}% off every harvest
               </span>
             </span>
             <ChevronRight size={20} strokeWidth={2.6} className="shrink-0 text-on-dark" />
