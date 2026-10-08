@@ -25,6 +25,9 @@ npm install && npm run dev
 Open the printed URL (usually `http://localhost:5173`). To check a production
 build: `npm run build`.
 
+**Live demo: <https://bukid-direct.netlify.app>** - hosted on Netlify
+(`netlify.toml` holds the build settings).
+
 ---
 
 ## Demo keyboard shortcuts
