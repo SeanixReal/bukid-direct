@@ -1,13 +1,13 @@
 /* ==========================================================================
-   One-time road fetch for the Bukid Direct Pickup Hub map.
+   One-time road fetch for the Bukid Direct city map.
 
      npm run fetch:roads
 
    Queries the OpenStreetMap Overpass API for the major roads inside the Cebu
    City boundary, groups them into named streets, simplifies the geometry,
    works out which streets touch which, and writes src/data/roads.geojson.
-   (The hub map only draws the geometry; the list of touching streets is
-   kept in the file but nothing reads it yet.)
+   (The app draws the geometry and routes over it in src/data/route.ts; the
+   list of touching streets is kept in the file but nothing reads it yet.)
 
    THE APP NEVER RUNS THIS. It imports the committed .geojson file, so the
    demo works with the Wi-Fi switched off. Re-run it only when you want

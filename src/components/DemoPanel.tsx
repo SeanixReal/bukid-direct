@@ -3,6 +3,7 @@ import {
   Camera,
   CircleAlert,
   CircleCheckBig,
+  Navigation,
   PackageCheck,
   Pause,
   Play,
@@ -14,8 +15,8 @@ import {
   X,
   type LucideIcon,
 } from 'lucide-react'
-import { READY_STAGE, useApp } from '../state/AppState'
-import { orderStages } from '../data/sample'
+import { useApp } from '../state/AppState'
+import { getFarm, stagesFor } from '../data/sample'
 
 /* --------------------------------------------------------------------------
    Presenter controls. Live OUTSIDE the phone frame, so they never appear in a
@@ -28,22 +29,22 @@ export function DemoPanel({ onClose }: { onClose: () => void }) {
     order,
     simRunning,
     placeDemoOrder,
-    playOrderDay,
-    pauseOrderDay,
-    nextStage,
-    setStage,
+    playDay,
+    pauseDay,
+    nextStep,
+    jumpTo,
     member,
     setMember,
     fillDemoBasket,
     resetDemo,
   } = useApp()
 
-  const stage = order ? orderStages[order.stage] : null
-
-  const ensureOrder = () => order ?? placeDemoOrder()
+  const finished = order?.shipments.every((s) => s.stage >= stagesFor[s.mode].length - 1)
+  const canPickup = !order || order.shipments.some((s) => s.mode === 'pickup')
+  const canRide = !order || order.shipments.some((s) => s.mode === 'delivery')
 
   return (
-    <aside className="animate-sheet-up fixed bottom-5 right-5 z-[2000] w-[288px] rounded-card bg-panel p-4 text-on-dark shadow-float">
+    <aside className="animate-sheet-up fixed bottom-5 right-5 z-[2000] w-[300px] rounded-card bg-panel p-4 text-on-dark shadow-float">
       <div className="mb-3 flex items-center justify-between">
         <div>
           <p className="text-[13px] font-extrabold tracking-tight text-on-dark">Presenter controls</p>
@@ -59,37 +60,44 @@ export function DemoPanel({ onClose }: { onClose: () => void }) {
         </button>
       </div>
 
-      {/* --- Order day ------------------------------------------------------ */}
-      <Label>Order day</Label>
-      <div className="mb-2 rounded-md bg-on-dark/8 p-2.5">
-        <p className="text-[12px] font-bold text-on-dark">
-          {order ? `${order.id} · ${stage?.label}` : 'No order placed yet'}
-        </p>
-        <div className="mt-2 flex gap-1">
-          {orderStages.map((s, i) => (
-            <span
-              key={s.id}
-              className={`h-[5px] flex-1 rounded-full ${
-                !order || i > order.stage
-                  ? 'bg-on-dark/15'
-                  : s.id === 'ready'
-                    ? 'bg-accent'
-                    : 'bg-secondary'
-              }`}
-            />
-          ))}
-        </div>
+      {/* --- Delivery day ----------------------------------------------------- */}
+      <Label>Delivery day</Label>
+      <div className="mb-2 space-y-2 rounded-md bg-on-dark/8 p-2.5">
+        {order ? (
+          order.shipments.map((s) => {
+            const list = stagesFor[s.mode]
+            return (
+              <div key={s.id}>
+                <p className="text-[12px] font-bold text-on-dark">
+                  {getFarm(s.farmId).call} · {s.mode === 'pickup' ? 'Pick-up' : 'Delivery'}
+                </p>
+                <div className="mt-1 flex gap-1">
+                  {list.map((id, i) => (
+                    <span
+                      key={id}
+                      className={`h-[5px] flex-1 rounded-full ${
+                        i > s.stage ? 'bg-on-dark/15' : id === 'ready' && i === s.stage ? 'bg-accent' : 'bg-secondary'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+            )
+          })
+        ) : (
+          <p className="text-[12px] font-bold text-on-dark">No order placed yet</p>
+        )}
       </div>
 
       {order ? (
         <div className="mb-2 flex gap-1.5">
           <PanelButton
             Icon={simRunning ? Pause : Play}
-            label={simRunning ? 'Pause' : order.stage >= READY_STAGE ? 'Replay day' : 'Play order day'}
-            onClick={simRunning ? pauseOrderDay : playOrderDay}
+            label={simRunning ? 'Pause' : finished ? 'Replay day' : 'Play delivery day'}
+            onClick={simRunning ? pauseDay : playDay}
             strong
           />
-          <PanelButton Icon={SkipForward} label="Next" onClick={nextStage} narrow />
+          <PanelButton Icon={SkipForward} label="Next" onClick={nextStep} narrow />
         </div>
       ) : (
         <div className="mb-2">
@@ -105,11 +113,11 @@ export function DemoPanel({ onClose }: { onClose: () => void }) {
         </div>
       )}
       <p className="mb-3 text-[11px] font-medium leading-snug text-on-dark-muted">
-        Walks the order from harvest to the hub in about 15 seconds. When it is ready, the
-        pickup screen takes over by itself.
+        Harvest, packing and courier in about 25 seconds. The live map opens by itself when a
+        rider sets off.
       </p>
 
-      {/* --- Buyer ------------------------------------------------------------ */}
+      {/* --- Buyer -------------------------------------------------------------- */}
       <Label>Buyer</Label>
       <div className="mb-3 flex gap-1.5">
         <PanelToggle
@@ -129,7 +137,7 @@ export function DemoPanel({ onClose }: { onClose: () => void }) {
         />
       </div>
 
-      {/* --- Jumps -------------------------------------------------------------- */}
+      {/* --- Jumps ----------------------------------------------------------------- */}
       <Label>Jump to</Label>
       <div className="space-y-1.5">
         <div className="flex gap-1.5">
@@ -137,22 +145,35 @@ export function DemoPanel({ onClose }: { onClose: () => void }) {
             Icon={CircleCheckBig}
             label="Salamat!"
             onClick={() => {
-              ensureOrder()
+              if (!order) placeDemoOrder()
               navigate('/confirmed')
             }}
           />
-          <PanelButton Icon={Tractor} label="Farmer view" onClick={() => navigate('/farmer')} />
+          <PanelButton Icon={Tractor} label="Seller" onClick={() => navigate('/seller')} />
         </div>
-        <PanelButton
-          Icon={PackageCheck}
-          label="Ready for pickup"
-          accent
-          onClick={() => {
-            ensureOrder()
-            setStage(READY_STAGE)
-            navigate('/ready')
-          }}
-        />
+        {canRide && (
+          <PanelButton
+            Icon={Navigation}
+            label="Rider on the way"
+            onClick={() => {
+              const moved = jumpTo('onTheWay')
+              const riding = moved.shipments.find((s) => s.mode === 'delivery')
+              if (riding) navigate(`/track/${riding.id}`)
+            }}
+          />
+        )}
+        {canPickup && (
+          <PanelButton
+            Icon={PackageCheck}
+            label="Ready for pickup"
+            accent
+            onClick={() => {
+              const moved = jumpTo('ready')
+              const waiting = moved.shipments.find((s) => s.mode === 'pickup')
+              if (waiting) navigate(`/ready/${waiting.id}`)
+            }}
+          />
+        )}
         <PanelButton
           Icon={RotateCcw}
           label="Reset everything"
@@ -173,9 +194,7 @@ export function DemoPanel({ onClose }: { onClose: () => void }) {
 
 function Label({ children }: { children: string }) {
   return (
-    <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-on-dark-muted">
-      {children}
-    </p>
+    <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-on-dark-muted">{children}</p>
   )
 }
 
@@ -195,9 +214,7 @@ function PanelToggle({
       type="button"
       onClick={onClick}
       className={`flex flex-1 flex-col items-center gap-1 rounded-md px-1 py-2.5 text-[11px] font-bold transition-colors ${
-        active
-          ? 'bg-secondary text-on-secondary'
-          : 'bg-on-dark/10 text-on-dark-muted hover:bg-on-dark/15'
+        active ? 'bg-secondary text-on-secondary' : 'bg-on-dark/10 text-on-dark-muted hover:bg-on-dark/15'
       }`}
     >
       <Icon size={17} strokeWidth={2.4} />
@@ -282,8 +299,6 @@ export function ShotToast({ status }: { status: ShotStatus }) {
 
 function Key({ children }: { children: string }) {
   return (
-    <span className="rounded-[5px] bg-on-dark/15 px-1.5 py-[1px] font-extrabold text-on-dark">
-      {children}
-    </span>
+    <span className="rounded-[5px] bg-on-dark/15 px-1.5 py-[1px] font-extrabold text-on-dark">{children}</span>
   )
 }

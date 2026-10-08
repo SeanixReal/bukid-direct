@@ -1,39 +1,30 @@
 import { useNavigate } from 'react-router-dom'
-import { ArrowRight, ChevronRight, MapPin, ShoppingBasket, Sprout } from 'lucide-react'
+import { ArrowRight, ChevronRight, ShoppingBasket, Sprout } from 'lucide-react'
 import { Screen, ScreenFooter } from '../components/Screen'
-import { ProductPicture } from '../components/ProduceArt'
-import { Avatar, Button, PlusTag, Stepper, SumRow } from '../components/ui'
+import { ProducePicture } from '../components/ProduceArt'
+import { FulfilmentRow } from '../components/FarmBits'
+import { Avatar, Button, ModeSwitch, PlusTag, Rating, Stepper, SumRow } from '../components/ui'
 import { useApp } from '../state/AppState'
-import { lineTotal, plusSavings, unitPrice } from '../state/pricing'
-import {
-  getFarm,
-  getHub,
-  getProduct,
-  peso,
-  perUnit,
-  qtyText,
-  schedule,
-} from '../data/sample'
+import { listingDetails } from '../state/catalog'
+import { lineTotal, plusSavings, unitPrice, type FarmGroup } from '../state/pricing'
+import { getFarm, peso, perUnit, qtyText, schedule } from '../data/sample'
 
 export function Basket() {
   const navigate = useNavigate()
-  const { basket, basketTotals: t, member, hubId, setQty } = useApp()
-  const hub = getHub(hubId)
+  const { basket, groups, basketTotals: t, member, modeOf } = useApp()
 
   if (basket.length === 0) {
     return (
       <Screen nav>
-        <Header count={0} />
+        <Header />
         <div className="flex flex-col items-center px-8 pt-16 text-center">
           <span className="flex h-28 w-28 items-center justify-center rounded-full bg-primary-soft text-primary">
             <ShoppingBasket size={52} strokeWidth={1.9} />
           </span>
-          <h2 className="mt-6 text-[24px] font-extrabold tracking-tight text-ink">
-            Your basket is empty
-          </h2>
+          <h2 className="mt-6 text-[24px] font-extrabold tracking-tight text-ink">Your basket is empty</h2>
           <p className="mt-1.5 text-[16px] font-medium leading-snug text-ink-muted">
-            Fill it with this week's harvest. Order by {schedule.cutoff} for pickup{' '}
-            {schedule.pickupDay.toLowerCase()}.
+            Mix and match from as many farms as you like. Order by {schedule.cutoff} for{' '}
+            {schedule.day.toLowerCase()}.
           </p>
           <Button className="mt-7" onClick={() => navigate('/shop')}>
             Start shopping
@@ -43,7 +34,7 @@ export function Basket() {
     )
   }
 
-  const saving = plusSavings(basket)
+  const saving = plusSavings(basket, modeOf)
 
   return (
     <Screen
@@ -59,67 +50,12 @@ export function Basket() {
         </ScreenFooter>
       }
     >
-      <Header count={t.count} />
+      <Header count={t.count} farmCount={t.farmCount} />
 
       <div className="space-y-3 px-5 pb-6">
-        {/* ---------------- Pickup ---------------- */}
-        <button
-          type="button"
-          onClick={() => navigate('/hubs')}
-          className="tappable flex w-full items-center gap-3 rounded-card bg-primary-soft p-3.5 text-left"
-        >
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary">
-            <MapPin size={19} strokeWidth={2.5} />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-[15px] font-bold text-ink">Pickup at {hub.name}</span>
-            <span className="block text-[13px] font-semibold text-ink-muted">
-              {schedule.pickupDay}, {hub.hours}
-            </span>
-          </span>
-          <span className="text-[14px] font-bold text-primary">Change</span>
-        </button>
-
-        {/* ---------------- Lines ---------------- */}
-        <ul className="divide-y divide-line rounded-card border border-line bg-card px-4 shadow-card">
-          {basket.map((line) => {
-            const product = getProduct(line.productId)
-            if (!product) return null
-            const farm = getFarm(product.farmId)
-            return (
-              <li key={line.productId} className="flex gap-3 py-3.5">
-                <button
-                  type="button"
-                  onClick={() => navigate(`/product/${product.id}`)}
-                  aria-label={product.name}
-                  className="tappable shrink-0"
-                >
-                  <ProductPicture product={product} className="h-[72px] w-[72px] rounded-md" />
-                </button>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-baseline justify-between gap-2">
-                    <p className="truncate text-[16px] font-bold text-ink">{product.name}</p>
-                    <p className="tabular shrink-0 text-[16px] font-extrabold text-ink">
-                      {peso(lineTotal(line, member))}
-                    </p>
-                  </div>
-                  <p className="truncate text-[13px] font-semibold text-ink-muted">
-                    {farm.call} · {peso(unitPrice(product.price, member))} / {perUnit(product)}
-                  </p>
-                  <Stepper
-                    size="sm"
-                    className="mt-2"
-                    label={qtyText(product, line.qty)}
-                    onDec={() => setQty(product.id, line.qty - product.step)}
-                    onInc={() => setQty(product.id, line.qty + product.step)}
-                    decLabel={line.qty <= product.step ? `Remove ${product.name}` : `Less ${product.name}`}
-                    incLabel={`More ${product.name}`}
-                  />
-                </div>
-              </li>
-            )
-          })}
-        </ul>
+        {groups.map((g) => (
+          <FarmGroupCard key={g.farmId} group={g} member={member} />
+        ))}
 
         {/* ---------------- Where the money goes ---------------- */}
         <div className="flex items-center gap-3 rounded-card bg-secondary-soft p-4">
@@ -136,7 +72,7 @@ export function Basket() {
           </div>
           <p className="text-[14px] font-semibold leading-snug text-on-secondary">
             <b className="font-extrabold">{peso(t.toFarmers)}</b> of this goes straight to{' '}
-            {t.farmIds.length === 1 ? 'the farm' : `${t.farmIds.length} farms`}.
+            {t.farmCount === 1 ? 'the farm' : `${t.farmCount} farms`}.
           </p>
         </div>
 
@@ -144,16 +80,12 @@ export function Basket() {
         <div className="space-y-2 rounded-card border border-line bg-card p-4 shadow-card">
           <SumRow label="Produce" value={peso(t.subtotal)} />
           <SumRow
-            label="Pickup Hub fee"
-            value={member ? 'Free' : peso(t.hubFee)}
-            tone={member ? 'primary' : 'ink'}
+            label={`Delivery (${groups.filter((g) => g.mode === 'delivery').length} of ${t.farmCount} farms)`}
+            value={t.delivery > 0 ? peso(t.delivery) : 'Free'}
+            tone={t.delivery > 0 ? 'ink' : 'primary'}
           />
           {member && t.savings > 0 && (
-            <SumRow
-              label={<PlusTag label="You saved" />}
-              value={`−${peso(t.savings)}`}
-              tone="primary"
-            />
+            <SumRow label={<PlusTag label="You saved" />} value={`−${peso(t.savings)}`} tone="primary" />
           )}
           <div className="border-t border-line pt-2">
             <SumRow label="Total" value={peso(t.total)} strong />
@@ -181,15 +113,120 @@ export function Basket() {
   )
 }
 
-function Header({ count }: { count: number }) {
+/* One farm's part of the basket: its items, Delivery or Pick-up, and its fee. */
+function FarmGroupCard({ group: g, member }: { group: FarmGroup; member: boolean }) {
+  const navigate = useNavigate()
+  const { setQty, setFarmMode } = useApp()
+  const farm = getFarm(g.farmId)
+  const freeShare = g.mode === 'delivery' && g.toFree > 0 ? g.subtotal / (g.subtotal + g.toFree) : 1
+
+  return (
+    <section className="overflow-hidden rounded-card border border-line bg-card shadow-card">
+      {/* Farm */}
+      <div className="flex items-center gap-3 border-b border-line px-4 py-3">
+        <button
+          type="button"
+          onClick={() => navigate(`/farm/${farm.id}`)}
+          className="tappable flex min-w-0 flex-1 items-center gap-3 text-left"
+        >
+          <Avatar initials={farm.initials} size={40} />
+          <span className="min-w-0">
+            <span className="block truncate text-[16px] font-extrabold text-ink">{farm.call}</span>
+            <span className="flex items-center gap-1.5 text-[12.5px]">
+              <Rating value={farm.rating} />
+              <span className="truncate font-semibold text-ink-muted">· {farm.place.split(', ').pop()}</span>
+            </span>
+          </span>
+        </button>
+        {!farm.pickup && (
+          <span className="shrink-0 rounded-pill bg-surface px-3 py-1.5 text-[12px] font-bold text-ink-muted">
+            Delivery only
+          </span>
+        )}
+      </div>
+      {farm.pickup && (
+        <div className="border-b border-line px-4 py-2.5">
+          <ModeSwitch size="sm" value={g.mode} onChange={(m) => setFarmMode(farm.id, m)} />
+        </div>
+      )}
+
+      {/* Items */}
+      <ul className="divide-y divide-line px-4">
+        {g.lines.map((line) => {
+          const found = listingDetails(line.listingId)
+          if (!found) return null
+          const { listing, item } = found
+          return (
+            <li key={line.listingId} className="flex gap-3 py-3.5">
+              <button
+                type="button"
+                onClick={() => navigate(`/listing/${listing.id}`)}
+                aria-label={item.name}
+                className="tappable shrink-0"
+              >
+                <ProducePicture item={item} className="h-[68px] w-[68px] rounded-md" />
+              </button>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-baseline justify-between gap-2">
+                  <p className="truncate text-[16px] font-bold text-ink">{item.name}</p>
+                  <p className="tabular shrink-0 text-[16px] font-extrabold text-ink">
+                    {peso(lineTotal(line, member))}
+                  </p>
+                </div>
+                <p className="truncate text-[13px] font-semibold text-ink-muted">
+                  {peso(unitPrice(listing.price, member))} / {perUnit(item)}
+                </p>
+                <Stepper
+                  size="sm"
+                  className="mt-2"
+                  label={qtyText(item, line.qty)}
+                  onDec={() => setQty(listing.id, line.qty - item.step)}
+                  onInc={() => setQty(listing.id, line.qty + item.step)}
+                  decLabel={line.qty <= item.step ? `Remove ${item.name}` : `Less ${item.name}`}
+                  incLabel={`More ${item.name}`}
+                />
+              </div>
+            </li>
+          )
+        })}
+      </ul>
+
+      {/* How it gets to you */}
+      <div className="border-t border-line bg-surface/60 px-4 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <FulfilmentRow farm={farm} mode={g.mode} />
+          <span
+            className={`shrink-0 text-[15px] font-extrabold ${g.fee > 0 ? 'text-ink' : 'text-primary'}`}
+          >
+            {g.fee > 0 ? peso(g.fee) : 'Free'}
+          </span>
+        </div>
+        {g.mode === 'delivery' && g.toFree > 0 && (
+          <div className="mt-2.5">
+            <div className="h-[6px] overflow-hidden rounded-full bg-surface-2">
+              <div className="h-full rounded-full bg-secondary" style={{ width: `${freeShare * 100}%` }} />
+            </div>
+            <p className="mt-1.5 text-[12.5px] font-semibold text-ink-muted">
+              Add <b className="font-extrabold text-ink">{peso(g.toFree)}</b> more from {farm.call} for free
+              delivery
+            </p>
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+function Header({ count, farmCount }: { count?: number; farmCount?: number }) {
   return (
     <div className="px-5 pb-4 pt-2">
       <h1 className="text-[28px] font-extrabold tracking-tight text-ink">Your basket</h1>
-      {count > 0 && (
+      {count ? (
         <p className="text-[15px] font-semibold text-ink-muted">
-          {count} {count === 1 ? 'item' : 'items'} from local farms
+          {count} {count === 1 ? 'item' : 'items'} from {farmCount}{' '}
+          {farmCount === 1 ? 'farm' : 'farms'} · each farm sends its own part
         </p>
-      )}
+      ) : null}
     </div>
   )
 }

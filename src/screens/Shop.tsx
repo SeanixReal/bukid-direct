@@ -1,38 +1,43 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronRight, MapPin, Search, Sprout, X } from 'lucide-react'
+import { MapPin, Search, Sprout, Store, X, ChevronRight } from 'lucide-react'
 import { Screen, SectionTitle } from '../components/Screen'
 import { Wordmark } from '../components/Logo'
-import { ProductCard } from '../components/ProductCard'
-import { Avatar, Chip } from '../components/ui'
+import { ListingCard } from '../components/ListingCard'
+import { FarmChip } from '../components/FarmBits'
+import { Avatar, Chip, ModeSwitch } from '../components/ui'
 import { useApp } from '../state/AppState'
+import { allListings } from '../state/catalog'
 import {
   categories,
+  farms,
   getFarm,
-  getHub,
+  getProduce,
   greeting,
   peso,
   plusPlan,
-  products,
-  schedule,
   user,
   type CategoryId,
-  type Product,
+  type Listing,
 } from '../data/sample'
 
 export function Shop() {
   const navigate = useNavigate()
-  const { hubId, member } = useApp()
+  const { member, prefMode, setPrefMode } = useApp()
   const [category, setCategory] = useState<CategoryId | 'all'>('all')
   const [query, setQuery] = useState('')
 
-  const hub = getHub(hubId)
+  const pickup = prefMode === 'pickup'
+  /* Pick-up shows only farms that have a pickup point, like foodpanda. */
+  const sellers = farms.filter((f) => !pickup || f.pickup)
+  const forSale = allListings().filter((l) => !pickup || getFarm(l.farmId).pickup)
   const q = query.trim().toLowerCase()
   const browsing = category === 'all' && !q
-  const list = products.filter(
-    (p) => (category === 'all' || p.category === category) && (!q || matches(p, q)),
+  const list = forSale.filter(
+    (l) =>
+      (category === 'all' || getProduce(l.produceId).category === category) && (!q || matches(l, q)),
   )
-  const fresh = products.filter((p) => p.harvestedToday)
+  const fresh = forSale.filter((l) => l.harvestedToday)
   const listTitle = q
     ? `Results for “${query.trim()}”`
     : category === 'all'
@@ -55,11 +60,28 @@ export function Shop() {
           </button>
         </div>
 
-        <p className="mt-5 text-[16px] font-semibold text-ink-muted">
+        <ModeSwitch value={prefMode} onChange={setPrefMode} className="mt-4" />
+
+        <p className="mt-2.5 flex items-center gap-1.5 text-[13.5px] font-semibold text-ink-muted">
+          {pickup ? (
+            <>
+              <Store size={15} strokeWidth={2.5} className="text-primary" />
+              Collect from farm stalls and farm gates near you
+            </>
+          ) : (
+            <>
+              <MapPin size={15} strokeWidth={2.5} className="text-primary" />
+              Deliver to <b className="font-bold text-ink">{user.address.label}</b> ·{' '}
+              {user.address.street}, {user.address.area.split(',')[0]}
+            </>
+          )}
+        </p>
+
+        <p className="mt-4 text-[16px] font-semibold text-ink-muted">
           {greeting()}, {user.firstName}!
         </p>
         <h1 className="mt-0.5 text-[28px] font-extrabold leading-[1.12] tracking-tight text-ink">
-          What's fresh this week?
+          Buy straight from Cebu farmers
         </h1>
 
         <label className="mt-4 flex h-[52px] items-center gap-2.5 rounded-pill bg-card px-4 shadow-card ring-1 ring-inset ring-line focus-within:ring-2 focus-within:ring-primary">
@@ -81,29 +103,10 @@ export function Shop() {
             </button>
           )}
         </label>
-
-        <button
-          type="button"
-          onClick={() => navigate('/hubs')}
-          className="tappable mt-3 flex w-full items-center gap-3 rounded-card bg-primary-soft p-3.5 text-left"
-        >
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary">
-            <MapPin size={19} strokeWidth={2.5} />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-[15px] font-bold text-ink">
-              Pickup {schedule.pickupDay.toLowerCase()} at {hub.name}
-            </span>
-            <span className="block truncate text-[13px] font-semibold text-ink-muted">
-              {hub.hours} · Order by {schedule.cutoff}
-            </span>
-          </span>
-          <ChevronRight size={19} strokeWidth={2.6} className="shrink-0 text-primary" />
-        </button>
       </header>
 
       {/* ---------------- Category chips ---------------- */}
-      <div className="no-scrollbar mt-5 flex gap-2 overflow-x-auto px-5 pb-1">
+      <div className="no-scrollbar mt-4 flex gap-2 overflow-x-auto px-5 pb-1">
         {categories.map((c) => (
           <Chip key={c.id} active={c.id === category} onClick={() => setCategory(c.id)}>
             {c.label}
@@ -111,20 +114,43 @@ export function Shop() {
         ))}
       </div>
 
-      {/* ---------------- Harvested today ---------------- */}
+      {/* ---------------- The sellers ---------------- */}
       {browsing && (
         <section className="mt-6">
           <SectionTitle
             className="px-5"
             action={
-              <span className="text-[13px] font-semibold text-ink-muted">{fresh.length} items</span>
+              <button
+                type="button"
+                onClick={() => navigate('/farms')}
+                className="tappable text-[14px] font-bold text-primary"
+              >
+                See all
+              </button>
             }
+          >
+            {pickup ? 'Farms with pick-up' : 'Farms selling this week'}
+          </SectionTitle>
+          <div className="no-scrollbar flex gap-3 overflow-x-auto px-5 pb-2">
+            {sellers.map((f) => (
+              <FarmChip key={f.id} farm={f} mode={pickup ? 'pickup' : 'delivery'} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ---------------- Harvested today ---------------- */}
+      {browsing && fresh.length > 0 && (
+        <section className="mt-5">
+          <SectionTitle
+            className="px-5"
+            action={<span className="text-[13px] font-semibold text-ink-muted">{fresh.length} items</span>}
           >
             Picked this morning
           </SectionTitle>
           <div className="no-scrollbar flex gap-3 overflow-x-auto px-5 pb-2">
-            {fresh.map((p) => (
-              <ProductCard key={p.id} product={p} className="w-[172px] shrink-0" />
+            {fresh.map((l) => (
+              <ListingCard key={l.id} listing={l} className="w-[172px] shrink-0" />
             ))}
           </div>
         </section>
@@ -144,7 +170,8 @@ export function Shop() {
             <span className="min-w-0 flex-1">
               <span className="block text-[17px] font-extrabold text-on-dark">{plusPlan.name}</span>
               <span className="block text-[13.5px] font-semibold leading-snug text-on-dark-muted">
-                10% off every harvest and no hub fee. {peso(plusPlan.price)}/{plusPlan.period}.
+                10% off every harvest and {peso(plusPlan.deliveryDiscount)} off delivery.{' '}
+                {peso(plusPlan.price)}/{plusPlan.period}.
               </span>
             </span>
             <ChevronRight size={20} strokeWidth={2.6} className="shrink-0 text-on-dark" />
@@ -157,7 +184,7 @@ export function Shop() {
         <SectionTitle
           action={
             <span className="text-[13px] font-semibold text-ink-muted">
-              {list.length} {list.length === 1 ? 'item' : 'items'}
+              {list.length} {list.length === 1 ? 'listing' : 'listings'}
             </span>
           }
         >
@@ -166,15 +193,17 @@ export function Shop() {
 
         {list.length > 0 ? (
           <div className="grid grid-cols-2 gap-3">
-            {list.map((p) => (
-              <ProductCard key={p.id} product={p} />
+            {list.map((l) => (
+              <ListingCard key={l.id} listing={l} />
             ))}
           </div>
         ) : (
           <div className="rounded-card border border-dashed border-line bg-card p-6 text-center">
-            <p className="text-[16px] font-bold text-ink">Nothing matches “{query.trim()}”</p>
+            <p className="text-[16px] font-bold text-ink">
+              {q ? `Nothing matches “${query.trim()}”` : 'Nothing here for pick-up yet'}
+            </p>
             <p className="mt-1 text-[14px] font-medium text-ink-muted">
-              Try “tomatoes”, “mango” or a farmer's name.
+              {q ? "Try “tomatoes”, “mango” or a farmer's name." : 'Switch to Delivery to see every farm.'}
             </p>
           </div>
         )}
@@ -183,9 +212,10 @@ export function Shop() {
   )
 }
 
-function matches(p: Product, q: string) {
-  const farm = getFarm(p.farmId)
-  return [p.name, p.local ?? '', farm.call, farm.farmer, farm.place].some((s) =>
+function matches(l: Listing, q: string) {
+  const farm = getFarm(l.farmId)
+  const item = getProduce(l.produceId)
+  return [item.name, item.local ?? '', farm.call, farm.farmer, farm.place].some((s) =>
     s.toLowerCase().includes(q),
   )
 }

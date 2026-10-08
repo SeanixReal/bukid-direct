@@ -1,5 +1,5 @@
 /* --------------------------------------------------------------------------
-   Flat produce illustrations - one per product, plus the hills used on the
+   Flat produce illustrations - one per kind of produce, plus the hills on the
    splash screen and the farm pages.
 
    Drawn in code on a 120 x 100 grid, so the pictures stay sharp at any size
@@ -9,7 +9,7 @@
    -------------------------------------------------------------------------- */
 
 import type { ReactNode } from 'react'
-import type { Product, ProductId, Tint } from '../data/sample'
+import type { Produce, ProduceId, Tint } from '../data/sample'
 import { MARK_PIN, MARK_SPROUT } from './Logo'
 
 type P = [number, number]
@@ -207,7 +207,7 @@ function Sprig({ deg, len }: { deg: number; len: number }) {
 
 /* --- The pictures ------------------------------------------------------------ */
 
-const ART: Record<ProductId, () => ReactNode> = {
+const ART: Record<ProduceId, () => ReactNode> = {
   tomatoes: () => (
     <>
       <Ground rx={44} />
@@ -491,7 +491,7 @@ export const tintClass: Record<Tint, string> = {
 
 /** Just the drawing, on a transparent background. The view is cropped a
     little inside the 120 x 100 grid so the produce fills its picture. */
-export function ProduceArt({ id, className }: { id: ProductId; className?: string }) {
+export function ProduceArt({ id, className }: { id: ProduceId; className?: string }) {
   return (
     <svg viewBox="12 14 96 80" className={className} aria-hidden>
       {ART[id]()}
@@ -500,21 +500,24 @@ export function ProduceArt({ id, className }: { id: ProductId; className?: strin
 }
 
 /** The drawing on its tinted picture background - what cards and thumbnails
-    use. Size and corner radius come from `className`. */
-export function ProductPicture({
-  product,
+    use. Size and corner radius come from `className`. `dim` greys it out,
+    for anything out of stock. */
+export function ProducePicture({
+  item,
+  dim = false,
   className = '',
   children,
 }: {
-  product: Product
+  item: Produce
+  dim?: boolean
   className?: string
   children?: ReactNode
 }) {
   return (
-    <div className={`relative overflow-hidden ${tintClass[product.tint]} ${className}`}>
+    <div className={`relative overflow-hidden ${tintClass[item.tint]} ${className}`}>
       <ProduceArt
-        id={product.id}
-        className={`absolute inset-0 h-full w-full ${product.outOfStock ? 'opacity-55 grayscale-[0.6]' : ''}`}
+        id={item.id}
+        className={`absolute inset-0 h-full w-full ${dim ? 'opacity-55 grayscale-[0.6]' : ''}`}
       />
       {children}
     </div>

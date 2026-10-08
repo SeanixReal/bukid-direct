@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Road data for the Pickup Hub map.
+   Road data for the city map.
 
    Loads the committed src/data/roads.geojson - real Cebu City street geometry
    exported once from OpenStreetMap by scripts/fetch-roads.ts. The file is

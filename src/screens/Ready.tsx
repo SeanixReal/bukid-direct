@@ -1,29 +1,39 @@
-import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Clock, MapPin, Navigation, PackageCheck, Sunrise } from 'lucide-react'
+import { useMemo } from 'react'
+import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import { ArrowLeft, Check, Clock, PackageCheck, Sunrise } from 'lucide-react'
 import { Screen } from '../components/Screen'
-import { ProductPicture } from '../components/ProduceArt'
+import { CityMap } from '../components/CityMap'
+import { ProducePicture } from '../components/ProduceArt'
 import { Button } from '../components/ui'
 import { useApp } from '../state/AppState'
-import { demoBasket, demoOrder, getFarm, getHub, getProduct, listNames } from '../data/sample'
+import { getListing } from '../state/catalog'
+import { route } from '../data/route'
+import { distanceKm, distanceText, getFarm, getProduce, homeAt } from '../data/sample'
 
 /* --------------------------------------------------------------------------
-   "Ready for pickup" - takes over the screen when the order reaches the hub.
-   Orange is reserved for exactly this moment (and "Harvested today"), which
-   is why it reads as news the instant it appears. "Andam na!" is Bisaya for
-   "It's ready!".
+   "Ready for pickup" - takes over the screen when a Pick-up order is packed
+   and waiting at the farm's pickup point. Orange is reserved for exactly
+   this (and "Harvested today"), which is why it reads as news the instant
+   it appears. "Andam na!" is Bisaya for "It's ready!".
    -------------------------------------------------------------------------- */
 
 export function Ready() {
-  const navigate = useNavigate()
-  const { order, hubId, showToast } = useApp()
+  const { id } = useParams()
+  const { order } = useApp()
+  const shipment = order?.shipments.find((s) => s.id === id)
+  if (!shipment) return <Navigate to="/orders" replace />
+  if (shipment.mode === 'delivery') return <Navigate to={`/track/${shipment.id}`} replace />
+  return <ReadyForPickup id={shipment.id} />
+}
 
-  /* Opened from the presenter panel before any order exists? Show the demo
-     order so the screen is never empty. */
-  const hub = getHub(order?.hubId ?? hubId)
-  const lines = order?.lines ?? demoBasket
-  const code = order?.code ?? demoOrder.code
-  const farmIds = [...new Set(lines.map((l) => getProduct(l.productId)?.farmId ?? ''))].filter(Boolean)
-  const farmers = listNames(farmIds.map((id) => getFarm(id).call))
+function ReadyForPickup({ id }: { id: string }) {
+  const navigate = useNavigate()
+  const { order, markPickedUp, showToast, stageOf } = useApp()
+  const shipment = order!.shipments.find((s) => s.id === id)!
+  const farm = getFarm(shipment.farmId)
+  const pickup = farm.pickup!
+  const collected = stageOf(shipment) === 'done'
+  const directions = useMemo(() => route(homeAt, pickup.at), [pickup])
 
   return (
     <Screen
@@ -32,13 +42,15 @@ export function Ready() {
         <div className="shrink-0 space-y-2 px-5 pb-1.5 pt-2">
           <Button
             variant="onAccent"
+            disabled={collected}
             onClick={() => {
-              showToast(`See you at ${hub.name}!`)
+              markPickedUp(shipment.id)
+              showToast(`Enjoy your harvest from ${farm.call}. Salamat!`)
               navigate('/orders')
             }}
           >
-            <Navigation size={18} strokeWidth={2.6} />
-            I'm on my way
+            <Check size={19} strokeWidth={3} />
+            {collected ? 'Picked up' : "I've picked it up"}
           </Button>
           <Button variant="outlineOnAccent" onClick={() => navigate('/orders')}>
             View order
@@ -57,39 +69,35 @@ export function Ready() {
             <ArrowLeft size={20} strokeWidth={2.4} />
           </button>
           <span className="text-[13px] font-extrabold uppercase tracking-[0.14em] text-on-accent/75">
-            Pickup Hub
+            Pick-up · {farm.call}
           </span>
         </div>
 
-        <div className="flex flex-1 flex-col justify-center px-5 pb-5">
+        <div className="flex flex-1 flex-col justify-center px-5 pb-4">
           <div className="flex flex-col items-center text-center">
-            <span className="relative flex h-[76px] w-[76px] items-center justify-center rounded-full bg-on-accent/12 text-on-accent">
+            <span className="relative flex h-[68px] w-[68px] items-center justify-center rounded-full bg-on-accent/12 text-on-accent">
               <span className="animate-halo absolute inset-0 rounded-full bg-on-accent/20" />
-              <PackageCheck size={38} strokeWidth={2.2} className="relative" />
+              <PackageCheck size={34} strokeWidth={2.2} className="relative" />
             </span>
-            <p className="mt-4 text-[20px] font-extrabold text-on-accent/80">Andam na!</p>
-            <h1 className="mt-1 text-balance text-[32px] font-extrabold leading-[1.1] tracking-tight text-on-accent">
+            <p className="mt-3 text-[19px] font-extrabold text-on-accent/80">Andam na!</p>
+            <h1 className="mt-0.5 text-balance text-[30px] font-extrabold leading-[1.1] tracking-tight text-on-accent">
               Your order is ready for pickup
             </h1>
-            <p className="mt-2 text-[17px] font-bold text-on-accent/80">at {hub.name}</p>
+            <p className="mt-1.5 text-[17px] font-bold text-on-accent/80">at {pickup.place}</p>
           </div>
 
-          {/* Code */}
-          <div className="mt-6 rounded-card bg-card p-4 text-center shadow-float">
-            <p className="text-[13px] font-extrabold uppercase tracking-wide text-ink-muted">
-              Pickup code
-            </p>
-            <p className="mt-1 text-[52px] font-extrabold leading-none tracking-[0.12em] text-ink">
-              {code}
-            </p>
-            <div className="mt-4 flex items-center gap-3 border-t border-line pt-3 text-left">
+          {/* Code and what is waiting */}
+          <div className="mt-4 rounded-card bg-card p-4 text-center shadow-float">
+            <p className="text-[13px] font-extrabold uppercase tracking-wide text-ink-muted">Pick-up code</p>
+            <p className="mt-1 text-[44px] font-extrabold leading-none tracking-[0.12em] text-ink">{order!.code}</p>
+            <div className="mt-3.5 flex items-center gap-3 border-t border-line pt-3 text-left">
               <div className="flex shrink-0 -space-x-2">
-                {lines.slice(0, 4).map((l) => {
-                  const product = getProduct(l.productId)
-                  return product ? (
-                    <ProductPicture
-                      key={l.productId}
-                      product={product}
+                {shipment.lines.slice(0, 4).map((l) => {
+                  const listing = getListing(l.listingId)
+                  return listing ? (
+                    <ProducePicture
+                      key={l.listingId}
+                      item={getProduce(listing.produceId)}
                       className="h-9 w-9 rounded-full ring-2 ring-card"
                     />
                   ) : null
@@ -100,21 +108,33 @@ export function Ready() {
                   <Sunrise size={14} strokeWidth={2.8} />
                   Harvested today
                 </span>{' '}
-                by {farmers}.
+                by {farm.call}.
               </p>
             </div>
           </div>
 
-          {/* Where and until when */}
-          <div className="mt-3 space-y-2.5 rounded-card bg-on-accent/10 p-4">
-            <p className="flex items-center gap-2.5 text-[15px] font-bold text-on-accent">
-              <MapPin size={18} strokeWidth={2.5} className="shrink-0" />
-              {hub.host}
-            </p>
-            <p className="flex items-center gap-2.5 text-[15px] font-bold text-on-accent">
-              <Clock size={18} strokeWidth={2.5} className="shrink-0" />
-              Open until {hub.closes} today
-            </p>
+          {/* Where */}
+          <div className="mt-3 overflow-hidden rounded-card bg-card shadow-float">
+            <CityMap
+              frame={[homeAt, pickup.at]}
+              route={directions}
+              markers={[
+                { id: 'home', at: homeAt, kind: 'home', label: 'You' },
+                { id: 'pickup', at: pickup.at, kind: 'pin' },
+              ]}
+              padding={{ top: 44, right: 30, bottom: 26, left: 30 }}
+              className="h-[112px]"
+              attributionClassName="bottom-1 right-1.5"
+            />
+            <div className="flex items-center gap-3 px-4 py-3">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[15px] font-bold text-ink">{pickup.detail}</p>
+                <p className="flex items-center gap-1.5 text-[13px] font-semibold text-ink-muted">
+                  <Clock size={14} strokeWidth={2.5} />
+                  Open {pickup.hours} · {distanceText(distanceKm(pickup.at))} from you
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

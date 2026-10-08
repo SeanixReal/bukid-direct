@@ -1,28 +1,26 @@
-import { MapPin, Package, ShoppingBasket, Store, User } from 'lucide-react'
+import { Package, ShoppingBasket, Store, Tractor, User } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import { useApp } from '../state/AppState'
 
 const items = [
   { to: '/shop', label: 'Shop', Icon: Store },
-  { to: '/hubs', label: 'Hubs', Icon: MapPin },
+  { to: '/farms', label: 'Farms', Icon: Tractor },
   { to: '/basket', label: 'Basket', Icon: ShoppingBasket },
   { to: '/orders', label: 'Orders', Icon: Package },
   { to: '/account', label: 'Account', Icon: User },
 ] as const
 
 export function BottomNav() {
-  const { basketTotals, stageId } = useApp()
-  const ready = stageId === 'ready'
+  const { basketTotals, order, stageOf } = useApp()
+  /* Orange dot: something is packed and ready for pickup. */
+  const ready = order?.shipments.some((s) => stageOf(s) === 'ready') ?? false
 
   return (
     <nav className="shrink-0 border-t border-line bg-card px-2 pt-1.5">
       <ul className="flex items-stretch justify-between">
         {items.map(({ to, label, Icon }) => (
           <li key={to} className="flex-1">
-            <NavLink
-              to={to}
-              className="tappable flex flex-col items-center gap-[3px] rounded-md py-1"
-            >
+            <NavLink to={to} className="tappable flex flex-col items-center gap-[3px] rounded-md py-1">
               {({ isActive }) => (
                 <>
                   <span
@@ -44,9 +42,7 @@ export function BottomNav() {
                     )}
                   </span>
                   <span
-                    className={`text-[12px] ${
-                      isActive ? 'font-extrabold text-primary' : 'font-semibold text-ink-muted'
-                    }`}
+                    className={`text-[12px] ${isActive ? 'font-extrabold text-primary' : 'font-semibold text-ink-muted'}`}
                   >
                     {label}
                   </span>

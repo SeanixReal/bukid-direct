@@ -2,21 +2,11 @@ import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { Banknote, Check, CreditCard, MessageSquare, Wallet, type LucideIcon } from 'lucide-react'
 import { Screen, ScreenFooter, SectionTitle, TopBar } from '../components/Screen'
-import { HubMap } from '../components/HubMap'
-import { Button, Chip, PlusTag, SumRow } from '../components/ui'
+import { CityMap } from '../components/CityMap'
+import { FulfilmentRow } from '../components/FarmBits'
+import { Avatar, Button, PlusTag, SumRow } from '../components/ui'
 import { useApp } from '../state/AppState'
-import {
-  distanceKm,
-  distanceText,
-  getHub,
-  paymentMethods,
-  peso,
-  pickupSlots,
-  schedule,
-  user,
-  type PaymentId,
-  type SlotId,
-} from '../data/sample'
+import { getFarm, homeAt, paymentMethods, peso, user, type PaymentId } from '../data/sample'
 
 const paymentIcon: Record<PaymentId, LucideIcon> = {
   gcash: Wallet,
@@ -26,15 +16,15 @@ const paymentIcon: Record<PaymentId, LucideIcon> = {
 
 export function Checkout() {
   const navigate = useNavigate()
-  const { basket, basketTotals: t, member, hubId, placeOrder } = useApp()
-  const [slotId, setSlotId] = useState<SlotId>('early')
+  const { basket, groups, basketTotals: t, member, placeOrder } = useApp()
   const [payment, setPayment] = useState<PaymentId>('gcash')
-  const hub = getHub(hubId)
 
   if (basket.length === 0) return <Navigate to="/basket" replace />
 
+  const delivering = groups.some((g) => g.mode === 'delivery')
+
   const submit = () => {
-    placeOrder({ slotId, payment })
+    placeOrder({ payment })
     navigate('/confirmed', { replace: true })
   }
 
@@ -50,55 +40,65 @@ export function Checkout() {
         </ScreenFooter>
       }
     >
-      <TopBar title="Checkout" subtitle={`${t.count} items from ${t.farmIds.length} farms`} fallback="/basket" />
+      <TopBar
+        title="Checkout"
+        subtitle={`${t.count} items from ${t.farmCount} ${t.farmCount === 1 ? 'farm' : 'farms'}`}
+        fallback="/basket"
+      />
 
       <div className="px-5 pb-6">
-        {/* ---------------- Hub ---------------- */}
-        <SectionTitle
-          action={
-            <button
-              type="button"
-              onClick={() => navigate('/hubs')}
-              className="tappable text-[14px] font-bold text-primary"
-            >
-              Change
-            </button>
-          }
-        >
-          Pickup Hub
-        </SectionTitle>
-        <div className="overflow-hidden rounded-card border border-line bg-card shadow-card">
-          <HubMap
-            selectedId={hub.id}
-            focusIds={[hub.id]}
-            labels={false}
-            compact
-            padding={{ top: 40, right: 40, bottom: 24, left: 40 }}
-            className="h-[128px]"
-            attributionClassName="bottom-1 right-1.5"
-          />
-          <div className="p-4">
-            <p className="text-[17px] font-extrabold text-ink">{hub.name}</p>
-            <p className="text-[14px] font-semibold text-ink-muted">
-              {hub.host} · {distanceText(distanceKm(hub.at))}
-            </p>
-          </div>
-        </div>
+        {/* ---------------- Where ---------------- */}
+        {delivering && (
+          <>
+            <SectionTitle>Deliver to</SectionTitle>
+            <div className="overflow-hidden rounded-card border border-line bg-card shadow-card">
+              <CityMap
+                frame={[homeAt]}
+                markers={[{ id: 'home', at: homeAt, kind: 'home', label: user.address.label }]}
+                padding={{ top: 20, right: 20, bottom: 20, left: 20 }}
+                className="h-[120px]"
+                attributionClassName="bottom-1 right-1.5"
+              />
+              <div className="p-4">
+                <p className="text-[17px] font-extrabold text-ink">
+                  {user.address.label} · {user.address.street}
+                </p>
+                <p className="text-[14px] font-semibold text-ink-muted">
+                  {user.address.area} · {user.address.note}
+                </p>
+              </div>
+            </div>
+          </>
+        )}
 
-        {/* ---------------- When ---------------- */}
-        <SectionTitle className="mt-6">Pickup time · {schedule.pickupDay}</SectionTitle>
-        <div className="flex gap-2">
-          {pickupSlots.map((s) => (
-            <Chip
-              key={s.id}
-              active={s.id === slotId}
-              onClick={() => setSlotId(s.id)}
-              className="flex-1 justify-center"
-            >
-              {s.label}
-            </Chip>
-          ))}
-        </div>
+        {/* ---------------- Each farm ---------------- */}
+        <SectionTitle className={delivering ? 'mt-6' : ''}>
+          {t.farmCount === 1 ? 'Your farm' : `Your ${t.farmCount} farms`}
+        </SectionTitle>
+        <ul className="divide-y divide-line rounded-card border border-line bg-card px-4 shadow-card">
+          {groups.map((g) => {
+            const farm = getFarm(g.farmId)
+            return (
+              <li key={g.farmId} className="flex items-center gap-3 py-3.5">
+                <Avatar initials={farm.initials} size={40} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <p className="truncate text-[16px] font-bold text-ink">{farm.call}</p>
+                    <p className="tabular shrink-0 text-[15px] font-extrabold text-ink">{peso(g.subtotal)}</p>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <FulfilmentRow farm={farm} mode={g.mode} wrap />
+                    <span
+                      className={`shrink-0 text-[13px] font-bold ${g.fee > 0 ? 'text-ink-muted' : 'text-primary'}`}
+                    >
+                      {g.fee > 0 ? `+${peso(g.fee)}` : 'Free'}
+                    </span>
+                  </div>
+                </div>
+              </li>
+            )
+          })}
+        </ul>
 
         {/* ---------------- Payment ---------------- */}
         <SectionTitle className="mt-6">Payment</SectionTitle>
@@ -127,9 +127,7 @@ export function Checkout() {
                     <span className={`block text-[16px] font-bold ${active ? 'text-primary' : 'text-ink'}`}>
                       {m.label}
                     </span>
-                    <span className="block truncate text-[13px] font-medium text-ink-muted">
-                      {m.detail}
-                    </span>
+                    <span className="block truncate text-[13px] font-medium text-ink-muted">{m.detail}</span>
                   </span>
                   <span
                     className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
@@ -147,8 +145,8 @@ export function Checkout() {
         <div className="mt-4 flex items-start gap-3 rounded-card bg-surface p-4">
           <MessageSquare size={19} strokeWidth={2.3} className="mt-0.5 shrink-0 text-primary" />
           <p className="text-[14px] font-semibold leading-snug text-ink-muted">
-            We'll text <b className="font-extrabold text-ink">{user.mobile}</b> the moment your
-            order is ready for pickup.
+            We'll text <b className="font-extrabold text-ink">{user.mobile}</b> as each farm packs,
+            hands over to the rider, or is ready for you to collect.
           </p>
         </div>
 
@@ -156,9 +154,9 @@ export function Checkout() {
         <div className="mt-4 space-y-2 rounded-card border border-line bg-card p-4 shadow-card">
           <SumRow label="Produce" value={peso(t.subtotal)} />
           <SumRow
-            label="Pickup Hub fee"
-            value={member ? 'Free' : peso(t.hubFee)}
-            tone={member ? 'primary' : 'ink'}
+            label="Delivery"
+            value={t.delivery > 0 ? peso(t.delivery) : 'Free'}
+            tone={t.delivery > 0 ? 'ink' : 'primary'}
           />
           {member && t.savings > 0 && (
             <SumRow label={<PlusTag label="You saved" />} value={`−${peso(t.savings)}`} tone="primary" />

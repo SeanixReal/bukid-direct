@@ -1,5 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
-import { Minus, PackageCheck, Plus, Sprout, Sunrise } from 'lucide-react'
+import { Minus, PackageCheck, Plus, Sprout, Star, Store, Sunrise, Truck } from 'lucide-react'
+import type { Mode } from '../data/sample'
 
 /* --------------------------------------------------------------------------
    Small shared pieces: cards, buttons, chips, badges, steppers.
@@ -287,6 +288,59 @@ export function Segmented<T extends string>({
         </button>
       ))}
     </div>
+  )
+}
+
+/* --- Delivery / Pick-up switch, like Grab and foodpanda ------------------------ */
+
+export function ModeSwitch({
+  value,
+  onChange,
+  size = 'md',
+  className = '',
+}: {
+  value: Mode
+  onChange: (mode: Mode) => void
+  size?: 'sm' | 'md'
+  className?: string
+}) {
+  const options: { id: Mode; label: string; Icon: typeof Truck }[] = [
+    { id: 'delivery', label: 'Delivery', Icon: Truck },
+    { id: 'pickup', label: 'Pick-up', Icon: Store },
+  ]
+  const sm = size === 'sm'
+  return (
+    <div className={`flex rounded-pill bg-surface p-1 ${className}`} role="group" aria-label="Delivery or pick-up">
+      {options.map(({ id, label, Icon }) => {
+        const active = id === value
+        return (
+          <button
+            key={id}
+            type="button"
+            onClick={() => onChange(id)}
+            aria-pressed={active}
+            className={`tappable flex flex-1 items-center justify-center gap-1.5 rounded-pill font-bold ${
+              sm ? 'h-8 px-3 text-[13px]' : 'h-10 text-[15px]'
+            } ${active ? 'bg-card text-primary shadow-card' : 'text-ink-muted'}`}
+          >
+            <Icon size={sm ? 14 : 17} strokeWidth={2.5} />
+            {label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+/* --- Rating ---------------------------------------------------------------------- */
+
+export function Rating({ value, count, className = '' }: { value: number; count?: number; className?: string }) {
+  return (
+    <span className={`inline-flex items-center gap-1 font-bold ${className}`}>
+      <Star size={14} strokeWidth={0} fill="currentColor" className="text-primary" />
+      <span className="text-ink">{value.toFixed(1)}</span>
+      {count !== undefined && <span className="font-semibold text-ink-muted">({count})</span>}
+    </span>
   )
 }
 

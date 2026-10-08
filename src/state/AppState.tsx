@@ -9,23 +9,30 @@ import {
   type ReactNode,
 } from 'react'
 import {
-  defaultHubId,
   demoBasket,
+  demoModes,
   demoOrder,
-  getProduct,
-  orderStages,
+  getFarm,
+  getProduce,
+  stageAt,
+  stagesFor,
   type ChannelId,
   type LanguageId,
+  type Listing,
+  type Mode,
   type PaymentId,
-  type ProductId,
-  type SlotId,
   type StageId,
 } from '../data/sample'
-import { totals, type Line, type Totals } from './pricing'
+import { addListing, getListing, resetListings } from './catalog'
+import { groupByFarm, totals, type FarmGroup, type Line, type Totals } from './pricing'
 
 /* --------------------------------------------------------------------------
    One small store for the whole prototype. No backend, no persistence - the
    presenter can reset it at any time from the demo panel (D).
+
+   An order is split into one "shipment" per farm, because each farm packs
+   its own part and either books a courier or hands it over at its pickup
+   point. Each shipment walks through stagesFor[mode].
    -------------------------------------------------------------------------- */
 
 interface Profile {
@@ -33,18 +40,26 @@ interface Profile {
   language: LanguageId
 }
 
+export interface Shipment {
+  id: string
+  farmId: string
+  mode: Mode
+  lines: Line[]
+  subtotal: number
+  fee: number
+  /* Index into stagesFor[mode]. */
+  stage: number
+}
+
 export interface Order {
   id: string
+  /* Shown at a pickup point. */
   code: string
-  lines: Line[]
-  totals: Totals
-  member: boolean
-  hubId: string
-  slotId: SlotId
-  payment: PaymentId
   placedAt: string
-  /* Index into orderStages. */
-  stage: number
+  payment: PaymentId
+  member: boolean
+  shipments: Shipment[]
+  totals: Totals
 }
 
 export interface Toast {
@@ -53,42 +68,53 @@ export interface Toast {
   action?: { label: string; to: string }
 }
 
+/* Nong Romy's side of tomorrow: harvest, pack, book the courier. */
+export type SellerStep = 'new' | 'harvested' | 'ready' | 'booked'
+
 interface AppStateValue {
   /* Buyer ---------------------------------------------------------------- */
-  hubId: string
-  setHubId: (id: string) => void
   member: boolean
   setMember: (on: boolean) => void
   profile: Profile
   updateProfile: (patch: Partial<Profile>) => void
-  favorites: ProductId[]
-  toggleFavorite: (id: ProductId) => void
+  favorites: string[]
+  toggleFavorite: (listingId: string) => void
 
-  /* Basket --------------------------------------------------------------- */
+  /* Delivery or Pick-up, like Grab and foodpanda. `prefMode` is the switch
+     on the shop; each farm in the basket can differ. */
+  prefMode: Mode
+  setPrefMode: (mode: Mode) => void
+  modeOf: (farmId: string) => Mode
+  setFarmMode: (farmId: string, mode: Mode) => void
+
+  /* Basket ----------------------------------------------------------------- */
   basket: Line[]
+  groups: FarmGroup[]
   basketTotals: Totals
-  qtyOf: (id: ProductId) => number
-  setQty: (id: ProductId, qty: number) => void
-  addToBasket: (id: ProductId, qty?: number) => void
+  qtyOf: (listingId: string) => number
+  setQty: (listingId: string, qty: number) => void
+  addToBasket: (listingId: string, qty?: number) => void
   fillDemoBasket: () => void
 
-  /* The order ------------------------------------------------------------ */
+  /* The order -------------------------------------------------------------- */
   order: Order | null
-  stageId: StageId | null
-  placeOrder: (opts: { slotId: SlotId; payment: PaymentId }) => Order
+  placeOrder: (opts: { payment: PaymentId }) => Order
   placeDemoOrder: () => Order
+  stageOf: (shipment: Shipment) => StageId
   simRunning: boolean
-  playOrderDay: () => void
-  pauseOrderDay: () => void
-  nextStage: () => void
-  /* Presenter shortcut: put the order straight on a stage. */
-  setStage: (stage: number) => void
-  markPickedUp: () => void
+  playDay: () => void
+  pauseDay: () => void
+  nextStep: () => void
+  /* Presenter shortcut: put every shipment on a stage. */
+  jumpTo: (stage: StageId) => Order
+  markPickedUp: (shipmentId: string) => void
 
-  /* Farmer view: products Nong Romy has ticked off as harvested. */
-  harvested: ProductId[]
-  toggleHarvested: (id: ProductId) => void
-  harvestAll: (ids: ProductId[]) => void
+  /* Seller ------------------------------------------------------------------ */
+  sellerStep: SellerStep
+  setSellerStep: (step: SellerStep) => void
+  /* Bumped when a farmer publishes, so lists re-read the catalog. */
+  listingsVersion: number
+  publishListing: (listing: Omit<Listing, 'id'>) => Listing
 
   /* Little confirmation pill over the bottom of the screen. */
   toast: Toast | null
@@ -101,177 +127,269 @@ interface AppStateValue {
 }
 
 const defaultProfile: Profile = { channel: 'both', language: 'en' }
-
-export const READY_STAGE = orderStages.findIndex((s) => s.id === 'ready')
-const PICKED_UP_STAGE = orderStages.findIndex((s) => s.id === 'pickedUp')
 const TICK_MS = 100
 
 const AppStateContext = createContext<AppStateValue | null>(null)
+/* The delivery-day clock gets its own context: it ticks ten times a second
+   while playing, and only the tracking map needs to hear it. */
+const ClockContext = createContext(0)
 
 function clockTime(date = new Date()) {
   return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
 }
 
+/** Furthest stage the clock alone takes a shipment to. Pick-up orders wait
+    at "Ready for pickup" until the buyer collects. */
+function autoEnd(mode: Mode) {
+  const list = stagesFor[mode]
+  return mode === 'pickup' ? list.indexOf('ready') : list.length - 1
+}
+
+function reached(mode: Mode, elapsed: number) {
+  const list = stagesFor[mode]
+  let i = 0
+  list.forEach((id, idx) => {
+    if (stageAt[id] <= elapsed) i = idx
+  })
+  return Math.min(i, autoEnd(mode))
+}
+
 export function AppStateProvider({ children }: { children: ReactNode }) {
-  const [hubId, setHubId] = useState(defaultHubId)
   const [member, setMember] = useState(false)
   const [profile, setProfile] = useState<Profile>(defaultProfile)
-  const [favorites, setFavorites] = useState<ProductId[]>([])
+  const [favorites, setFavorites] = useState<string[]>([])
+  const [prefMode, setPrefModeState] = useState<Mode>('delivery')
+  const [farmModes, setFarmModes] = useState<Record<string, Mode>>({})
   const [basket, setBasket] = useState<Line[]>([])
   const [order, setOrder] = useState<Order | null>(null)
   const [simRunning, setSimRunning] = useState(false)
-  const [harvested, setHarvested] = useState<ProductId[]>([])
+  const [elapsed, setElapsed] = useState(0)
+  const [sellerStep, setSellerStep] = useState<SellerStep>('new')
+  const [listingsVersion, setListingsVersion] = useState(0)
   const [toast, setToast] = useState<Toast | null>(null)
   const [demoKey, setDemoKey] = useState(0)
-
-  /* Order-day clock, in ms of demo time. A ref so pausing keeps the place. */
-  const elapsed = useRef(0)
   const toastSeq = useRef(0)
 
-  /* --- Order day: walks the order through its stages ------------------ */
+  /* --- Delivery day ------------------------------------------------------ */
   useEffect(() => {
     if (!simRunning) return
-    const id = window.setInterval(() => {
-      elapsed.current += TICK_MS
-      const reached = orderStages.reduce(
-        (last, s, i) => (s.at <= elapsed.current ? i : last),
-        0,
-      )
-      setOrder((o) => (o && reached > o.stage ? { ...o, stage: reached } : o))
-      /* The day ends when the order is waiting at the hub. */
-      if (reached >= READY_STAGE) setSimRunning(false)
-    }, TICK_MS)
+    const id = window.setInterval(() => setElapsed((e) => e + TICK_MS), TICK_MS)
     return () => window.clearInterval(id)
   }, [simRunning])
 
-  /* --- Basket ------------------------------------------------------------ */
+  /* Move shipments on as the clock passes each stage. */
+  useEffect(() => {
+    setOrder((o) => {
+      if (!o) return o
+      let changed = false
+      const shipments = o.shipments.map((s) => {
+        const next = reached(s.mode, elapsed)
+        if (next <= s.stage) return s
+        changed = true
+        return { ...s, stage: next }
+      })
+      return changed ? { ...o, shipments } : o
+    })
+  }, [elapsed])
 
-  const setQty = useCallback((id: ProductId, qty: number) => {
+  /* The day is over once every shipment is as far as the clock takes it. */
+  useEffect(() => {
+    if (simRunning && order && order.shipments.every((s) => s.stage >= autoEnd(s.mode))) {
+      setSimRunning(false)
+    }
+  }, [order, simRunning])
+
+  /* --- Delivery or pick-up -------------------------------------------------- */
+
+  const modeOf = useCallback(
+    (farmId: string): Mode =>
+      getFarm(farmId).pickup ? (farmModes[farmId] ?? prefMode) : 'delivery',
+    [farmModes, prefMode],
+  )
+
+  const setPrefMode = useCallback((mode: Mode) => {
+    setPrefModeState(mode)
+    setFarmModes({})
+  }, [])
+
+  const setFarmMode = useCallback((farmId: string, mode: Mode) => {
+    setFarmModes((m) => ({ ...m, [farmId]: mode }))
+  }, [])
+
+  /* --- Basket ---------------------------------------------------------------- */
+
+  const setQty = useCallback((listingId: string, qty: number) => {
     setBasket((lines) => {
       const value = Math.max(0, Math.round(qty * 10) / 10)
-      if (value === 0) return lines.filter((l) => l.productId !== id)
-      const existing = lines.find((l) => l.productId === id)
+      if (value === 0) return lines.filter((l) => l.listingId !== listingId)
+      const existing = lines.find((l) => l.listingId === listingId)
       if (existing) return lines.map((l) => (l === existing ? { ...l, qty: value } : l))
-      return [...lines, { productId: id, qty: value }]
+      return [...lines, { listingId, qty: value }]
     })
   }, [])
 
-  const addToBasket = useCallback((id: ProductId, qty?: number) => {
-    const product = getProduct(id)
-    if (!product || product.outOfStock) return
-    const step = qty ?? (product.unit === 'kg' ? 1 : product.step)
+  const addToBasket = useCallback((listingId: string, qty?: number) => {
+    const listing = getListing(listingId)
+    if (!listing || listing.outOfStock) return
+    const item = getProduce(listing.produceId)
+    const add = qty ?? (item.unit === 'kg' ? 1 : item.step)
     setBasket((lines) => {
-      const existing = lines.find((l) => l.productId === id)
-      if (existing) {
-        return lines.map((l) => (l === existing ? { ...l, qty: l.qty + step } : l))
-      }
-      return [...lines, { productId: id, qty: step }]
+      const existing = lines.find((l) => l.listingId === listingId)
+      if (existing) return lines.map((l) => (l === existing ? { ...l, qty: l.qty + add } : l))
+      return [...lines, { listingId, qty: add }]
     })
   }, [])
 
   const qtyOf = useCallback(
-    (id: ProductId) => basket.find((l) => l.productId === id)?.qty ?? 0,
+    (listingId: string) => basket.find((l) => l.listingId === listingId)?.qty ?? 0,
     [basket],
   )
 
   const fillDemoBasket = useCallback(() => {
     setBasket(demoBasket.map((l) => ({ ...l })))
+    setPrefModeState('delivery')
+    setFarmModes({ ...demoModes })
   }, [])
 
-  const basketTotals = useMemo(() => totals(basket, member), [basket, member])
+  const groups = useMemo(
+    () => groupByFarm(basket, member, modeOf),
+    // listingsVersion: a newly published listing can be in the basket.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [basket, member, modeOf, listingsVersion],
+  )
+  const basketTotals = useMemo(() => totals(groups), [groups])
 
-  /* --- The order ---------------------------------------------------------- */
+  /* --- The order ---------------------------------------------------------------- */
 
   const startOrder = useCallback(
-    (lines: Line[], opts: { slotId: SlotId; payment: PaymentId }) => {
+    (orderGroups: FarmGroup[], payment: PaymentId) => {
       const placed: Order = {
         id: demoOrder.id,
         code: demoOrder.code,
-        lines,
-        totals: totals(lines, member),
-        member,
-        hubId,
-        slotId: opts.slotId,
-        payment: opts.payment,
         placedAt: clockTime(),
-        stage: 0,
+        payment,
+        member,
+        shipments: orderGroups.map((g) => ({
+          id: `${demoOrder.id}-${getFarm(g.farmId).initials}`,
+          farmId: g.farmId,
+          mode: g.mode,
+          lines: g.lines,
+          subtotal: g.subtotal,
+          fee: g.fee,
+          stage: 0,
+        })),
+        totals: totals(orderGroups),
       }
-      elapsed.current = 0
       setSimRunning(false)
+      setElapsed(0)
       setOrder(placed)
       setBasket([])
       return placed
     },
-    [member, hubId],
+    [member],
   )
 
   const placeOrder = useCallback(
-    (opts: { slotId: SlotId; payment: PaymentId }) => startOrder(basket, opts),
-    [basket, startOrder],
+    ({ payment }: { payment: PaymentId }) => startOrder(groups, payment),
+    [groups, startOrder],
   )
 
   /* For the presenter: an order straight away, from whatever is in the
-     basket or else the demo basket. */
-  const placeDemoOrder = useCallback(
-    () =>
-      startOrder(basket.length ? basket : demoBasket.map((l) => ({ ...l })), {
-        slotId: 'early',
-        payment: 'gcash',
-      }),
-    [basket, startOrder],
+     basket or else the demo basket (three farms, one of them pick-up). */
+  const placeDemoOrder = useCallback(() => {
+    if (basket.length) return startOrder(groups, 'gcash')
+    const demoModeOf = (farmId: string): Mode =>
+      getFarm(farmId).pickup ? (demoModes[farmId] ?? 'delivery') : 'delivery'
+    return startOrder(groupByFarm(demoBasket, member, demoModeOf), 'gcash')
+  }, [basket.length, groups, member, startOrder])
+
+  const stageOf = useCallback((s: Shipment) => stagesFor[s.mode][s.stage], [])
+
+  const playDay = useCallback(() => {
+    if (!order) return
+    const finished = order.shipments.every((s) => s.stage >= autoEnd(s.mode))
+    if (finished) {
+      /* Replaying a finished day starts it again from "Order placed". */
+      setElapsed(0)
+      setOrder({ ...order, shipments: order.shipments.map((s) => ({ ...s, stage: 0 })) })
+    }
+    setSimRunning(true)
+  }, [order])
+
+  const pauseDay = useCallback(() => setSimRunning(false), [])
+
+  const nextStep = useCallback(() => {
+    const marks = [...new Set(Object.values(stageAt))].sort((a, b) => a - b)
+    const next = marks.find((m) => m > elapsed)
+    if (next !== undefined) {
+      setElapsed(next)
+      return
+    }
+    /* Past the last delivery: hand over anything waiting at a pickup point. */
+    setOrder((o) =>
+      o
+        ? {
+            ...o,
+            shipments: o.shipments.map((s) =>
+              s.mode === 'pickup' ? { ...s, stage: stagesFor.pickup.indexOf('done') } : s,
+            ),
+          }
+        : o,
+    )
+  }, [elapsed])
+
+  const jumpTo = useCallback(
+    (stage: StageId) => {
+      const target = order ?? placeDemoOrder()
+      /* A little way into "On the way", so the rider is visibly moving. */
+      const at = stage === 'onTheWay' ? stageAt.onTheWay + 2500 : stageAt[stage]
+      const moved: Order = {
+        ...target,
+        shipments: target.shipments.map((s) => {
+          const list = stagesFor[s.mode]
+          const want = list.indexOf(stage)
+          return { ...s, stage: want >= 0 ? want : reached(s.mode, at) }
+        }),
+      }
+      setElapsed(Number.isFinite(at) ? at : 0)
+      setOrder(moved)
+      setSimRunning(stage === 'onTheWay')
+      return moved
+    },
+    [order, placeDemoOrder],
   )
 
-  const playOrderDay = useCallback(() => {
-    setOrder((o) => {
-      if (!o) return o
-      /* Replaying a finished day starts it again from "placed". */
-      if (o.stage >= READY_STAGE) {
-        elapsed.current = 0
-        return { ...o, stage: 0 }
-      }
-      elapsed.current = Math.max(elapsed.current, orderStages[o.stage].at)
-      return o
-    })
-    setSimRunning(true)
+  const markPickedUp = useCallback((shipmentId: string) => {
+    setOrder((o) =>
+      o
+        ? {
+            ...o,
+            shipments: o.shipments.map((s) =>
+              s.id === shipmentId ? { ...s, stage: stagesFor[s.mode].indexOf('done') } : s,
+            ),
+          }
+        : o,
+    )
   }, [])
 
-  const pauseOrderDay = useCallback(() => setSimRunning(false), [])
+  /* --- Seller ----------------------------------------------------------------------- */
 
-  const nextStage = useCallback(() => {
-    setOrder((o) => {
-      if (!o || o.stage >= PICKED_UP_STAGE) return o
-      const stage = o.stage + 1
-      if (stage < PICKED_UP_STAGE) elapsed.current = orderStages[stage].at
-      return { ...o, stage }
-    })
+  const publishListing = useCallback((draft: Omit<Listing, 'id'>) => {
+    const listing: Listing = { ...draft, id: `${draft.farmId}-${draft.produceId}-${Date.now()}` }
+    addListing(listing)
+    setListingsVersion((v) => v + 1)
+    return listing
   }, [])
 
-  const setStage = useCallback((stage: number) => {
-    setSimRunning(false)
-    elapsed.current = orderStages[Math.min(stage, READY_STAGE)].at
-    setOrder((o) => (o ? { ...o, stage } : o))
-  }, [])
-
-  const markPickedUp = useCallback(() => {
-    setSimRunning(false)
-    setOrder((o) => (o ? { ...o, stage: PICKED_UP_STAGE } : o))
-  }, [])
-
-  /* --- Everything else ----------------------------------------------------- */
+  /* --- Everything else ------------------------------------------------------------------ */
 
   const updateProfile = useCallback((patch: Partial<Profile>) => {
     setProfile((p) => ({ ...p, ...patch }))
   }, [])
 
-  const toggleFavorite = useCallback((id: ProductId) => {
+  const toggleFavorite = useCallback((id: string) => {
     setFavorites((f) => (f.includes(id) ? f.filter((x) => x !== id) : [...f, id]))
   }, [])
-
-  const toggleHarvested = useCallback((id: ProductId) => {
-    setHarvested((h) => (h.includes(id) ? h.filter((x) => x !== id) : [...h, id]))
-  }, [])
-
-  const harvestAll = useCallback((ids: ProductId[]) => setHarvested(ids), [])
 
   const showToast = useCallback((text: string, action?: Toast['action']) => {
     toastSeq.current += 1
@@ -281,50 +399,55 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const dismissToast = useCallback(() => setToast(null), [])
 
   const resetDemo = useCallback(() => {
-    elapsed.current = 0
+    resetListings()
     setSimRunning(false)
-    setHubId(defaultHubId)
+    setElapsed(0)
     setMember(false)
     setProfile(defaultProfile)
     setFavorites([])
+    setPrefModeState('delivery')
+    setFarmModes({})
     setBasket([])
     setOrder(null)
-    setHarvested([])
+    setSellerStep('new')
+    setListingsVersion((v) => v + 1)
     setToast(null)
     setDemoKey((k) => k + 1)
   }, [])
 
-  const stageId = order ? orderStages[order.stage].id : null
-
   const value = useMemo<AppStateValue>(
     () => ({
-      hubId,
-      setHubId,
       member,
       setMember,
       profile,
       updateProfile,
       favorites,
       toggleFavorite,
+      prefMode,
+      setPrefMode,
+      modeOf,
+      setFarmMode,
       basket,
+      groups,
       basketTotals,
       qtyOf,
       setQty,
       addToBasket,
       fillDemoBasket,
       order,
-      stageId,
       placeOrder,
       placeDemoOrder,
+      stageOf,
       simRunning,
-      playOrderDay,
-      pauseOrderDay,
-      nextStage,
-      setStage,
+      playDay,
+      pauseDay,
+      nextStep,
+      jumpTo,
       markPickedUp,
-      harvested,
-      toggleHarvested,
-      harvestAll,
+      sellerStep,
+      setSellerStep,
+      listingsVersion,
+      publishListing,
       toast,
       showToast,
       dismissToast,
@@ -332,31 +455,35 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       demoKey,
     }),
     [
-      hubId,
       member,
       profile,
       updateProfile,
       favorites,
       toggleFavorite,
+      prefMode,
+      setPrefMode,
+      modeOf,
+      setFarmMode,
       basket,
+      groups,
       basketTotals,
       qtyOf,
       setQty,
       addToBasket,
       fillDemoBasket,
       order,
-      stageId,
       placeOrder,
       placeDemoOrder,
+      stageOf,
       simRunning,
-      playOrderDay,
-      pauseOrderDay,
-      nextStage,
-      setStage,
+      playDay,
+      pauseDay,
+      nextStep,
+      jumpTo,
       markPickedUp,
-      harvested,
-      toggleHarvested,
-      harvestAll,
+      sellerStep,
+      listingsVersion,
+      publishListing,
       toast,
       showToast,
       dismissToast,
@@ -365,11 +492,25 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     ],
   )
 
-  return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>
+  return (
+    <AppStateContext.Provider value={value}>
+      <ClockContext.Provider value={elapsed}>{children}</ClockContext.Provider>
+    </AppStateContext.Provider>
+  )
 }
 
 export function useApp() {
   const ctx = useContext(AppStateContext)
   if (!ctx) throw new Error('useApp must be used inside <AppStateProvider>')
   return ctx
+}
+
+/** Milliseconds of demo time since the order was placed. */
+export function useSimClock() {
+  return useContext(ClockContext)
+}
+
+/** How far along its route a shipment's rider is, 0 to 1. */
+export function riderProgress(elapsed: number) {
+  return Math.max(0, Math.min(1, (elapsed - stageAt.onTheWay) / (stageAt.done - stageAt.onTheWay)))
 }

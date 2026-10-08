@@ -7,28 +7,20 @@ import {
   Languages,
   MapPin,
   Sprout,
+  Store,
   Tractor,
   Wallet,
   type LucideIcon,
 } from 'lucide-react'
 import { Screen } from '../components/Screen'
 import { Wordmark } from '../components/Logo'
-import { Avatar, PlusTag, Segmented } from '../components/ui'
+import { Avatar, ModeSwitch, PlusTag, Segmented } from '../components/ui'
 import { useApp } from '../state/AppState'
-import {
-  brand,
-  getHub,
-  languages,
-  notifyChannels,
-  peso,
-  plusPlan,
-  user,
-} from '../data/sample'
+import { brand, languages, notifyChannels, peso, plusPlan, user } from '../data/sample'
 
 export function Account() {
   const navigate = useNavigate()
-  const { hubId, member, profile, updateProfile, favorites } = useApp()
-  const hub = getHub(hubId)
+  const { member, profile, updateProfile, favorites, prefMode, setPrefMode, showToast } = useApp()
 
   return (
     <Screen nav>
@@ -40,7 +32,7 @@ export function Account() {
             <h1 className="text-[26px] font-extrabold leading-tight tracking-tight text-ink">
               {user.fullName}
             </h1>
-            <p className="text-[15px] font-semibold text-ink-muted">{user.area}</p>
+            <p className="text-[15px] font-semibold text-ink-muted">{user.address.area}</p>
             <p className="text-[13px] font-semibold text-ink-faint">{user.since}</p>
           </div>
         </div>
@@ -70,7 +62,7 @@ export function Account() {
             <span className="min-w-0 flex-1">
               <span className="block text-[17px] font-extrabold text-on-dark">Join {plusPlan.name}</span>
               <span className="block text-[14px] font-semibold text-on-dark-muted">
-                10% off every harvest, no hub fee
+                10% off every harvest, {peso(plusPlan.deliveryDiscount)} off delivery
               </span>
             </span>
             <ChevronRight size={20} strokeWidth={2.6} className="shrink-0 text-on-dark" />
@@ -79,8 +71,16 @@ export function Account() {
 
         {/* ---------------- Settings ---------------- */}
         <div className="mt-5 divide-y divide-line rounded-card border border-line bg-card px-4 shadow-card">
-          <Row Icon={MapPin} label="Pickup Hub" onClick={() => navigate('/hubs')} value={hub.name} />
-          <Row Icon={Bell} label="Ready-for-pickup alerts">
+          <Row
+            Icon={MapPin}
+            label="Delivery address"
+            onClick={() => showToast('Address book is not part of this prototype')}
+            value={`${user.address.label} · ${user.address.street}`}
+          />
+          <Row Icon={Store} label="Usually">
+            <ModeSwitch value={prefMode} onChange={setPrefMode} />
+          </Row>
+          <Row Icon={Bell} label="Order updates">
             <Segmented
               options={notifyChannels}
               value={profile.channel}
@@ -105,16 +105,16 @@ export function Account() {
         {/* ---------------- The other side ---------------- */}
         <button
           type="button"
-          onClick={() => navigate('/farmer')}
+          onClick={() => navigate('/seller')}
           className="tappable mt-3 flex w-full items-center gap-3.5 rounded-card border border-line bg-card p-4 text-left shadow-card"
         >
           <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
             <Tractor size={23} strokeWidth={2.2} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[16px] font-bold text-ink">Farmer view</span>
+            <span className="block text-[16px] font-bold text-ink">Sell on Bukid Direct</span>
             <span className="block text-[14px] font-medium text-ink-muted">
-              See the app from Nong Romy's side
+              The Seller Center, as Nong Romy sees it
             </span>
           </span>
           <ChevronRight size={20} strokeWidth={2.6} className="shrink-0 text-ink-faint" />

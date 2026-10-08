@@ -1,25 +1,17 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowRight, Check, HandCoins, MapPin, ShoppingBasket, Sunrise, type LucideIcon } from 'lucide-react'
+import { ArrowRight, HandCoins, MapPin, Store, Sunrise, Truck, Users, type LucideIcon } from 'lucide-react'
 import { BackButton, Screen, ScreenFooter } from '../components/Screen'
-import { Button } from '../components/ui'
+import { Button, ModeSwitch } from '../components/ui'
 import { Logo } from '../components/Logo'
-import { HubMap } from '../components/HubMap'
+import { CityMap } from '../components/CityMap'
 import { useApp } from '../state/AppState'
-import {
-  distanceKm,
-  distanceText,
-  farmerShare,
-  getHub,
-  hubs,
-  schedule,
-} from '../data/sample'
+import { farmerShare, farms, homeAt, user } from '../data/sample'
 
 const STEPS = 2
 
 export function Onboarding() {
   const navigate = useNavigate()
-  const { hubId, setHubId } = useApp()
   const [step, setStep] = useState(0)
 
   const finish = () => navigate('/shop')
@@ -34,7 +26,7 @@ export function Onboarding() {
               <ArrowRight size={19} strokeWidth={2.6} />
             </Button>
           ) : (
-            <Button onClick={finish}>Start shopping at {getHub(hubId).name}</Button>
+            <Button onClick={finish}>Start shopping</Button>
           )}
         </ScreenFooter>
       }
@@ -61,7 +53,7 @@ export function Onboarding() {
       </div>
 
       <div key={step} className="animate-screen-in px-5 pb-6">
-        {step === 0 ? <HowItWorks /> : <ChooseHub value={hubId} onChange={setHubId} />}
+        {step === 0 ? <HowItWorks /> : <WhereToDeliver />}
       </div>
     </Screen>
   )
@@ -71,19 +63,19 @@ export function Onboarding() {
 
 const steps: { Icon: LucideIcon; title: string; detail: string }[] = [
   {
-    Icon: ShoppingBasket,
-    title: "Shop this week's harvest",
-    detail: `Order by ${schedule.cutoff}. Prices are agreed with the farmers.`,
+    Icon: Users,
+    title: 'Shop from Cebu farmers',
+    detail: 'Compare prices and fill one basket from as many farms as you like.',
   },
   {
     Icon: Sunrise,
-    title: 'The farmers pick it for you',
-    detail: 'Harvested the morning of your pickup, not days before.',
+    title: 'They harvest it for you',
+    detail: 'Picked the morning it leaves the farm, not days before.',
   },
   {
-    Icon: MapPin,
-    title: 'Collect it at your Pickup Hub',
-    detail: 'Show your 4-digit code. In and out in two minutes.',
+    Icon: Truck,
+    title: 'Delivered, or pick it up',
+    detail: 'Farms send it by Lalamove or Maxim, or you collect it from their stall.',
   },
 ]
 
@@ -92,10 +84,10 @@ function HowItWorks() {
     <>
       <Logo size={44} className="text-primary" />
       <h1 className="mt-4 text-[30px] font-extrabold leading-[1.12] tracking-tight text-ink">
-        Straight from the farm to a hub near you
+        Fresh from the farm, straight to you
       </h1>
       <p className="mt-2 text-[16px] font-medium leading-snug text-ink-muted">
-        Cebu farmers harvest what you order. You pick it up the next afternoon, still fresh.
+        A market where Cebu farmers sell directly to you - no middlemen.
       </p>
 
       <ol className="mt-6 space-y-3">
@@ -131,71 +123,56 @@ function HowItWorks() {
   )
 }
 
-/* --- 2. Choose a Pickup Hub ---------------------------------------------------- */
+/* --- 2. Where to deliver --------------------------------------------------- */
 
-function ChooseHub({ value, onChange }: { value: string; onChange: (id: string) => void }) {
+function WhereToDeliver() {
+  const { prefMode, setPrefMode } = useApp()
+  const withPickup = farms.filter((f) => f.pickup).length
+
   return (
     <>
       <h1 className="text-[28px] font-extrabold leading-tight tracking-tight text-ink">
-        Choose your Pickup Hub
+        Delivery or pick-up?
       </h1>
       <p className="mt-1.5 text-[16px] font-medium leading-snug text-ink-muted">
-        Pick the one closest to home or work. You can change it any time.
+        Choose your usual. You can switch any time, even farm by farm in your basket.
       </p>
 
-      <HubMap
-        selectedId={value}
-        onSelect={onChange}
-        compact
-        padding={{ top: 60, right: 36, bottom: 34, left: 36 }}
-        className="mt-4 h-[250px] rounded-card ring-1 ring-inset ring-line"
+      <ModeSwitch value={prefMode} onChange={setPrefMode} className="mt-4" />
+
+      <CityMap
+        frame={[homeAt]}
+        markers={[{ id: 'home', at: homeAt, kind: 'home', label: user.address.label }]}
+        padding={{ top: 30, right: 30, bottom: 30, left: 30 }}
+        className="mt-4 h-[200px] rounded-card ring-1 ring-inset ring-line"
       />
 
-      <ul className="mt-3 space-y-2.5">
-        {hubs.map((hub) => {
-          const active = hub.id === value
-          return (
-            <li key={hub.id}>
-              <button
-                type="button"
-                onClick={() => onChange(hub.id)}
-                aria-pressed={active}
-                className={`tappable flex w-full items-center gap-3 rounded-card border p-3.5 text-left ${
-                  active ? 'border-primary bg-primary-soft' : 'border-line bg-card'
-                }`}
-              >
-                <span
-                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
-                    active ? 'bg-primary text-on-primary' : 'bg-surface text-ink-muted'
-                  }`}
-                >
-                  <MapPin size={20} strokeWidth={2.4} />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className={`block text-[16px] font-bold ${active ? 'text-primary' : 'text-ink'}`}>
-                    {hub.name}
-                  </span>
-                  <span className="block truncate text-[13px] font-medium text-ink-muted">
-                    {hub.host}
-                  </span>
-                </span>
-                <span className="shrink-0 text-right">
-                  <span className="block text-[13px] font-bold text-ink">
-                    {distanceText(distanceKm(hub.at))}
-                  </span>
-                  <span
-                    className={`ml-auto mt-1 flex h-6 w-6 items-center justify-center rounded-full border-2 ${
-                      active ? 'border-primary bg-primary text-on-primary' : 'border-line'
-                    }`}
-                  >
-                    {active && <Check size={14} strokeWidth={3.2} />}
-                  </span>
-                </span>
-              </button>
-            </li>
-          )
-        })}
-      </ul>
+      <div className="mt-3 flex items-center gap-3 rounded-card border border-line bg-card p-4 shadow-card">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
+          <MapPin size={20} strokeWidth={2.4} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[16px] font-bold text-ink">
+            {user.address.label} · {user.address.street}
+          </span>
+          <span className="block truncate text-[13px] font-medium text-ink-muted">
+            {user.address.area} · {user.address.note}
+          </span>
+        </span>
+      </div>
+
+      <div className="mt-3 flex items-start gap-3 rounded-card bg-surface p-4">
+        {prefMode === 'pickup' ? (
+          <Store size={20} strokeWidth={2.3} className="mt-0.5 shrink-0 text-primary" />
+        ) : (
+          <Truck size={20} strokeWidth={2.3} className="mt-0.5 shrink-0 text-primary" />
+        )}
+        <p className="text-[14px] font-semibold leading-snug text-ink-muted">
+          {prefMode === 'pickup'
+            ? `${withPickup} farms have a stall or farm gate you can collect from - pick-up is always free.`
+            : 'Each farm books a Lalamove or Maxim rider and you can follow it live. Far farms share one trip for the whole city, so delivery stays cheap.'}
+        </p>
+      </div>
     </>
   )
 }
