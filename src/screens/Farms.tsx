@@ -6,7 +6,7 @@ import { useApp } from '../state/AppState'
 import { allListings } from '../state/catalog'
 import { distanceKm, distanceText, farms, peso } from '../data/sample'
 
-/* Every seller on the marketplace, with how each one gets an order to you. */
+/* Every farm on the marketplace, with how each one gets an order to you. */
 export function Farms() {
   const navigate = useNavigate()
   useApp()
@@ -14,9 +14,9 @@ export function Farms() {
   return (
     <Screen nav>
       <div className="px-5 pb-4 pt-2">
-        <h1 className="text-[28px] font-extrabold tracking-tight text-ink">Sellers</h1>
+        <h1 className="text-[28px] font-extrabold tracking-tight text-ink">Farms</h1>
         <p className="text-[15px] font-semibold text-ink-muted">
-          {farms.length} farmers and fishers selling this week
+          {farms.length} Cebu farms selling this week
         </p>
       </div>
 
@@ -73,7 +73,7 @@ export function Farms() {
             <Tractor size={24} strokeWidth={2.2} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[17px] font-extrabold text-on-dark">Farmer or fisher?</span>
+            <span className="block text-[17px] font-extrabold text-on-dark">Are you a farmer?</span>
             <span className="block text-[13.5px] font-semibold leading-snug text-on-dark-muted">
               Sell direct. List in minutes, we book the riders.
             </span>

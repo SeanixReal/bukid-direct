@@ -65,12 +65,12 @@ const steps: { Icon: LucideIcon; title: string; detail: string }[] = [
   {
     Icon: Users,
     title: 'Order with a tap',
-    detail: 'No market trip. One basket, many sellers.',
+    detail: 'No market trip. One basket, many farms.',
   },
   {
     Icon: Sunrise,
-    title: 'Straight from the source',
-    detail: 'Farmers and fishers, no middlemen.',
+    title: 'Straight from the farm',
+    detail: 'No middlemen. Picked fresh for you.',
   },
   {
     Icon: Truck,
@@ -84,10 +84,10 @@ function HowItWorks() {
     <>
       <Logo size={44} className="text-primary" />
       <h1 className="mt-4 text-[30px] font-extrabold leading-[1.12] tracking-tight text-ink">
-        Fresh food, straight from the source
+        Fresh from the farm, straight to you
       </h1>
       <p className="mt-2 text-[16px] font-medium leading-snug text-ink-muted">
-        Fruit, vegetables and fish from Cebu farmers and fishers.
+        Fruit and vegetables from Cebu farmers.
       </p>
 
       <ol className="mt-6 space-y-3">
@@ -116,7 +116,7 @@ function HowItWorks() {
         <HandCoins size={22} strokeWidth={2.3} className="shrink-0 text-primary" />
         <p className="text-[14px] font-semibold leading-snug text-on-secondary">
           <b className="font-extrabold">{Math.round(farmerShare * 100)}%</b> of what you pay for food goes
-          straight to the seller.
+          straight to the farmer.
         </p>
       </div>
     </>
@@ -169,7 +169,7 @@ function WhereToDeliver() {
         )}
         <p className="text-[14px] font-semibold leading-snug text-ink-muted">
           {prefMode === 'pickup'
-            ? `${withPickup} sellers have a stall or gate to collect from. Always free.`
+            ? `${withPickup} farms have a stall or gate to collect from. Always free.`
             : "Lalamove brings it, at Lalamove's own price. Follow your rider live."}
         </p>
       </div>

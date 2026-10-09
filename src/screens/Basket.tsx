@@ -23,7 +23,7 @@ export function Basket() {
           </span>
           <h2 className="mt-6 text-[24px] font-extrabold tracking-tight text-ink">Your basket is empty</h2>
           <p className="mt-1.5 text-[16px] font-medium leading-snug text-ink-muted">
-            Mix and match from as many sellers as you like. Order by {schedule.cutoff} for{' '}
+            Mix and match from as many farms as you like. Order by {schedule.cutoff} for{' '}
             {schedule.day.toLowerCase()}.
           </p>
           <Button className="mt-7" onClick={() => navigate('/shop')}>
@@ -79,7 +79,7 @@ export function Basket() {
           </div>
           <p className="text-[14px] font-semibold leading-snug text-on-secondary">
             <b className="font-extrabold">{peso(t.toFarmers)}</b> of this goes straight to{' '}
-            {t.farmCount === 1 ? 'the seller' : `${t.farmCount} sellers`}.
+            {t.farmCount === 1 ? 'the farm' : `${t.farmCount} farms`}.
           </p>
         </div>
 
@@ -88,7 +88,7 @@ export function Basket() {
           <SumRow label="Produce" value={peso(t.regular)} />
           {t.sukiOff > 0 && <SumRow label="Suki deals" value={`−${peso(t.sukiOff)}`} tone="primary" />}
           <SumRow
-            label={`Delivery (${groups.filter((g) => g.mode === 'delivery').length} of ${t.farmCount} sellers)`}
+            label={`Delivery (${groups.filter((g) => g.mode === 'delivery').length} of ${t.farmCount} farms)`}
             value={delivery > 0 ? peso(delivery) : 'Free'}
             tone={delivery > 0 ? 'ink' : 'primary'}
           />
@@ -276,7 +276,7 @@ function Header({ count, farmCount }: { count?: number; farmCount?: number }) {
       {count ? (
         <p className="text-[15px] font-semibold text-ink-muted">
           {count} {count === 1 ? 'item' : 'items'} from {farmCount}{' '}
-          {farmCount === 1 ? 'seller' : 'sellers'} · each sends its own part
+          {farmCount === 1 ? 'farm' : 'farms'} · each sends its own part
         </p>
       ) : null}
     </div>

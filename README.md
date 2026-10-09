@@ -3,14 +3,14 @@
 > Fresh from the Farm.
 
 A clickable **interface prototype** of a local food marketplace for Cebu,
-built for a Technopreneurship pitch. Farmers and fishers sell fruit,
-vegetables and fish directly to buyers - no middleman, no trip to the market,
-just a tap on the phone. A buyer fills one basket from several sellers, and
-each seller's part is either **delivered** by Lalamove or **picked up** at the
-seller's stall or gate, like Delivery / Pick-up on Grab and foodpanda.
+built for a Technopreneurship pitch. Cebu farmers sell fruit and vegetables
+directly to buyers - no middleman, no trip to the market, just a tap on the
+phone. A buyer fills one basket from several farms, and each farm's part is
+either **delivered** by Lalamove or **picked up** at the farm's stall or gate,
+like Delivery / Pick-up on Grab and foodpanda.
 
 It is a demo of the UI only: no backend, no accounts, no payments, no courier
-integration. Every seller, listing, rider and order in it is invented, and the
+integration. Every farm, listing, rider and order in it is invented, and the
 prices are illustrative. The street map is real, though, and the whole thing works with the
 Wi-Fi off.
 
@@ -50,18 +50,18 @@ files**, allow it once so every press of S saves a file.
 2. **Onboarding** — how the marketplace works, then *Delivery or Pick-up?*
    with her address on the map.
 3. **Shop** — the Delivery | Pick-up switch, *Selling this week*, *Fresh this
-   morning*, the *Fish & seafood* chip, and every listing showing who sells it.
+   morning*, and every listing showing which farm sells it.
    Open the tomatoes: Nong Romy sells them for ₱60, and *Also sold by* shows
    Nong Jun's for ₱55.
 4. **Basket** (press **D** → *Fill basket* for the prepared one) — grouped by
-   seller like Shopee. Nong Romy's vegetables and Nong Berto's bangus come by
-   Lalamove, Nang Fe's greens are set to Pick-up at her farm gate. Each seller
+   farm like Shopee. Nong Romy's vegetables and Lito & Grace's mangoes come by
+   Lalamove, Nang Fe's greens are set to Pick-up at her farm gate. Each farm
    shows its delivery fee - Lalamove's fare for the trip - and an *Add ₱X
    more* nudge.
 5. **Checkout** → **Place order** → **"Salamat!"**, with a pick-up code for
    Nang Fe's part.
 6. **Track my order**, then **D** → **Play delivery day**. Over about 25
-   seconds every seller packs; Nang Fe's part turns orange - *Ready for
+   seconds every farm packs; Nang Fe's part turns orange - *Ready for
    pickup* - and when the riders set off, the **live map** takes over: Nong
    Romy's Lalamove rider going from his Carbon Market stall to Joy's door on
    real Cebu streets, then *Delivered!* and a star rating.
@@ -73,11 +73,11 @@ files**, allow it once so every press of S saves a file.
    shown as a guide), publish - and it is in the shop. Under *Grow your
    sales*, **Feature tomatoes · ₱99** puts them in the shop's *Featured this
    week* row.
-8. Extras for Q&A: **Sellers** tab, a seller's page with reviews, **Direct
+8. Extras for Q&A: **Farms** tab, a farm's page with reviews, **Direct
    Plus** (join, then *Fill basket*: the service fee goes, Nong Romy's suki
-   deal comes off, and the welcome voucher pays Nong Berto's delivery).
+   deal comes off, and the welcome voucher pays Nong Romy's delivery).
 9. **"How do you make money?"** - after an order is placed, the presenter
-   panel shows *This order's money*: what the sellers, Lalamove and Bukid
+   panel shows *This order's money*: what the farms, Lalamove and Bukid
    Direct each get from it. The full maths is [below](#how-bukid-direct-makes-money).
 
 **Reset everything** in the panel puts it back to the splash screen.
@@ -89,12 +89,12 @@ files**, allow it once so every press of S saves a file.
 
 ## How delivery works (and why)
 
-- **Bukid Direct books Lalamove for the seller.** At checkout the app asks
+- **Bukid Direct books Lalamove for the farm.** At checkout the app asks
   Lalamove's business API for the trip's price and shows exactly that - no
   markup. When the buyer pays, the rider is booked for the next morning, and
-  Bukid Direct pays Lalamove out of the buyer's payment. The seller only packs
+  Bukid Direct pays Lalamove out of the buyer's payment. The farmer only packs
   and hands over; no warehouses or hubs to run.
-- **Far sellers hand over in the city.** Farms in Dalaguete, Balamban or
+- **Far farms hand over in the city.** Farms in Dalaguete, Balamban or
   Carcar bring the day's orders to a city spot - Nong Romy's Carbon Market
   stall, for example - and the riders collect them there, so each buyer pays
   a short city trip.
@@ -102,10 +102,10 @@ files**, allow it once so every press of S saves a file.
   km for the first 5 km, ₱5 a km after - applied to the road distance on the
   map (`lalamoveFare` in `sample.ts`), so ₱68–106 in the demo. The real app
   shows the live quote, which can include traffic or demand surcharges.
-- **Every seller sets a free-delivery mark** (the seller then pays the rider),
+- **Every farm sets a free-delivery mark** (the farm then pays the rider),
   and the basket nudges buyers towards it.
-- **Pick-up is free** at sellers with a stall or gate in reach (Carbon Market,
-  Pasil Fish Market, Pardo Market, Busay).
+- **Pick-up is free** at farms with a stall or gate in reach (Carbon Market,
+  Pardo Market, Busay).
 
 Lalamove is named in text only - no logo - and nothing implies a partnership.
 Maxim and other couriers could be added if they offer a business account.
@@ -280,9 +280,9 @@ the water/rain tokens are gone.
 ## Changing the sample data
 
 **All invented content lives in [`src/data/sample.ts`](src/data/sample.ts):**
-the buyer and her address, the six sellers (five farms and a fishing family)
-with their delivery terms and suki deals, the 20 kinds of produce, the 26
-listings (several sellers offer the same produce at different prices, two are
+the buyer and her address, the five farms
+with their delivery terms and suki deals, the 17 kinds of produce, the 23
+listings (several farms offer the same produce at different prices, two are
 featured), the order stages and their
 timing, past orders, the fees, Direct Plus, and the Seller Center. Every
 total in the app is worked out from those numbers.

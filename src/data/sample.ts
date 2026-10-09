@@ -6,9 +6,8 @@
    farmers, listings, prices, couriers, riders, orders, people - is invented.
 
    How the marketplace works:
-     - Every seller - a farm or a fishing family - has its own shop, prices
-       and delivery terms.
-     - The same produce can be sold by several sellers at different prices.
+     - Every farm has its own shop, prices and delivery terms.
+     - The same produce can be sold by several farms at different prices.
      - Each farm's part of an order is delivered by Lalamove, or picked up
        at the farm's own pickup point - like Delivery / Pick-up on Grab or
        foodpanda.
@@ -108,7 +107,7 @@ export const plusPlan = {
   perks: [
     { id: 'fee', title: 'No service fee', detail: 'Save ₱10 every order' },
     { id: 'welcome', title: 'Free first delivery', detail: 'On an order of ₱200 or more' },
-    { id: 'suki', title: 'Suki deals', detail: 'Members-only vouchers from sellers' },
+    { id: 'suki', title: 'Suki deals', detail: 'Members-only vouchers from farms' },
     { id: 'early', title: 'First pick', detail: 'New harvests a day early' },
     { id: 'visit', title: 'Farm visit days', detail: 'Twice a year' },
   ],
@@ -129,7 +128,7 @@ export function lalamoveFare(km: number) {
   return Math.round(49 + 6 * Math.min(km, 5) + 5 * Math.max(0, km - 5))
 }
 
-/* --- Sellers: farms and fisherfolk ------------------------------------------- */
+/* --- Farms ---------------------------------------------------------------- */
 
 export type Mode = 'delivery' | 'pickup'
 
@@ -316,43 +315,13 @@ export const farms: Farm[] = [
       { name: 'Dodong M.', stars: 4, text: 'Easy pick-up at Pardo on my way home.' },
     ],
   },
-  {
-    id: 'berto',
-    farmer: 'Berto Ompad',
-    call: 'Nong Berto',
-    initials: 'BO',
-    place: 'Cordova, Mactan',
-    kmToCity: 20,
-    since: 'Selling since 2026',
-    story: 'A fishing family from Cordova. The catch comes in at dawn and leaves the same morning.',
-    rating: 4.8,
-    reviewCount: 87,
-    sold: '320 sold',
-    delivery: {
-      fee: lalamoveFare(5.5),
-      freeOver: 1000,
-      window: '8 – 10 AM',
-      handover: { place: 'Pasil Fish Market stall', at: [10.2915, 123.8935] },
-      rider: { name: 'Mae C.', plate: 'GBC 3391' },
-    },
-    pickup: {
-      place: 'Pasil Fish Market stall',
-      detail: 'Stall 4, near the main gate',
-      at: [10.2915, 123.8935],
-      hours: '5 – 10 AM',
-    },
-    reviews: [
-      { name: 'Annie R.', stars: 5, text: 'The squid still had its shine. So fresh.' },
-      { name: 'Oscar D.', stars: 5, text: 'Bangus came cleaned and scaled, as asked.' },
-    ],
-  },
 ]
 
 /* --- Produce types -------------------------------------------------------------
    What can be sold. Each has a flat illustration in ProduceArt.tsx, a unit
    it is sold in, and how much one tap of + adds. */
 
-export type CategoryId = 'vegetables' | 'leafy' | 'root' | 'fruits' | 'seafood' | 'pantry'
+export type CategoryId = 'vegetables' | 'leafy' | 'root' | 'fruits' | 'pantry'
 
 export const categories: { id: CategoryId | 'all'; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -360,7 +329,6 @@ export const categories: { id: CategoryId | 'all'; label: string }[] = [
   { id: 'leafy', label: 'Leafy greens' },
   { id: 'root', label: 'Root crops' },
   { id: 'fruits', label: 'Fruits' },
-  { id: 'seafood', label: 'Fish & seafood' },
   { id: 'pantry', label: 'Eggs & rice' },
 ]
 
@@ -383,9 +351,6 @@ export type ProduceId =
   | 'mangoes'
   | 'saba'
   | 'calamansi'
-  | 'bangus'
-  | 'squid'
-  | 'shrimp'
   | 'eggs'
   | 'rice'
 
@@ -420,15 +385,12 @@ export const produce: Produce[] = [
   { id: 'mangoes', name: 'Mangoes', local: 'Mangga', category: 'fruits', tint: 'cream', unit: 'kg', step: 0.5 },
   { id: 'saba', name: 'Saba bananas', local: 'Saging saba', category: 'fruits', tint: 'cream', unit: 'bunch', size: 'about 10 pieces', step: 1 },
   { id: 'calamansi', name: 'Calamansi', local: 'Lemonsito', category: 'fruits', tint: 'leaf', unit: 'pack', size: '250 g', step: 1 },
-  { id: 'bangus', name: 'Milkfish', local: 'Bangus', category: 'seafood', tint: 'mint', unit: 'kg', step: 0.5 },
-  { id: 'squid', name: 'Squid', local: 'Nokus', category: 'seafood', tint: 'cream', unit: 'kg', step: 0.5 },
-  { id: 'shrimp', name: 'Shrimp', local: 'Pasayan', category: 'seafood', tint: 'sand', unit: 'kg', step: 0.5 },
   { id: 'eggs', name: 'Free-range eggs', local: 'Itlog', category: 'pantry', tint: 'mint', unit: 'dozen', step: 1 },
   { id: 'rice', name: 'Brown rice', local: 'Bugas', category: 'pantry', tint: 'sand', unit: 'bag', size: '2 kg', step: 1 },
 ]
 
 /* --- Listings -------------------------------------------------------------------
-   What each seller has right now. Several sellers can offer the same
+   What each farm has right now. Several farms can offer the same
    produce - the product page shows the other offers side by side. Prices sit
    a little under typical Cebu market prices: no middleman's cut. */
 
@@ -437,7 +399,7 @@ export interface Listing {
   produceId: ProduceId
   farmId: string
   price: number
-  /* "Fresh today" - picked, laid or caught today. Marked in orange, one of
+  /* "Fresh today" - picked or laid today. Marked in orange, one of
      only two uses of orange. */
   freshToday?: boolean
   outOfStock?: boolean
@@ -479,22 +441,16 @@ export const listings: Listing[] = [
   { id: 'jun-eggs', produceId: 'eggs', farmId: 'jun', price: 100, about: 'Native-chicken eggs, a little smaller with rich yolks.' },
   { id: 'jun-calamansi', produceId: 'calamansi', farmId: 'jun', price: 16, about: 'Calamansi from the trees along the farm path. Extra juicy this month.' },
   { id: 'jun-mangoes', produceId: 'mangoes', farmId: 'jun', price: 100, featured: true, about: 'Talisay mangoes, a touch smaller than the Balamban ones, just as sweet.' },
-
-  /* Nong Berto - the morning's catch from Cordova */
-  { id: 'berto-bangus', produceId: 'bangus', farmId: 'berto', price: 170, freshToday: true, about: 'Silvery bangus from the family fish pens. Cleaned and scaled if you ask.' },
-  { id: 'berto-squid', produceId: 'squid', farmId: 'berto', price: 250, freshToday: true, about: "Small, tender nokus from last night's catch. Grill it, or cook it in its ink." },
-  { id: 'berto-shrimp', produceId: 'shrimp', farmId: 'berto', price: 350, about: 'Medium pasayan. Sweet in sinigang, or steamed with garlic.' },
 ]
 
-/* What "Fill basket" in the presenter panel puts in the basket: two farms and
-   a fishing family, one of them set to Pick-up, so both ways of getting an
-   order show. */
+/* What "Fill basket" in the presenter panel puts in the basket: three farms,
+   one of them set to Pick-up, so both ways of getting an order show. */
 export const demoBasket: { listingId: string; qty: number }[] = [
   { listingId: 'romy-tomatoes', qty: 1 },
   { listingId: 'romy-potatoes', qty: 2 },
   { listingId: 'fe-lettuce', qty: 1 },
   { listingId: 'fe-pechay', qty: 2 },
-  { listingId: 'berto-bangus', qty: 1 },
+  { listingId: 'ybanez-mangoes', qty: 1 },
 ]
 export const demoModes: Record<string, Mode> = { fe: 'pickup' }
 

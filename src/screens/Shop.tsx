@@ -82,7 +82,7 @@ export function Shop() {
           {greeting()}, {user.firstName}!
         </p>
         <h1 className="mt-0.5 text-[28px] font-extrabold leading-[1.12] tracking-tight text-ink">
-          Fresh from the source. No middlemen.
+          Fresh from the farm. No middlemen.
         </h1>
 
         <label className="mt-4 flex h-[52px] items-center gap-2.5 rounded-pill bg-card px-4 shadow-card ring-1 ring-inset ring-line focus-within:ring-2 focus-within:ring-primary">
@@ -90,7 +90,7 @@ export function Shop() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search food or sellers"
+            placeholder="Search food or farms"
             className="min-w-0 flex-1 bg-transparent text-[16px] font-semibold outline-none"
           />
           {query && (
@@ -115,7 +115,7 @@ export function Shop() {
         ))}
       </div>
 
-      {/* ---------------- The sellers ---------------- */}
+      {/* ---------------- The farms ---------------- */}
       {browsing && (
         <section className="mt-6">
           <SectionTitle
@@ -130,7 +130,7 @@ export function Shop() {
               </button>
             }
           >
-            {pickup ? 'Sellers with pick-up' : 'Selling this week'}
+            {pickup ? 'Farms with pick-up' : 'Selling this week'}
           </SectionTitle>
           <div className="no-scrollbar flex gap-3 overflow-x-auto px-5 pb-2">
             {sellers.map((f) => (

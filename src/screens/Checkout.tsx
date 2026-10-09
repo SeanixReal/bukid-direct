@@ -44,7 +44,7 @@ export function Checkout() {
     >
       <TopBar
         title="Checkout"
-        subtitle={`${t.count} items from ${t.farmCount} ${t.farmCount === 1 ? 'seller' : 'sellers'}`}
+        subtitle={`${t.count} items from ${t.farmCount} ${t.farmCount === 1 ? 'farm' : 'farms'}`}
         fallback="/basket"
       />
 
@@ -75,7 +75,7 @@ export function Checkout() {
 
         {/* ---------------- Each farm ---------------- */}
         <SectionTitle className={delivering ? 'mt-6' : ''}>
-          {t.farmCount === 1 ? 'Your seller' : `Your ${t.farmCount} sellers`}
+          {t.farmCount === 1 ? 'Your farm' : `Your ${t.farmCount} farms`}
         </SectionTitle>
         <ul className="divide-y divide-line rounded-card border border-line bg-card px-4 shadow-card">
           {groups.map((g) => {

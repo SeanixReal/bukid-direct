@@ -205,100 +205,6 @@ function Sprig({ deg, len }: { deg: number; len: number }) {
   )
 }
 
-/** A whole fish on its side, head to the left - bangus. */
-function Fish({ x, y, s = 1, deg = 0, back = false }: { x: number; y: number; s?: number; deg?: number; back?: boolean }) {
-  return (
-    <g transform={`translate(${x} ${y}) rotate(${deg}) scale(${s})`}>
-      <path d="M28 -3L44 -13C41 -5 41 5 44 13L28 3Z" fill="var(--art-fish-dark)" />
-      <path d="M-6 -12C-2 -20 7 -21 13 -11Z" fill="var(--art-fish-dark)" />
-      <path
-        d="M-34 0C-28 -11 -10 -15 6 -13C16 -12 24 -7 30 -3L30 3C24 7 16 12 6 13C-10 15 -28 11 -34 0Z"
-        fill={back ? 'var(--art-fish-dark)' : 'var(--art-fish)'}
-      />
-      {!back && (
-        <>
-          <path d="M-31 3C-18 10 2 12 24 5C10 13 -14 15 -27 8Z" fill="var(--art-fish-belly)" />
-          <Shine cx={-2} cy={-8} rx={14} ry={2.2} deg={-4} />
-          <path d="M-21 -8C-25 -3 -25 4 -21 9" stroke="var(--art-fish-dark)" strokeWidth={1.5} fill="none" strokeLinecap="round" />
-          <circle cx={-27} cy={-2} r={2.6} fill={C.shine} />
-          <circle cx={-27} cy={-2} r={1.3} fill="var(--ink)" />
-        </>
-      )}
-    </g>
-  )
-}
-
-/** A squid on its side, tentacles trailing to the left - nokus. */
-function Squid({ x, y, s = 1, deg = 0, back = false }: { x: number; y: number; s?: number; deg?: number; back?: boolean }) {
-  const tone = back ? 'var(--art-squid-dark)' : 'var(--art-squid)'
-  return (
-    <g transform={`translate(${x} ${y}) rotate(${deg}) scale(${s})`}>
-      <g stroke={tone} strokeWidth={2.4} fill="none" strokeLinecap="round">
-        <path d="M-8 -4C-18 -8 -26 -5 -34 -9" />
-        <path d="M-8 -1C-19 -2 -28 1 -36 -1" />
-        <path d="M-8 2C-18 4 -26 8 -34 6" />
-        <path d="M-8 5C-16 9 -22 13 -30 13" />
-        <path d="M-8 0C-22 -3 -36 3 -46 -2" strokeWidth={1.5} />
-      </g>
-      <ellipse cx={-6} cy={0} rx={7} ry={6.5} fill={tone} />
-      <path d="M30 -6L46 -13L42 0L46 13L30 6Z" fill="var(--art-squid-dark)" />
-      <path d="M-2 -8C12 -11 30 -8 42 0C30 8 12 11 -2 8Z" fill={tone} />
-      {!back && (
-        <>
-          <Shine cx={18} cy={-4} rx={12} ry={1.8} deg={-3} />
-          <g fill="var(--art-squid-dark)">
-            <circle cx={8} cy={2} r={1.2} />
-            <circle cx={16} cy={-2} r={1} />
-            <circle cx={24} cy={2.5} r={1.1} />
-            <circle cx={31} cy={-1} r={0.9} />
-          </g>
-          <circle cx={-7} cy={-2} r={2.2} fill="var(--ink)" />
-          <circle cx={-6.3} cy={-2.6} r={0.7} fill={C.shine} />
-        </>
-      )}
-    </g>
-  )
-}
-
-/** A curled shrimp, head to the upper left - pasayan. */
-function Shrimp({ x, y, s = 1, deg = 0, back = false }: { x: number; y: number; s?: number; deg?: number; back?: boolean }) {
-  const tone = back ? 'var(--art-shrimp-dark)' : 'var(--art-shrimp)'
-  return (
-    <g transform={`translate(${x} ${y}) rotate(${deg}) scale(${s})`}>
-      <g stroke="var(--art-shrimp-dark)" strokeWidth={1.1} fill="none" strokeLinecap="round">
-        <path d="M-21 -12C-30 -28 0 -34 26 -24" />
-        <path d="M-20 -11C-34 -22 -36 4 -30 14" />
-      </g>
-      <path d="M1 13L-10 12L-8 18L-12 24L0 21Z" fill="var(--art-shrimp-dark)" />
-      <path
-        d="M-16 -13C0 -20 22 -12 22 4C22 16 12 22 0 21L1 13C8 13 13 9 13 3C13 -5 2 -9 -12 -5Z"
-        fill={tone}
-      />
-      <path d="M-20 -12L-31 -16L-20 -8Z" fill="var(--art-shrimp-dark)" />
-      <ellipse cx={-15} cy={-9} rx={7} ry={5.5} transform="rotate(-15 -15 -9)" fill={tone} />
-      {!back && (
-        <>
-          <g stroke="var(--art-shrimp-dark)" strokeWidth={1.1} strokeLinecap="round" opacity={0.6}>
-            <path d="M2 -15L0 -7" />
-            <path d="M10 -12L6 -5" />
-            <path d="M17 -6L11 0" />
-            <path d="M21 2L13 4" />
-            <path d="M19 11L12 9" />
-            <path d="M12 18L8 13" />
-          </g>
-          <g stroke="var(--art-shrimp-dark)" strokeWidth={1.2} strokeLinecap="round">
-            <path d="M-6 -5L-10 1" />
-            <path d="M0 -6L-3 1" />
-            <path d="M6 -3L3 3" />
-          </g>
-          <Shine cx={9} cy={-12} rx={7} ry={1.8} deg={18} />
-          <circle cx={-17} cy={-11} r={1.6} fill="var(--ink)" />
-        </>
-      )}
-    </g>
-  )
-}
-
 /* --- The pictures ------------------------------------------------------------ */
 
 const ART: Record<ProduceId, () => ReactNode> = {
@@ -572,33 +478,6 @@ const ART: Record<ProduceId, () => ReactNode> = {
         <ellipse cx={96} cy={88.5} rx={2.2} ry={1.3} />
         <ellipse cx={26} cy={87} rx={2.2} ry={1.3} transform="rotate(-15 26 87)" />
       </g>
-    </>
-  ),
-
-  /* Fish on a banana leaf, the way it is laid out at the market. */
-  bangus: () => (
-    <>
-      <Ground rx={46} />
-      <path d={leaf([14, 80], 94, 11, -5)} fill={C.leaf} />
-      <path d="M17 79.5L104 72" stroke={C.leafDark} strokeWidth={1.3} opacity={0.45} strokeLinecap="round" />
-      <Fish x={66} y={50} s={0.8} deg={-6} back />
-      <Fish x={58} y={66} deg={3} />
-    </>
-  ),
-
-  squid: () => (
-    <>
-      <Ground rx={44} />
-      <Squid x={66} y={50} s={0.85} deg={-10} back />
-      <Squid x={60} y={68} deg={4} />
-    </>
-  ),
-
-  shrimp: () => (
-    <>
-      <Ground rx={42} />
-      <Shrimp x={44} y={56} s={0.95} deg={-10} back />
-      <Shrimp x={74} y={62} s={1.05} deg={8} />
     </>
   ),
 }

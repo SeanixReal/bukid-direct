@@ -117,7 +117,7 @@ const badgeSize = {
   md: 'h-[30px] gap-1.5 px-3 text-[13px]',
 }
 
-/** "Fresh today" - picked, laid or caught today. A quiet white pill with an
+/** "Fresh today" - picked or laid today. A quiet white pill with an
     orange sunrise: one of the two places the accent is allowed. */
 export function FreshBadge({
   size = 'md',

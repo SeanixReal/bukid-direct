@@ -154,11 +154,11 @@ function ListingDetail({ id }: { id: string }) {
         {listing.outOfStock && (
           <div className="mt-4 rounded-card bg-danger-soft p-4 text-[14px] font-semibold leading-snug text-danger">
             {farm.call} is sold out this week.
-            {others.length > 0 && ' Other sellers still have some - see below.'}
+            {others.length > 0 && ' Other farms still have some - see below.'}
           </div>
         )}
 
-        {/* ---------------- The seller ---------------- */}
+        {/* ---------------- The farm ---------------- */}
         <button
           type="button"
           onClick={() => navigate(`/farm/${farm.id}`)}
@@ -190,7 +190,7 @@ function ListingDetail({ id }: { id: string }) {
           </span>
         </button>
 
-        {/* ---------------- Other sellers ---------------- */}
+        {/* ---------------- Other farms ---------------- */}
         {others.length > 0 && (
           <>
             <h2 className="mt-6 flex items-center gap-2 text-[18px] font-extrabold tracking-tight text-ink">
