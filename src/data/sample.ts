@@ -30,7 +30,7 @@ export type LatLng = [number, number]
 
 export const brand = {
   name: 'Bukid Direct',
-  tagline: 'Fresh from the Farm.',
+  tagline: 'Your suki, one tap away',
   plus: 'Direct Plus',
 }
 

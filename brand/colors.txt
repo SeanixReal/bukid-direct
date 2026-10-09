@@ -1,5 +1,5 @@
 Bukid Direct - colour palette (from src/theme.css)
-Fresh from the Farm.
+Your suki, one tap away
 Typeface: Plus Jakarta Sans (ExtraBold for headings and "Bukid", Regular for "Direct")
 
 BRAND GREENS

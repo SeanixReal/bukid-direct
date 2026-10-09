@@ -1,6 +1,6 @@
 # Bukid Direct
 
-> Fresh from the Farm.
+> Your suki, one tap away
 
 A clickable **interface prototype** of a local food marketplace for Cebu,
 built for a Technopreneurship pitch. Cebu farmers sell fruit and vegetables
@@ -208,7 +208,7 @@ DA-7's market price monitoring.
 | | |
 | --- | --- |
 | Name | **Bukid Direct** |
-| Tagline | Fresh from the Farm. |
+| Tagline | Your suki, one tap away |
 | Subscription | **Direct Plus** |
 | Tone | Friendly, trustworthy, local. Plain English with the occasional Bisaya touch: *Salamat!* on the order confirmation, *Andam na!* when a pick-up is ready, *Maayong buntag* on the shop, *Nong/Nang* for the farmers, Bisaya produce names. |
 | Typeface | Plus Jakarta Sans - ExtraBold for headings and "Bukid", Regular for "Direct". |

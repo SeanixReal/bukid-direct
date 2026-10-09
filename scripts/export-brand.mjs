@@ -277,7 +277,7 @@ const sheet = page(
   `<div id="art" class="sheet">
     <header>
       <div class="mark">${fill(markGreen)}</div>
-      <div><h1><b>Bukid</b> Direct</h1><p>Fresh from the Farm. &middot; Colour palette &middot; Typeface: Plus Jakarta Sans</p></div>
+      <div><h1><b>Bukid</b> Direct</h1><p>Your suki, one tap away &middot; Colour palette &middot; Typeface: Plus Jakarta Sans</p></div>
     </header>
     ${palette
       .map((g) => `<h2>${g.group}</h2><div class="row">${g.items.map(swatch).join('')}</div>`)
@@ -314,7 +314,7 @@ screenshot(sheet, 'color-palette.png', 1440, measure(sheet).h, false)
 /* Plain hex list, for typing into a Canva Brand Kit. */
 const lines = [
   'Bukid Direct - colour palette (from src/theme.css)',
-  'Fresh from the Farm.',
+  'Your suki, one tap away',
   'Typeface: Plus Jakarta Sans (ExtraBold for headings and "Bukid", Regular for "Direct")',
   '',
   ...palette.flatMap((g) => [
