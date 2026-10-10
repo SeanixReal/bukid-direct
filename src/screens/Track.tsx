@@ -187,7 +187,7 @@ function TrackShipment({ id }: { id: string }) {
                     <button
                       type="button"
                       aria-label={`Call ${rider.name}`}
-                      onClick={() => showToast(`Calling ${rider.name} through ${courier.name}...`)}
+                      onClick={() => showToast(`Calling ${rider.name} through ${courier.app}...`)}
                       className="tappable flex h-11 w-11 items-center justify-center rounded-full bg-card text-primary shadow-card"
                     >
                       <Phone size={19} strokeWidth={2.4} />
@@ -197,12 +197,12 @@ function TrackShipment({ id }: { id: string }) {
                   {/* Live tracking and rider updates: the courier's own app */}
                   <button
                     type="button"
-                    onClick={() => showToast(`Opening ${courier.name} for live tracking...`)}
+                    onClick={() => showToast(`Opening ${courier.app} for live tracking...`)}
                     className="tappable mt-2.5 flex w-full items-center gap-3 rounded-card border border-line px-3 py-2.5 text-left"
                   >
                     <ExternalLink size={18} strokeWidth={2.4} className="shrink-0 text-primary" />
                     <span className="min-w-0 flex-1">
-                      <span className="block text-[14.5px] font-bold text-ink">Open in {courier.name}</span>
+                      <span className="block text-[14.5px] font-bold text-ink">Open in {courier.app}</span>
                       <span className="block text-[12.5px] font-semibold text-ink-muted">
                         Live tracking and rider updates
                       </span>

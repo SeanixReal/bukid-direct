@@ -357,7 +357,7 @@ export function Seller() {
   )
 }
 
-/** What the buyer chose: "Maxim · 11 AM – 1 PM", or "Pick-up · 1 – 6 PM". */
+/** What the buyer chose: "GrabExpress · 11 AM – 1 PM", or "Pick-up · 1 – 6 PM". */
 function plan(o: SellerOrder, market: Market) {
   if (o.mode === 'pickup') return `Pick-up · ${market.hours}`
   return [o.courier && getCourier(o.courier).name, o.slot && slotText(o.slot)].filter(Boolean).join(' · ')

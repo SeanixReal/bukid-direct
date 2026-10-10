@@ -11,17 +11,19 @@ sellers are local producers - farmers and fishing families selling their own
 harvest or catch.
 
 A buyer fills one basket from many stalls. Each market's part is either
-**delivered** by one rider - from a courier the buyer picks: **Maxim, Angkas
-Padala or Lalamove** - or **picked up** at the stalls, like Delivery /
-Pick-up on Grab and foodpanda. Buyer and stalls agree on the courier, the
-time and the handoff before the stalls pack.
+**delivered** by one rider - from a courier the buyer picks: **GrabExpress
+or Lalamove** - or **picked up** at the stalls, like Delivery / Pick-up on
+GrabFood and foodpanda. Buyer and stalls agree on the courier, the time and
+the handoff before the stalls pack.
 
 The app follows the pitch deck (Canva, "Presentation - PresGo") and its
 revised problem statement. It started as Bukid Direct, a farms-only
 marketplace - the repo and the Netlify address still carry that name.
 
-It is a demo of the UI only: no backend, no accounts, no payments, no courier
-integration. Every seller, listing, rider and order in it is invented, and the
+It is a demo of the UI only: no backend, no accounts, no payments, and no
+riders are really booked - [Booking riders through the courier
+APIs](#booking-riders-through-the-courier-apis) shows how the real app would
+do it. Every seller, listing, rider and order in it is invented, and the
 prices are illustrative. The markets and the street map are real, though, and
 the whole thing works with the Wi-Fi off.
 
@@ -73,8 +75,8 @@ files**, allow it once so every press of S saves a file.
    one fare**. From **Pasil Fish Market**: Nong Berto's bangus, set to
    Pick-up.
 5. **Checkout** — the deck's **Choose your delivery option**. For each
-   market: Delivery or Pick-up, the courier (**Maxim, Angkas Padala or
-   Lalamove**, each at its own fare for the trip, the cheapest marked) and
+   market: Delivery or Pick-up, the courier (**GrabExpress or Lalamove**,
+   each at its own fare for the trip, the cheapest marked) and
    the time. For the order: the **handoff** (*Hand it to me* or *Leave at the
    gate*). Each stall confirms these before packing. Switch a courier and the
    total changes. → **Place order** → **"Salamat!"**, with a pick-up code for
@@ -121,30 +123,58 @@ files**, allow it once so every press of S saves a file.
   example - so a basket from three Carbon stalls is one stop, one rider and
   one fare.
 - **The buyer picks the courier.** At checkout each market's part shows
-  **Maxim, Angkas Padala and Lalamove**, each at its own fare for the trip -
-  no markup - starting on the courier that market's stalls usually use.
+  **GrabExpress and Lalamove**, each at its own fare for the trip - no
+  markup - starting on the courier that market's stalls usually use.
   Buyers who find delivery too dear take the cheapest, or pick up for free.
 - **Buyer and stalls agree** on the courier, the time and the handoff: the
   buyer chooses them at checkout, each stall confirms them in the Seller
   Center before it packs.
 - **PresGo books the rider once the stalls have packed**, through the
-  courier's business account, and pays the courier out of the buyer's
-  payment. The buyer then sees the rider's name and estimated arrival time;
+  courier's delivery API ([below](#booking-riders-through-the-courier-apis)),
+  and pays the courier out of the buyer's payment. The buyer then sees the rider's name and estimated arrival time;
   live tracking and rider updates are in the courier's own app (*Open in
   Lalamove*). Sellers only pack and hand over; no warehouses or hubs to run.
 - **Fares come from each courier's rate** applied to the road distance from
   the market on the map (`couriers` and each market's `km` in `sample.ts`),
-  so ₱76–118 in the demo. Lalamove's are its published Cebu motorcycle rates -
-  ₱49 base, ₱6 a km for the first 5 km, ₱5 a km after. **Maxim's and Angkas
-  Padala's are placeholders**: neither publishes a Cebu rate card, so check
-  their apps before the pitch. The real app shows each courier's live quote,
-  which can include traffic or demand surcharges.
+  so ₱79–132 in the demo. Lalamove's are its published Cebu motorcycle rates -
+  ₱49 base, ₱6 a km for the first 5 km, ₱5 a km after. **GrabExpress's is a
+  placeholder** (₱60 + ₱7 a km): Grab publishes no Cebu rate card - its API
+  quotes each trip - so check the Grab app before the pitch. The real app
+  shows each courier's live quote, which can include traffic or demand
+  surcharges.
 - **Pick-up is free**: the buyer shows one code at each stall, which has the
   bag ready.
 
-Maxim, Angkas Padala and Lalamove are named in text only - no logos - and
-nothing implies a partnership. Other couriers could be added if they offer a
-business account.
+GrabExpress and Lalamove are named in text only - no logos - and nothing
+implies a partnership. Other couriers could be added if they offer a booking
+API.
+
+### Booking riders through the courier APIs
+
+Both couriers let another app quote, book, follow and cancel a motorcycle
+delivery in the Philippines, Cebu included, through a delivery API - the
+[GrabExpress API](https://developer.grab.com/docs/grab-express/) and the
+[Lalamove API](https://developers.lalamove.com/). In the real PresGo, each
+step of the demo maps onto a call from PresGo's server:
+
+| Step in PresGo | GrabExpress API | Lalamove API (v3) |
+| --- | --- | --- |
+| Checkout: price each market's trip, handover point to the buyer's door | `POST /v1/deliveries/quotes` | `POST /v3/quotations` |
+| The stalls have packed: book the courier the buyer picked | `POST /v1/deliveries` | `POST /v3/orders` |
+| Rider assigned, picked up, delivered | webhook to PresGo | webhook to PresGo |
+| The rider's name and plate for the buyer | `GET /v1/deliveries/{deliveryID}` | `GET /v3/orders/{orderId}/drivers/{driverId}` |
+| A stall cancels | `DELETE /v1/deliveries/{deliveryID}` | `DELETE /v3/orders/{orderId}` |
+
+- **Quotes replace the rate cards.** Checkout would show the price each API
+  quotes for the trip, so the fares in `couriers` are only for the demo. Quote
+  again just before booking: the morning's fare can differ from the one the
+  buyer saw at night.
+- **Access.** GrabExpress: an OAuth 2.0 client ID and secret from Grab's
+  developer portal; production access is granted per country and city.
+  Lalamove: an API key and secret from the Lalamove Partner Portal, every
+  request signed and sent for the `PH` market; production needs a topped-up
+  Lalamove wallet.
+- **Keys stay on PresGo's server**, never in the app.
 
 ---
 
@@ -169,12 +199,12 @@ passes it on to the courier.
 | Perk | Paid by | Cost to PresGo |
 | --- | --- | --- |
 | No service fee | PresGo | ₱10 per order, not collected |
-| Welcome voucher: one market's delivery free on the first order of ₱200 or more | PresGo | once per member, ₱76–118 in the sample data |
+| Welcome voucher: one market's delivery free on the first order of ₱200 or more | PresGo | once per member, ₱79–132 in the sample data |
 | Suki deals - members-only vouchers a stall posts for its regulars (e.g. ₱15 off ₱300) | the stall | nothing |
 | First pick of the morning's catch and harvest | - | nothing |
 
 **Why free delivery only once, not every month.** At a 5% commission a ₱500
-order earns ₱25, and one courier trip costs ₱76–118. Free delivery every
+order earns ₱25, and one courier trip costs ₱79–132. Free delivery every
 month would cost more than a member brings in. The first draft - four free
 deliveries a month, two ₱20 vouchers and 5% off everything - would have cost
 about ₱460 a month per member against ₱149 coming in (₱49 + 5% of four ₱500
@@ -233,9 +263,9 @@ per active buyer. For example, ₱40,000 a month of running costs (a
 placeholder - use your own budget) needs about 730 active buyers.
 
 Placeholders worth settling before the pitch: the four prices above, the
-2.5% payment fee, each market's `km`, and the Maxim and Angkas Padala rates
-in `couriers` - check all three couriers' current Cebu rates in their apps,
-and check the food prices against DA-7's market price monitoring.
+2.5% payment fee, each market's `km`, and the GrabExpress rate in
+`couriers` - check both couriers' current Cebu rates in their apps - and the
+food prices against DA-7's market price monitoring.
 
 ---
 
@@ -317,7 +347,7 @@ the water/rain tokens are gone.
 ## Changing the sample data
 
 **All invented content lives in [`src/data/sample.ts`](src/data/sample.ts):**
-the buyer and her address, the three couriers and their rates, the four
+the buyer and her address, the two couriers and their rates, the four
 markets (where they are, how far from Joy, delivery times, pick-up hours),
 the eight stalls with their suki deals and reviews, the 25 kinds of food, the
 31 listings (several stalls offer the same food at different prices, two are

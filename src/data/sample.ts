@@ -14,9 +14,9 @@
      - Vegetables, fruit, meat, fish and seafood, root crops, rice and eggs -
        and the same food from several stalls at different prices.
      - A buyer fills one basket from many stalls. Each market's part comes
-       with one rider, from a courier the buyer picks - Maxim, Angkas Padala
-       or Lalamove - or is picked up at the stalls, like Delivery / Pick-up
-       on Grab or foodpanda.
+       with one rider, from a courier the buyer picks - GrabExpress or
+       Lalamove - or is picked up at the stalls, like Delivery / Pick-up on
+       GrabFood or foodpanda.
      - Buyer and stalls agree on the courier, the time and the handoff: the
        buyer chooses them at checkout and each stall confirms before packing.
      - Once the stalls have packed, PresGo books the chosen courier at its
@@ -122,40 +122,46 @@ export const plusPlan = {
 }
 
 /* --- Delivery ----------------------------------------------------------------
-   The buyer picks the courier for each market's part of an order: Maxim,
-   Angkas Padala or Lalamove, at the courier's own fare - PresGo adds nothing
+   The buyer picks the courier for each market's part of an order:
+   GrabExpress or Lalamove, at the courier's own fare - PresGo adds nothing
    on top. The stalls confirm the courier, time and handoff; once they have
    packed, PresGo books that courier, and the buyer sees the rider's name and
    arrival time. Live tracking and rider updates are in the courier's own
-   app. Names only: no logos, and nothing here implies a partnership. */
+   app. Names only: no logos, and nothing here implies a partnership.
 
-export type CourierId = 'maxim' | 'angkas' | 'lalamove'
+   Both couriers take bookings from other apps through a delivery API - the
+   GrabExpress API and the Lalamove API - so the real PresGo would ask each
+   for a quote at checkout, book the chosen one once the stalls have packed,
+   and hear back about the rider through the courier's webhook. The README
+   has the steps. This demo books nothing: fares come from the rates below. */
+
+export type CourierId = 'grab' | 'lalamove'
 
 export interface Courier {
   id: CourierId
   name: string
+  /* The app the buyer opens for live tracking: "Open in Grab". */
+  app: string
   /* Motorcycle fare for a trip of `km` road kilometres. Traffic and demand
      surcharges can apply - the real app shows each courier's live quote. */
   fare: (km: number) => number
 }
 
-/* In the order the pitch deck names them. */
 export const couriers: Courier[] = [
-  /* PLACEHOLDER rate: Maxim does not publish a Cebu rate card. Check the
-     Maxim app before the pitch. */
-  { id: 'maxim', name: 'Maxim', fare: (km) => Math.round(45 + 6.5 * km) },
-  /* PLACEHOLDER rate: check the Angkas app for current Cebu Padala fares. */
-  { id: 'angkas', name: 'Angkas Padala', fare: (km) => Math.round(52 + 8 * Math.max(0, km - 2)) },
+  /* PLACEHOLDER rate: Grab does not publish a GrabExpress rate card for
+     Cebu - its API quotes each trip. Check the Grab app before the pitch. */
+  { id: 'grab', name: 'GrabExpress', app: 'Grab', fare: (km) => Math.round(60 + 7 * km) },
   /* Lalamove's published motorcycle rates for Cebu: ₱49 base, ₱6 a km for
      the first 5 km, ₱5 a km after that. */
   {
     id: 'lalamove',
     name: 'Lalamove',
+    app: 'Lalamove',
     fare: (km) => Math.round(49 + 6 * Math.min(km, 5) + 5 * Math.max(0, km - 5)),
   },
 ]
 
-/** "Maxim, Angkas Padala or Lalamove" */
+/** "GrabExpress or Lalamove" */
 export const courierNames = `${couriers
   .slice(0, -1)
   .map((c) => c.name)
@@ -234,7 +240,7 @@ export const markets: Market[] = [
     known: 'The morning catch from the Visayan seas',
     at: [10.28964, 123.89142],
     km: 5.8,
-    usual: 'maxim',
+    usual: 'grab',
     handover: 'the Belgium Street entrance',
     slots: [
       [8, 10],
@@ -251,7 +257,7 @@ export const markets: Market[] = [
     known: 'Danggit and dried fish',
     at: [10.29517, 123.8929],
     km: 5.0,
-    usual: 'angkas',
+    usual: 'grab',
     handover: 'the Tres de Abril Street side',
     slots: [
       [10, 12],
@@ -268,7 +274,7 @@ export const markets: Market[] = [
     known: 'The south side neighbourhood market',
     at: [10.27429, 123.85005],
     km: 10.3,
-    usual: 'maxim',
+    usual: 'lalamove',
     handover: 'the N. Bacalso Avenue side',
     slots: [
       [9, 11],
@@ -757,8 +763,8 @@ export const sellerView = {
      buyer chose. Joy's order joins this list when it includes something
      from Nong Romy. */
   orders: [
-    { buyer: 'Mark T.', area: 'Banilad', mode: 'delivery', courier: 'maxim', slot: [11, 13], items: 'Tomatoes 2 kg, Cabbage 1 kg', total: 170 },
-    { buyer: 'Liza P.', area: 'Mabolo', mode: 'delivery', courier: 'angkas', slot: [11, 13], items: 'Carrots 1 kg, Potatoes 2 kg', total: 220 },
+    { buyer: 'Mark T.', area: 'Banilad', mode: 'delivery', courier: 'grab', slot: [11, 13], items: 'Tomatoes 2 kg, Cabbage 1 kg', total: 170 },
+    { buyer: 'Liza P.', area: 'Mabolo', mode: 'delivery', courier: 'lalamove', slot: [11, 13], items: 'Carrots 1 kg, Potatoes 2 kg', total: 220 },
     { buyer: 'Cora M.', area: 'Talamban', mode: 'pickup', items: 'Tomatoes 3 kg, Lettuce 2 heads', total: 250 },
     { buyer: 'Rico D.', area: 'Labangon', mode: 'delivery', courier: 'lalamove', slot: [15, 17], items: 'Cabbage 2 kg, Carrots 1 kg', total: 170 },
   ] as SellerOrder[],
@@ -822,7 +828,7 @@ export function fareFor(market: Market, courier: CourierId) {
   return getCourier(courier).fare(market.km)
 }
 
-/** The cheapest courier fare from this market - "Delivery from ₱76". */
+/** The cheapest courier fare from this market - "Delivery from ₱79". */
 export function cheapestFare(market: Market) {
   return Math.min(...couriers.map((c) => c.fare(market.km)))
 }
