@@ -165,7 +165,7 @@ export function Checkout() {
           <SumRow label="Food" value={peso(t.regular)} />
           {t.sukiOff > 0 && <SumRow label="Suki deals" value={`−${peso(t.sukiOff)}`} tone="primary" />}
           <SumRow
-            label="Delivery · couriers' own fares"
+            label="Delivery"
             value={delivery > 0 ? peso(delivery) : 'Free'}
             tone={delivery > 0 ? 'ink' : 'primary'}
           />
@@ -195,15 +195,15 @@ export function Checkout() {
 /* --------------------------------------------------------------------------
    One market's part of the order: Delivery or Pick-up and, for a delivery,
    which courier brings it and when - what the stalls then confirm. One
-   rider collects from every stall in the market, so each courier is shown
-   once, at its own fare for the trip.
+   rider collects from every stall in the market. The fare is the same with
+   either courier: buyers pick the one they trust or that is common where
+   they live.
    -------------------------------------------------------------------------- */
 
 function DeliveryOption({ group: g }: { group: MarketGroup }) {
   const { setMarketMode, setMarketCourier, slotOf, setMarketSlot } = useApp()
   const market = getMarket(g.marketId)
-  const fares = couriers.map((courier) => ({ courier, fare: fareFor(market, courier.id) }))
-  const cheapest = Math.min(...fares.map((f) => f.fare))
+  const fare = fareFor(market)
   const slots = market.slots.map((slot, i) => ({ id: String(i), label: slotText(slot) }))
   const stallList = g.stalls.map((s) => stallNo(getSeller(s.sellerId))).join(', ')
 
@@ -233,10 +233,8 @@ function DeliveryOption({ group: g }: { group: MarketGroup }) {
       {g.mode === 'delivery' ? (
         <>
           <div role="radiogroup" aria-label={`Courier from ${market.name}`} className="border-t border-line px-2 py-1.5">
-            {fares.map(({ courier, fare }) => {
+            {couriers.map((courier) => {
               const active = courier.id === g.courier
-              /* One tag a row, so a long courier name never gets cut off. */
-              const tag = fare === cheapest ? 'Cheapest' : courier.id === market.usual ? 'Usual' : null
               return (
                 <button
                   key={courier.id}
@@ -252,7 +250,6 @@ function DeliveryOption({ group: g }: { group: MarketGroup }) {
                   <span className={`min-w-0 flex-1 truncate text-[15px] font-bold ${active ? 'text-primary' : 'text-ink'}`}>
                     {courier.name}
                   </span>
-                  {tag && <Tag tone={tag === 'Cheapest' ? 'leaf' : 'plain'}>{tag}</Tag>}
                   <span className="tabular w-[42px] shrink-0 text-right text-[15px] font-extrabold text-ink">
                     {peso(fare)}
                   </span>
@@ -300,18 +297,6 @@ function CheckCircle({ active }: { active: boolean }) {
       }`}
     >
       {active && <Check size={14} strokeWidth={3.2} />}
-    </span>
-  )
-}
-
-function Tag({ children, tone = 'plain' }: { children: string; tone?: 'plain' | 'leaf' }) {
-  return (
-    <span
-      className={`shrink-0 rounded-pill px-2 py-[2px] text-[11.5px] font-extrabold ${
-        tone === 'leaf' ? 'bg-secondary-soft text-primary' : 'bg-surface text-ink-muted'
-      }`}
-    >
-      {children}
     </span>
   )
 }

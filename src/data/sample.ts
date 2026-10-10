@@ -15,13 +15,12 @@
        and the same food from several stalls at different prices.
      - A buyer fills one basket from many stalls. Each market's part comes
        with one rider, from a courier the buyer picks - GrabExpress or
-       Lalamove - or is picked up at the stalls, like Delivery / Pick-up on
-       GrabFood or foodpanda.
+       Lalamove, at the same fare - or is picked up at the stalls, like
+       Delivery / Pick-up on GrabFood or foodpanda.
      - Buyer and stalls agree on the courier, the time and the handoff: the
        buyer chooses them at checkout and each stall confirms before packing.
-     - Once the stalls have packed, PresGo books the chosen courier at its
-       own fare. The rider collects from every stall in that market in one
-       stop.
+     - Once the stalls have packed, PresGo books the chosen courier. The
+       rider collects from every stall in that market in one stop.
 
    House rules for anything written in this file:
      - Plain English, with the occasional Bisaya touch in labels
@@ -123,17 +122,18 @@ export const plusPlan = {
 
 /* --- Delivery ----------------------------------------------------------------
    The buyer picks the courier for each market's part of an order:
-   GrabExpress or Lalamove, at the courier's own fare - PresGo adds nothing
-   on top. The stalls confirm the courier, time and handoff; once they have
+   GrabExpress or Lalamove. The fare is the same with either (fareFor,
+   below), so buyers pick the courier they trust or that is common in their
+   area. The stalls confirm the courier, time and handoff; once they have
    packed, PresGo books that courier, and the buyer sees the rider's name and
    arrival time. Live tracking and rider updates are in the courier's own
    app. Names only: no logos, and nothing here implies a partnership.
 
    Both couriers take bookings from other apps through a delivery API - the
-   GrabExpress API and the Lalamove API - so the real PresGo would ask each
-   for a quote at checkout, book the chosen one once the stalls have packed,
-   and hear back about the rider through the courier's webhook. The README
-   has the steps. This demo books nothing: fares come from the rates below. */
+   GrabExpress API and the Lalamove API - so the real PresGo would book the
+   chosen one once the stalls have packed and hear back about the rider
+   through the courier's webhook. The README has the steps. This demo books
+   nothing. */
 
 export type CourierId = 'grab' | 'lalamove'
 
@@ -142,23 +142,11 @@ export interface Courier {
   name: string
   /* The app the buyer opens for live tracking: "Open in Grab". */
   app: string
-  /* Motorcycle fare for a trip of `km` road kilometres. Traffic and demand
-     surcharges can apply - the real app shows each courier's live quote. */
-  fare: (km: number) => number
 }
 
 export const couriers: Courier[] = [
-  /* PLACEHOLDER rate: Grab does not publish a GrabExpress rate card for
-     Cebu - its API quotes each trip. Check the Grab app before the pitch. */
-  { id: 'grab', name: 'GrabExpress', app: 'Grab', fare: (km) => Math.round(60 + 7 * km) },
-  /* Lalamove's published motorcycle rates for Cebu: ₱49 base, ₱6 a km for
-     the first 5 km, ₱5 a km after that. */
-  {
-    id: 'lalamove',
-    name: 'Lalamove',
-    app: 'Lalamove',
-    fare: (km) => Math.round(49 + 6 * Math.min(km, 5) + 5 * Math.max(0, km - 5)),
-  },
+  { id: 'grab', name: 'GrabExpress', app: 'Grab' },
+  { id: 'lalamove', name: 'Lalamove', app: 'Lalamove' },
 ]
 
 /** "GrabExpress or Lalamove" */
@@ -823,14 +811,13 @@ export function getCourier(id: CourierId): Courier {
   return courierIndex.get(id) ?? couriers[0]
 }
 
-/** What a courier charges for the trip from this market to the buyer. */
-export function fareFor(market: Market, courier: CourierId) {
-  return getCourier(courier).fare(market.km)
-}
-
-/** The cheapest courier fare from this market - "Delivery from ₱79". */
-export function cheapestFare(market: Market) {
-  return Math.min(...couriers.map((c) => c.fare(market.km)))
+/** The delivery fare from this market to the buyer - the same whichever
+    courier brings it. Worked out from Lalamove's published motorcycle rate
+    for Cebu on the road distance: ₱49 base, ₱6 a km for the first 5 km, ₱5
+    a km after that. */
+export function fareFor(market: Market) {
+  const km = market.km
+  return Math.round(49 + 6 * Math.min(km, 5) + 5 * Math.max(0, km - 5))
 }
 
 export function getProduce(id: ProduceId): Produce {

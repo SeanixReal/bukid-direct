@@ -5,7 +5,7 @@ import { MarketBadge } from '../components/StallBits'
 import { Avatar, Rating } from '../components/ui'
 import { useApp } from '../state/AppState'
 import {
-  cheapestFare,
+  fareFor,
   distanceKm,
   distanceText,
   markets,
@@ -43,7 +43,7 @@ export function Markets() {
               <div className="mx-4 mb-3 space-y-1.5 rounded-md bg-surface px-3 py-2.5 text-[13px] font-semibold text-ink-muted">
                 <span className="flex items-center gap-2">
                   <Truck size={15} strokeWidth={2.4} className="shrink-0 text-primary" />
-                  Delivery from {peso(cheapestFare(market))} · one rider for every stall
+                  Delivery {peso(fareFor(market))} · one rider for every stall
                 </span>
                 <span className="flex items-center gap-2">
                   <Store size={15} strokeWidth={2.4} className="shrink-0 text-primary" />

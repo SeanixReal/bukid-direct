@@ -8,7 +8,7 @@ import { Avatar, Rating } from '../components/ui'
 import { useApp } from '../state/AppState'
 import { allListings } from '../state/catalog'
 import {
-  cheapestFare,
+  fareFor,
   courierNames,
   marketOf,
   peso,
@@ -74,7 +74,7 @@ export function StallScreen() {
               </Fact>
             )}
             <Fact Icon={Truck}>
-              Delivery from {peso(cheapestFare(market))} · one rider from {market.short}
+              Delivery {peso(fareFor(market))} · one rider from {market.short}
               <Sub>
                 {courierNames} · {schedule.day.toLowerCase()} {market.slots.map(slotText).join(' or ')}
               </Sub>

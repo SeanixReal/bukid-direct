@@ -16,7 +16,7 @@ import { useApp } from '../state/AppState'
 import { allListings, listingDetails } from '../state/catalog'
 import {
   categories,
-  cheapestFare,
+  fareFor,
   getSeller,
   marketOf,
   peso,
@@ -195,7 +195,7 @@ function ListingDetail({ id }: { id: string }) {
           <span className="block space-y-2 border-t border-line px-3.5 py-3">
             <span className="flex items-center gap-2.5 text-[14px] font-semibold text-ink">
               <Truck size={17} strokeWidth={2.4} className="shrink-0 text-primary" />
-              Delivery from {peso(cheapestFare(market))} · one rider from {market.short}
+              Delivery {peso(fareFor(market))} · one rider from {market.short}
             </span>
             <span className="flex items-center gap-2.5 text-[14px] font-semibold text-ink">
               <Store size={17} strokeWidth={2.4} className="shrink-0 text-primary" />

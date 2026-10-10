@@ -5,8 +5,8 @@
    A basket is split by market, then by stall: the stalls in one market each
    pack their own part, and one rider - from the courier the buyer picked -
    collects them all in a single stop. So each market has one delivery fee,
-   the courier's own fare for the trip. On top sits one small service fee per
-   order, waived for Direct Plus.
+   the same whichever courier the buyer picked. On top sits one small service
+   fee per order, waived for Direct Plus.
 
    Who pays for what:
      - Suki deals are posted and paid for by the stall, so the stall's share
@@ -57,8 +57,8 @@ export interface StallPart {
 export interface MarketGroup {
   marketId: MarketId
   mode: Mode
-  /* The courier the buyer picked for this market, and its fare for the trip
-     before any voucher. */
+  /* The courier the buyer picked for this market, and the market's delivery
+     fare before any voucher. */
   courier: CourierId
   fare: number
   stalls: StallPart[]
@@ -88,7 +88,7 @@ function groupByMarket(lines: Line[], member: boolean, modeOf: ModeOf, courierOf
         marketId: seller.marketId,
         mode: modeOf(seller.marketId),
         courier,
-        fare: fareFor(getMarket(seller.marketId), courier),
+        fare: fareFor(getMarket(seller.marketId)),
         stalls: [],
         lines: [],
         regular: 0,
@@ -224,9 +224,9 @@ function totals(groups: MarketGroup[], member: boolean, deliveryCovered: number)
   }
 }
 
-/** Where an order's money goes. Delivery is paid to each courier at its own
-    fare; PresGo keeps the commission and the service fee, and pays for the
-    welcome voucher. Before payment fees. */
+/** Where an order's money goes. Delivery is paid to the couriers; PresGo
+    keeps the commission and the service fee, and pays for the welcome
+    voucher. Before payment fees. */
 export function moneySplit(t: Totals) {
   const commission = t.subtotal - t.toSellers
   return {

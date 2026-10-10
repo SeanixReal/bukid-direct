@@ -76,11 +76,10 @@ files**, allow it once so every press of S saves a file.
    Pick-up.
 5. **Checkout** — the deck's **Choose your delivery option**. For each
    market: Delivery or Pick-up, the courier (**GrabExpress or Lalamove**,
-   each at its own fare for the trip, the cheapest marked) and
-   the time. For the order: the **handoff** (*Hand it to me* or *Leave at the
-   gate*). Each stall confirms these before packing. Switch a courier and the
-   total changes. → **Place order** → **"Salamat!"**, with a pick-up code for
-   the Pasil part.
+   same fare) and the time. For the order: the **handoff** (*Hand it to me*
+   or *Leave at the gate*). Each stall confirms these before packing. →
+   **Place order** → **"Salamat!"**, with a pick-up code for the Pasil
+   part.
 6. **Track my order**, then **D** → **Play delivery day** (or **Next** to
    step). Over about 25 seconds: the four stalls **confirm** (*Agreed with
    Nong Romy, Nang Lorna and Nang Fe: Lalamove, tomorrow 11 AM – 1 PM*) and
@@ -123,9 +122,10 @@ files**, allow it once so every press of S saves a file.
   example - so a basket from three Carbon stalls is one stop, one rider and
   one fare.
 - **The buyer picks the courier.** At checkout each market's part shows
-  **GrabExpress and Lalamove**, each at its own fare for the trip - no
-  markup - starting on the courier that market's stalls usually use.
-  Buyers who find delivery too dear take the cheapest, or pick up for free.
+  **GrabExpress and Lalamove** at the same fare, starting on the courier
+  that market's stalls usually use. Price doesn't decide it: buyers pick the
+  courier they trust or that is common where they live. Buyers who find
+  delivery too dear pick up for free.
 - **Buyer and stalls agree** on the courier, the time and the handoff: the
   buyer chooses them at checkout, each stall confirms them in the Seller
   Center before it packs.
@@ -134,14 +134,12 @@ files**, allow it once so every press of S saves a file.
   and pays the courier out of the buyer's payment. The buyer then sees the rider's name and estimated arrival time;
   live tracking and rider updates are in the courier's own app (*Open in
   Lalamove*). Sellers only pack and hand over; no warehouses or hubs to run.
-- **Fares come from each courier's rate** applied to the road distance from
-  the market on the map (`couriers` and each market's `km` in `sample.ts`),
-  so ₱79–132 in the demo. Lalamove's are its published Cebu motorcycle rates -
-  ₱49 base, ₱6 a km for the first 5 km, ₱5 a km after. **GrabExpress's is a
-  placeholder** (₱60 + ₱7 a km): Grab publishes no Cebu rate card - its API
-  quotes each trip - so check the Grab app before the pitch. The real app
-  shows each courier's live quote, which can include traffic or demand
-  surcharges.
+- **One fare per market**, from Lalamove's published Cebu motorcycle rate -
+  ₱49 base, ₱6 a km for the first 5 km, ₱5 a km after - on the road
+  distance from the market on the map (`fareFor` and each market's `km` in
+  `sample.ts`), so ₱79–106 in the demo. A courier's live quote can differ a
+  little with traffic or demand. **Still to decide:** who covers that gap -
+  PresGo, most simply.
 - **Pick-up is free**: the buyer shows one code at each stall, which has the
   bag ready.
 
@@ -159,16 +157,15 @@ step of the demo maps onto a call from PresGo's server:
 
 | Step in PresGo | GrabExpress API | Lalamove API (v3) |
 | --- | --- | --- |
-| Checkout: price each market's trip, handover point to the buyer's door | `POST /v1/deliveries/quotes` | `POST /v3/quotations` |
+| Before booking: price the trip from the handover point to the buyer's door | `POST /v1/deliveries/quotes` | `POST /v3/quotations` |
 | The stalls have packed: book the courier the buyer picked | `POST /v1/deliveries` | `POST /v3/orders` |
 | Rider assigned, picked up, delivered | webhook to PresGo | webhook to PresGo |
 | The rider's name and plate for the buyer | `GET /v1/deliveries/{deliveryID}` | `GET /v3/orders/{orderId}/drivers/{driverId}` |
 | A stall cancels | `DELETE /v1/deliveries/{deliveryID}` | `DELETE /v3/orders/{orderId}` |
 
-- **Quotes replace the rate cards.** Checkout would show the price each API
-  quotes for the trip, so the fares in `couriers` are only for the demo. Quote
-  again just before booking: the morning's fare can differ from the one the
-  buyer saw at night.
+- **The buyer pays the market's fare; the courier is paid its quote.** The
+  buyer sees one fare per market at checkout. When the stalls have packed,
+  PresGo gets the chosen courier's live quote through its API and books it.
 - **Access.** GrabExpress: an OAuth 2.0 client ID and secret from Grab's
   developer portal; production access is granted per country and city.
   Lalamove: an API key and secret from the Lalamove Partner Portal, every
@@ -191,20 +188,20 @@ and every total in the app is worked out from them.
 | Direct Plus | the buyer | **₱49/month** (`plusPlan.price`) | Direct Plus screen |
 | Featured listing | the stall, if it wants | **₱99/week** (`boost.price`), taken from its weekly pay-out | Seller Center, Shop |
 
-Delivery fees are not income: the buyer pays the courier's fare and PresGo
-passes it on to the courier.
+Delivery fees are not income: the buyer pays the market's delivery fare and
+PresGo passes it on to the courier.
 
 ### What Direct Plus gives, and who pays for it
 
 | Perk | Paid by | Cost to PresGo |
 | --- | --- | --- |
 | No service fee | PresGo | ₱10 per order, not collected |
-| Welcome voucher: one market's delivery free on the first order of ₱200 or more | PresGo | once per member, ₱79–132 in the sample data |
+| Welcome voucher: one market's delivery free on the first order of ₱200 or more | PresGo | once per member, ₱79–106 in the sample data |
 | Suki deals - members-only vouchers a stall posts for its regulars (e.g. ₱15 off ₱300) | the stall | nothing |
 | First pick of the morning's catch and harvest | - | nothing |
 
 **Why free delivery only once, not every month.** At a 5% commission a ₱500
-order earns ₱25, and one courier trip costs ₱79–132. Free delivery every
+order earns ₱25, and one courier trip costs ₱79–106. Free delivery every
 month would cost more than a member brings in. The first draft - four free
 deliveries a month, two ₱20 vouchers and 5% off everything - would have cost
 about ₱460 a month per member against ₱149 coming in (₱49 + 5% of four ₱500
@@ -263,9 +260,9 @@ per active buyer. For example, ₱40,000 a month of running costs (a
 placeholder - use your own budget) needs about 730 active buyers.
 
 Placeholders worth settling before the pitch: the four prices above, the
-2.5% payment fee, each market's `km`, and the GrabExpress rate in
-`couriers` - check both couriers' current Cebu rates in their apps - and the
-food prices against DA-7's market price monitoring.
+2.5% payment fee, each market's `km`, the delivery fare in `fareFor` -
+compare it with live quotes in the Grab and Lalamove apps - and the food
+prices against DA-7's market price monitoring.
 
 ---
 
@@ -347,7 +344,7 @@ the water/rain tokens are gone.
 ## Changing the sample data
 
 **All invented content lives in [`src/data/sample.ts`](src/data/sample.ts):**
-the buyer and her address, the two couriers and their rates, the four
+the buyer and her address, the two couriers and the delivery fare, the four
 markets (where they are, how far from Joy, delivery times, pick-up hours),
 the eight stalls with their suki deals and reviews, the 25 kinds of food, the
 31 listings (several stalls offer the same food at different prices, two are

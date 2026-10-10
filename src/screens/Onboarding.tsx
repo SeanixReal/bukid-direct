@@ -176,7 +176,7 @@ function WhereToDeliver() {
         <p className="text-[14px] font-semibold leading-snug text-ink-muted">
           {prefMode === 'pickup'
             ? `Collect at the stalls in any of the ${markets.length} markets, on your way home. Always free.`
-            : `Pick ${courierNames}, at the courier's own fare. One rider brings everything from the same market.`}
+            : `Pick ${courierNames}. One rider brings everything from the same market.`}
         </p>
       </div>
     </>
