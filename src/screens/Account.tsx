@@ -8,7 +8,6 @@ import {
   MapPin,
   Sprout,
   Store,
-  Tractor,
   Wallet,
   type LucideIcon,
 } from 'lucide-react'
@@ -110,10 +109,10 @@ export function Account() {
           className="tappable mt-3 flex w-full items-center gap-3.5 rounded-card border border-line bg-card p-4 text-left shadow-card"
         >
           <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
-            <Tractor size={23} strokeWidth={2.2} />
+            <Store size={23} strokeWidth={2.2} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[16px] font-bold text-ink">Sell on Bukid Direct</span>
+            <span className="block text-[16px] font-bold text-ink">Sell on {brand.name}</span>
             <span className="block text-[14px] font-medium text-ink-muted">
               The Seller Center, as Nong Romy sees it
             </span>
@@ -126,7 +125,7 @@ export function Account() {
           <Wordmark size={20} />
           <p className="mt-2 text-[14px] font-semibold text-ink-muted">{brand.tagline}</p>
           <p className="mt-1 text-[12px] font-medium text-ink-faint">
-            Interface prototype · farms, prices and people are made up
+            Interface prototype · stalls, prices and people are made up
           </p>
         </div>
       </div>

@@ -1,6 +1,6 @@
 /* --------------------------------------------------------------------------
    Flat produce illustrations - one per kind of produce, plus the hills on the
-   splash screen and the farm pages.
+   splash screen.
 
    Drawn in code on a 120 x 100 grid, so the pictures stay sharp at any size
    and the demo needs no photos and no internet. Flat shapes only: one fill
@@ -201,6 +201,218 @@ function Sprig({ deg, len }: { deg: number; len: number }) {
         )
       })}
       <ellipse cx={0} cy={-len - 3} rx={3.1} ry={5} fill={C.leaf} />
+    </g>
+  )
+}
+
+/** A whole fish on its side, head to the left - bangus. */
+function Fish({ x, y, s = 1, deg = 0, back = false }: { x: number; y: number; s?: number; deg?: number; back?: boolean }) {
+  return (
+    <g transform={`translate(${x} ${y}) rotate(${deg}) scale(${s})`}>
+      <path d="M28 -3L44 -13C41 -5 41 5 44 13L28 3Z" fill="var(--art-fish-dark)" />
+      <path d="M-6 -12C-2 -20 7 -21 13 -11Z" fill="var(--art-fish-dark)" />
+      <path
+        d="M-34 0C-28 -11 -10 -15 6 -13C16 -12 24 -7 30 -3L30 3C24 7 16 12 6 13C-10 15 -28 11 -34 0Z"
+        fill={back ? 'var(--art-fish-dark)' : 'var(--art-fish)'}
+      />
+      {!back && (
+        <>
+          <path d="M-31 3C-18 10 2 12 24 5C10 13 -14 15 -27 8Z" fill="var(--art-fish-belly)" />
+          <Shine cx={-2} cy={-8} rx={14} ry={2.2} deg={-4} />
+          <path d="M-21 -8C-25 -3 -25 4 -21 9" stroke="var(--art-fish-dark)" strokeWidth={1.5} fill="none" strokeLinecap="round" />
+          <circle cx={-27} cy={-2} r={2.6} fill={C.shine} />
+          <circle cx={-27} cy={-2} r={1.3} fill="var(--ink)" />
+        </>
+      )}
+    </g>
+  )
+}
+
+/** A squid on its side, tentacles trailing to the left - nokus. `dried`
+    turns it into sun-dried squid. */
+function Squid({
+  x,
+  y,
+  s = 1,
+  deg = 0,
+  back = false,
+  dried = false,
+}: {
+  x: number
+  y: number
+  s?: number
+  deg?: number
+  back?: boolean
+  dried?: boolean
+}) {
+  const light = dried ? 'var(--art-dried)' : 'var(--art-squid)'
+  const dark = dried ? 'var(--art-dried-dark)' : 'var(--art-squid-dark)'
+  const tone = back ? dark : light
+  return (
+    <g transform={`translate(${x} ${y}) rotate(${deg}) scale(${s})`}>
+      <g stroke={tone} strokeWidth={2.4} fill="none" strokeLinecap="round">
+        <path d="M-8 -4C-18 -8 -26 -5 -34 -9" />
+        <path d="M-8 -1C-19 -2 -28 1 -36 -1" />
+        <path d="M-8 2C-18 4 -26 8 -34 6" />
+        <path d="M-8 5C-16 9 -22 13 -30 13" />
+        <path d="M-8 0C-22 -3 -36 3 -46 -2" strokeWidth={1.5} />
+      </g>
+      <ellipse cx={-6} cy={0} rx={7} ry={6.5} fill={tone} />
+      <path d="M30 -6L46 -13L42 0L46 13L30 6Z" fill={dark} />
+      <path d="M-2 -8C12 -11 30 -8 42 0C30 8 12 11 -2 8Z" fill={tone} />
+      {!back && (
+        <>
+          <Shine cx={18} cy={-4} rx={12} ry={1.8} deg={-3} />
+          <g fill={dark}>
+            <circle cx={8} cy={2} r={1.2} />
+            <circle cx={16} cy={-2} r={1} />
+            <circle cx={24} cy={2.5} r={1.1} />
+            <circle cx={31} cy={-1} r={0.9} />
+          </g>
+          <circle cx={-7} cy={-2} r={2.2} fill="var(--ink)" />
+          <circle cx={-6.3} cy={-2.6} r={0.7} fill={C.shine} />
+        </>
+      )}
+    </g>
+  )
+}
+
+/** A curled shrimp, head to the upper left - pasayan. */
+function Shrimp({ x, y, s = 1, deg = 0, back = false }: { x: number; y: number; s?: number; deg?: number; back?: boolean }) {
+  const tone = back ? 'var(--art-shrimp-dark)' : 'var(--art-shrimp)'
+  return (
+    <g transform={`translate(${x} ${y}) rotate(${deg}) scale(${s})`}>
+      <g stroke="var(--art-shrimp-dark)" strokeWidth={1.1} fill="none" strokeLinecap="round">
+        <path d="M-21 -12C-30 -28 0 -34 26 -24" />
+        <path d="M-20 -11C-34 -22 -36 4 -30 14" />
+      </g>
+      <path d="M1 13L-10 12L-8 18L-12 24L0 21Z" fill="var(--art-shrimp-dark)" />
+      <path
+        d="M-16 -13C0 -20 22 -12 22 4C22 16 12 22 0 21L1 13C8 13 13 9 13 3C13 -5 2 -9 -12 -5Z"
+        fill={tone}
+      />
+      <path d="M-20 -12L-31 -16L-20 -8Z" fill="var(--art-shrimp-dark)" />
+      <ellipse cx={-15} cy={-9} rx={7} ry={5.5} transform="rotate(-15 -15 -9)" fill={tone} />
+      {!back && (
+        <>
+          <g stroke="var(--art-shrimp-dark)" strokeWidth={1.1} strokeLinecap="round" opacity={0.6}>
+            <path d="M2 -15L0 -7" />
+            <path d="M10 -12L6 -5" />
+            <path d="M17 -6L11 0" />
+            <path d="M21 2L13 4" />
+            <path d="M19 11L12 9" />
+            <path d="M12 18L8 13" />
+          </g>
+          <g stroke="var(--art-shrimp-dark)" strokeWidth={1.2} strokeLinecap="round">
+            <path d="M-6 -5L-10 1" />
+            <path d="M0 -6L-3 1" />
+            <path d="M6 -3L3 3" />
+          </g>
+          <Shine cx={9} cy={-12} rx={7} ry={1.8} deg={18} />
+          <circle cx={-17} cy={-11} r={1.6} fill="var(--ink)" />
+        </>
+      )}
+    </g>
+  )
+}
+
+/** A butterflied, sun-dried rabbitfish, head up - danggit. */
+function Danggit({ x, y, s = 1, deg = 0 }: { x: number; y: number; s?: number; deg?: number }) {
+  return (
+    <g transform={`translate(${x} ${y}) rotate(${deg}) scale(${s})`}>
+      <path d="M0 21L-9 32L0 28L9 32Z" fill="var(--art-dried-dark)" />
+      <path
+        d="M0 -24C11 -22 16 -8 14 4C12 13 6 19 0 22C-6 19 -12 13 -14 4C-16 -8 -11 -22 0 -24Z"
+        fill="var(--art-dried)"
+      />
+      <path d="M14 4C12 13 6 19 0 22C-6 19 -12 13 -14 4C-8 11 8 11 14 4Z" fill="var(--art-dried-dark)" opacity={0.45} />
+      <path d="M0 -20L0 18" stroke="var(--art-dried-dark)" strokeWidth={1.6} strokeLinecap="round" />
+      <g stroke="var(--art-dried-dark)" strokeWidth={1} strokeLinecap="round" opacity={0.55}>
+        {[-12, -5, 2, 9].map((ry) => (
+          <path key={ry} d={`M0 ${ry}L-8 ${ry + 4}M0 ${ry}L8 ${ry + 4}`} />
+        ))}
+      </g>
+      <Shine cx={-6} cy={-10} rx={2.2} ry={6} deg={12} />
+    </g>
+  )
+}
+
+/** A slab of pork belly, cut side to the front: skin, fat and meat in
+    layers - liempo. */
+function Liempo({ x, y, s = 1, deg = 0 }: { x: number; y: number; s?: number; deg?: number }) {
+  const w = 64
+  const bands: [number, string][] = [
+    [4, 'var(--art-skin)'],
+    [6, 'var(--art-fat)'],
+    [7, 'var(--art-pork)'],
+    [3, 'var(--art-fat)'],
+    [8, 'var(--art-pork)'],
+  ]
+  const tops = bands.map((_, i) => -14 + bands.slice(0, i).reduce((sum, [h]) => sum + h, 0))
+  return (
+    <g transform={`translate(${x} ${y}) rotate(${deg}) scale(${s})`}>
+      <rect x={-w / 2 + 2} y={-11.5} width={w} height={28} rx={3} fill="var(--art-pork-dark)" />
+      {bands.map(([h, fill], i) => (
+        <rect key={i} x={-w / 2} y={tops[i]} width={w} height={h} fill={fill} />
+      ))}
+      <Shine cx={-10} cy={-1} rx={12} ry={1.4} deg={0} />
+    </g>
+  )
+}
+
+/** A whole dressed chicken on its side, drumsticks up at the back - manok. */
+function Chicken({ x, y, s = 1 }: { x: number; y: number; s?: number }) {
+  return (
+    <g transform={`translate(${x} ${y}) scale(${s})`}>
+      {/* Back drumstick */}
+      <ellipse cx={14} cy={-8} rx={10} ry={8} transform="rotate(-40 14 -8)" fill="var(--art-chicken-dark)" />
+      <path d="M18 -13L28 -26" stroke="var(--art-chicken-dark)" strokeWidth={5} strokeLinecap="round" />
+      <circle cx={29.5} cy={-28.5} r={3.8} fill="var(--art-cream)" />
+      {/* Body, breast to the left */}
+      <path
+        d="M-34 6C-34 -8 -22 -17 -6 -17C10 -17 26 -12 30 0C33 10 26 20 8 22C-10 24 -30 20 -34 6Z"
+        fill="var(--art-chicken)"
+      />
+      <path
+        d="M-34 6C-31 17 -14 23 4 22C18 21 28 15 30 4C25 13 14 17 2 17C-14 17 -27 13 -34 6Z"
+        fill="var(--art-chicken-dark)"
+      />
+      {/* Wing, tucked in */}
+      <path d="M-20 0C-14 -7 -4 -8 2 -2C-4 3 -13 5 -20 0Z" fill="var(--art-chicken-dark)" opacity={0.5} />
+      {/* Front drumstick */}
+      <ellipse cx={20} cy={-1} rx={11} ry={8.5} transform="rotate(-35 20 -1)" fill="var(--art-chicken)" />
+      <path
+        d="M11 4C16 8 24 7 29 1"
+        stroke="var(--art-chicken-dark)"
+        strokeWidth={1.4}
+        fill="none"
+        strokeLinecap="round"
+        opacity={0.7}
+      />
+      <path d="M24 -7L35 -19" stroke="var(--art-chicken)" strokeWidth={5.5} strokeLinecap="round" />
+      <circle cx={36.5} cy={-21.5} r={4.2} fill="var(--art-cream)" />
+      <Shine cx={-14} cy={-9} rx={9} ry={2.8} deg={-14} />
+    </g>
+  )
+}
+
+/** A round of beef shank: meat, a rim of fat, and the marrow bone - bulalo. */
+function Shank({ cx, cy, r }: { cx: number; cy: number; r: number }) {
+  const bx = cx + r * 0.14
+  const by = cy + r * 0.06
+  return (
+    <g>
+      <circle cx={cx + 1.6} cy={cy + 2} r={r} fill="var(--art-beef-dark)" />
+      <circle cx={cx} cy={cy} r={r} fill="var(--art-beef)" />
+      <circle cx={cx} cy={cy} r={r - 2.4} fill="none" stroke="var(--art-fat)" strokeWidth={1.6} opacity={0.75} />
+      <g stroke="var(--art-fat)" strokeWidth={1.3} fill="none" strokeLinecap="round" opacity={0.8}>
+        <path d={`M${cx - r * 0.7} ${cy - r * 0.15}q${r * 0.3} ${-r * 0.3} ${r * 0.6} ${-r * 0.18}`} />
+        <path d={`M${cx - r * 0.55} ${cy + r * 0.45}q${r * 0.3} ${r * 0.12} ${r * 0.55} ${-r * 0.05}`} />
+        <path d={`M${cx + r * 0.45} ${cy - r * 0.55}q${r * 0.2} ${r * 0.15} ${r * 0.2} ${r * 0.4}`} />
+      </g>
+      <circle cx={bx} cy={by} r={r * 0.36} fill="var(--art-cream)" />
+      <circle cx={bx} cy={by} r={r * 0.22} fill="var(--art-marrow)" />
+      <Shine cx={cx - r * 0.4} cy={cy - r * 0.5} rx={r * 0.24} ry={r * 0.08} deg={-30} />
     </g>
   )
 }
@@ -480,6 +692,76 @@ const ART: Record<ProduceId, () => ReactNode> = {
       </g>
     </>
   ),
+
+  /* Two slabs on a banana leaf, the way the meat section lays them out. */
+  liempo: () => (
+    <>
+      <Ground rx={46} />
+      <path d={leaf([12, 82], 96, 11, -4)} fill={C.leaf} />
+      <path d="M15 81.5L104 75" stroke={C.leafDark} strokeWidth={1.3} opacity={0.45} strokeLinecap="round" />
+      <Liempo x={66} y={50} deg={-8} s={0.86} />
+      <Liempo x={56} y={66} deg={4} />
+    </>
+  ),
+
+  chicken: () => (
+    <>
+      <Ground rx={42} />
+      <Chicken x={55} y={62} />
+    </>
+  ),
+
+  beefshank: () => (
+    <>
+      <Ground rx={42} />
+      <Shank cx={46} cy={54} r={20} />
+      <Shank cx={76} cy={64} r={18} />
+    </>
+  ),
+
+  /* Fish on a banana leaf, the way it is laid out at the market. */
+  bangus: () => (
+    <>
+      <Ground rx={46} />
+      <path d={leaf([14, 80], 94, 11, -5)} fill={C.leaf} />
+      <path d="M17 79.5L104 72" stroke={C.leafDark} strokeWidth={1.3} opacity={0.45} strokeLinecap="round" />
+      <Fish x={66} y={50} s={0.8} deg={-6} back />
+      <Fish x={58} y={66} deg={3} />
+    </>
+  ),
+
+  squid: () => (
+    <>
+      <Ground rx={44} />
+      <Squid x={66} y={50} s={0.85} deg={-10} back />
+      <Squid x={60} y={68} deg={4} />
+    </>
+  ),
+
+  shrimp: () => (
+    <>
+      <Ground rx={42} />
+      <Shrimp x={44} y={56} s={0.95} deg={-10} back />
+      <Shrimp x={74} y={62} s={1.05} deg={8} />
+    </>
+  ),
+
+  danggit: () => (
+    <>
+      <Ground rx={46} />
+      <Danggit x={37} y={56} deg={-26} s={0.92} />
+      <Danggit x={83} y={57} deg={24} s={0.92} />
+      <Danggit x={60} y={58} deg={2} />
+    </>
+  ),
+
+  driedsquid: () => (
+    <>
+      <Ground rx={44} />
+      <Squid x={66} y={50} s={0.85} deg={-10} back dried />
+      <Squid x={60} y={68} deg={4} dried />
+    </>
+  ),
 }
 
 export const tintClass: Record<Tint, string> = {
@@ -525,8 +807,8 @@ export function ProducePicture({
 }
 
 /* --------------------------------------------------------------------------
-   Rolling hills with crop rows - "bukid" means farm in Tagalog and mountain
-   in Bisaya, and this is both. Stretches to fill its box along the bottom.
+   Rolling hills with crop rows, like Cebu's upland farms. Stretches to fill
+   its box along the bottom.
    -------------------------------------------------------------------------- */
 
 export function Hills({ tone = 'onGreen', className = '' }: { tone?: 'onGreen' | 'onLight'; className?: string }) {

@@ -1,21 +1,45 @@
-import { useMemo, useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
-import { Check, MessageCircle, PackageCheck, Phone, Star } from 'lucide-react'
+import {
+  Check,
+  ChevronRight,
+  ExternalLink,
+  Hand,
+  MessageCircle,
+  PackageCheck,
+  Phone,
+  Star,
+  Truck,
+  type LucideIcon,
+} from 'lucide-react'
 import { BackButton, Screen } from '../components/Screen'
 import { CityMap } from '../components/CityMap'
 import { ProducePicture } from '../components/ProduceArt'
+import { whenText } from '../components/StallBits'
 import { Avatar, Button } from '../components/ui'
 import { riderProgress, useApp, useSimClock } from '../state/AppState'
 import { getListing } from '../state/catalog'
-import { pathLength, route } from '../data/route'
-import { courier, fillText, getFarm, getProduce, homeAt, stageText } from '../data/sample'
-
-/* Average speed across the city, for the "arriving in" estimate. */
-const CITY_KMH = 22
+import { arrivalAt, deliveryRoute, tripMinutes } from '../state/eta'
+import {
+  clockText,
+  fillText,
+  getCourier,
+  getMarket,
+  getProduce,
+  getSeller,
+  handoffs,
+  homeAt,
+  listNames,
+  stageText,
+  user,
+} from '../data/sample'
 
 /* --------------------------------------------------------------------------
-   Live tracking for one farm's delivery: the courier's route on real Cebu
-   streets, the rider moving along it, and who is bringing what.
+   Tracking for one market's delivery: the courier's route on real Cebu
+   streets and the rider moving along it. Until the stalls have packed it
+   shows what buyer and stalls agreed; once the rider is booked, who is
+   coming and when. Live tracking and rider updates are in the courier's own
+   app, one tap away.
    -------------------------------------------------------------------------- */
 
 export function Track() {
@@ -34,16 +58,22 @@ function TrackShipment({ id }: { id: string }) {
   const [stars, setStars] = useState(0)
 
   const shipment = order!.shipments.find((s) => s.id === id)!
-  const farm = getFarm(shipment.farmId)
+  const market = getMarket(shipment.marketId)
+  const who = listNames(shipment.stalls.map((st) => getSeller(st.sellerId).call))
+  const stalls = `${shipment.stalls.length} ${shipment.stalls.length === 1 ? 'stall' : 'stalls'}`
   const stage = stageOf(shipment)
   const copy = stageText.delivery[stage]
-  const rider = farm.delivery.rider
+  const rider = market.rider
+  const courier = getCourier(shipment.courier)
+  const handoff = handoffs.find((h) => h.id === order!.handoff)
 
-  const path = useMemo(() => route(farm.delivery.handover.at, homeAt), [farm])
+  const path = deliveryRoute(market.id)
   const moving = stage === 'onTheWay'
+  /* The rider is booked once the stalls have packed. */
+  const booked = stage === 'ready' || moving
   const progress = stage === 'done' ? 1 : moving ? riderProgress(elapsed) : 0
-  const tripMin = (pathLength(path) / 1000 / CITY_KMH) * 60
-  const minutesLeft = Math.max(1, Math.round((1 - progress) * tripMin))
+  const minutesLeft = Math.max(1, Math.round((1 - progress) * tripMinutes(market.id)))
+  const eta = clockText(arrivalAt(market.id, shipment.slot))
 
   return (
     <Screen scroll={false} className="bg-surface-2">
@@ -54,7 +84,7 @@ function TrackShipment({ id }: { id: string }) {
             route={path}
             progress={moving || stage === 'done' ? progress : undefined}
             markers={[{ id: 'home', at: homeAt, kind: 'home', label: 'You' }]}
-            padding={{ top: 76, right: 40, bottom: 300, left: 40 }}
+            padding={{ top: 76, right: 40, bottom: 340, left: 40 }}
             className="h-full w-full"
             attributionClassName="top-[64px] left-4"
           />
@@ -64,7 +94,7 @@ function TrackShipment({ id }: { id: string }) {
         <div className="absolute inset-x-4 top-2 z-10 flex items-center gap-3">
           <BackButton onClick={() => navigate('/orders')} tone="float" label="Back to orders" />
           <span className="rounded-pill bg-card px-4 py-2.5 text-[14px] font-extrabold text-ink shadow-float">
-            {moving ? `Arriving in about ${minutesLeft} min` : copy.label}
+            {moving ? `Arriving in about ${minutesLeft} min` : booked ? `Arrives around ${eta}` : copy.label}
           </span>
         </div>
 
@@ -79,11 +109,11 @@ function TrackShipment({ id }: { id: string }) {
                 <div>
                   <h1 className="text-[22px] font-extrabold tracking-tight text-ink">Delivered!</h1>
                   <p className="text-[14px] font-semibold text-ink-muted">
-                    {farm.call}'s order is at your door. Salamat!
+                    Your {market.short} order is at your door. Salamat!
                   </p>
                 </div>
               </div>
-              <p className="mt-4 text-[15px] font-bold text-ink">How was {farm.call}'s order?</p>
+              <p className="mt-4 text-[15px] font-bold text-ink">How was your order from {market.short}?</p>
               <div className="mt-2 flex gap-2">
                 {[1, 2, 3, 4, 5].map((n) => (
                   <button
@@ -112,12 +142,19 @@ function TrackShipment({ id }: { id: string }) {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <h1 className="text-[22px] font-extrabold leading-tight tracking-tight text-ink">
-                    {moving ? `${rider.name} is on the way` : copy.label}
+                    {moving ? `${rider.name} is on the way` : booked ? 'Rider booked' : copy.label}
                   </h1>
                   <p className="mt-0.5 text-[14px] font-semibold text-ink-muted">
                     {moving
-                      ? `Bringing ${farm.call}'s order from ${farm.delivery.handover.place}`
-                      : fillText(copy.detail, farm)}
+                      ? `Bringing your order from ${market.name}`
+                      : booked
+                        ? `Collecting from ${stalls} at ${market.name}`
+                        : fillText(copy.detail, {
+                            who,
+                            market,
+                            courier: shipment.courier,
+                            time: whenText(market, 'delivery', shipment.slot),
+                          })}
                   </p>
                 </div>
                 {stage === 'ready' && (
@@ -128,37 +165,68 @@ function TrackShipment({ id }: { id: string }) {
                 )}
               </div>
 
-              {/* Rider - booked when the order was paid */}
-              {moving || stage === 'ready' ? (
-                <div className="mt-4 flex items-center gap-3 rounded-card bg-surface p-3">
-                  <Avatar initials={rider.name.charAt(0)} size={46} tone="primary" />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[16px] font-bold text-ink">{rider.name}</p>
-                    <p className="truncate text-[13px] font-semibold text-ink-muted">
-                      {courier} · {rider.plate}
-                    </p>
+              {booked ? (
+                <>
+                  {/* The rider: name and arrival time once booked */}
+                  <div className="mt-4 flex items-center gap-3 rounded-card bg-surface p-3">
+                    <Avatar initials={rider.name.charAt(0)} size={46} tone="primary" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[16px] font-bold text-ink">{rider.name}</p>
+                      <p className="truncate text-[13px] font-semibold text-ink-muted">
+                        {courier.name} · {rider.plate}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      aria-label={`Message ${rider.name}`}
+                      onClick={() => showToast(`Message sent to ${rider.name}`)}
+                      className="tappable flex h-11 w-11 items-center justify-center rounded-full bg-card text-primary shadow-card"
+                    >
+                      <MessageCircle size={19} strokeWidth={2.4} />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={`Call ${rider.name}`}
+                      onClick={() => showToast(`Calling ${rider.name} through ${courier.name}...`)}
+                      className="tappable flex h-11 w-11 items-center justify-center rounded-full bg-card text-primary shadow-card"
+                    >
+                      <Phone size={19} strokeWidth={2.4} />
+                    </button>
                   </div>
+
+                  {/* Live tracking and rider updates: the courier's own app */}
                   <button
                     type="button"
-                    aria-label={`Message ${rider.name}`}
-                    onClick={() => showToast(`Message sent to ${rider.name}`)}
-                    className="tappable flex h-11 w-11 items-center justify-center rounded-full bg-card text-primary shadow-card"
+                    onClick={() => showToast(`Opening ${courier.name} for live tracking...`)}
+                    className="tappable mt-2.5 flex w-full items-center gap-3 rounded-card border border-line px-3 py-2.5 text-left"
                   >
-                    <MessageCircle size={19} strokeWidth={2.4} />
+                    <ExternalLink size={18} strokeWidth={2.4} className="shrink-0 text-primary" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[14.5px] font-bold text-ink">Open in {courier.name}</span>
+                      <span className="block text-[12.5px] font-semibold text-ink-muted">
+                        Live tracking and rider updates
+                      </span>
+                    </span>
+                    <ChevronRight size={18} strokeWidth={2.6} className="shrink-0 text-ink-faint" />
                   </button>
-                  <button
-                    type="button"
-                    aria-label={`Call ${rider.name}`}
-                    onClick={() => showToast(`Calling ${rider.name} through ${courier}...`)}
-                    className="tappable flex h-11 w-11 items-center justify-center rounded-full bg-card text-primary shadow-card"
-                  >
-                    <Phone size={19} strokeWidth={2.4} />
-                  </button>
-                </div>
+                </>
               ) : (
-                <p className="mt-4 rounded-card bg-surface p-3 text-[14px] font-semibold leading-snug text-ink-muted">
-                  {courier} rider booked · collects at {farm.delivery.handover.place}
-                </p>
+                /* What buyer and stalls agreed, until the rider is booked */
+                <div className="mt-4 space-y-2 rounded-card bg-surface p-3">
+                  <PlanRow Icon={Truck}>
+                    {courier.name} · {whenText(market, 'delivery', shipment.slot)}
+                  </PlanRow>
+                  {handoff && (
+                    <PlanRow Icon={Hand}>
+                      {handoff.label} · {user.address.note}
+                    </PlanRow>
+                  )}
+                  <p className="pt-0.5 text-[13px] font-medium leading-snug text-ink-muted">
+                    The rider is booked once{' '}
+                    {shipment.stalls.length === 1 ? 'the stall has' : `all ${stalls} have`} packed. Their
+                    name and arrival time show here.
+                  </p>
+                </div>
               )}
 
               {/* What is coming */}
@@ -176,7 +244,7 @@ function TrackShipment({ id }: { id: string }) {
                   })}
                 </div>
                 <p className="text-[14px] font-semibold text-ink-muted">
-                  {shipment.lines.length} {shipment.lines.length === 1 ? 'item' : 'items'} from {farm.call}
+                  {shipment.lines.length} {shipment.lines.length === 1 ? 'item' : 'items'} from {stalls}
                 </p>
               </div>
             </>
@@ -184,5 +252,14 @@ function TrackShipment({ id }: { id: string }) {
         </div>
       </div>
     </Screen>
+  )
+}
+
+function PlanRow({ Icon, children }: { Icon: LucideIcon; children: ReactNode }) {
+  return (
+    <p className="flex items-start gap-2.5 text-[14px] font-bold leading-snug text-ink">
+      <Icon size={17} strokeWidth={2.4} className="mt-[1px] shrink-0 text-primary" />
+      <span className="min-w-0">{children}</span>
+    </p>
   )
 }

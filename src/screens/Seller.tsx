@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { BadgePercent, Check, Megaphone, PackageCheck, Plus, Store, Truck, Wallet } from 'lucide-react'
+import { BadgePercent, Check, Megaphone, PackageCheck, Plus, Sprout, Store, Truck, Wallet } from 'lucide-react'
 import { Screen, ScreenFooter, SectionTitle, TopBar } from '../components/Screen'
 import { ProducePicture } from '../components/ProduceArt'
 import { Avatar, Button, FreshBadge, ReadyBadge } from '../components/ui'
@@ -7,48 +7,51 @@ import { useApp, type SellerStep } from '../state/AppState'
 import { allListings, getListing } from '../state/catalog'
 import {
   boost,
-  courier,
-  farmerShare,
-  getFarm,
+  getCourier,
   getProduce,
+  getSeller,
+  listNames,
+  marketOf,
   peso,
   perUnit,
   qtyText,
+  sellerShare,
   sellerView,
+  slotText,
+  stallNo,
   user,
+  type Market,
   type Mode,
+  type SellerOrder,
 } from '../data/sample'
 
 /* --------------------------------------------------------------------------
-   The seller's side of the marketplace - what Nong Romy sees. Tomorrow's
-   orders from different buyers: he harvests, packs and hands them to the
-   Lalamove riders Bukid Direct booked when each buyer paid. Plus his
-   listings, the paid extras that help him sell, and what he earns.
+   The seller's side of the marketplace - what Nong Romy sees at his Carbon
+   Market stall. Tomorrow's orders from different buyers, each with the
+   courier and time the buyer picked: he confirms them, harvests and packs -
+   PresGo then books each buyer's courier - and hands them to the riders.
+   Plus his listings, what sells where and when, the paid extras that help
+   him sell, and what he earns.
    -------------------------------------------------------------------------- */
-
-interface SellerOrder {
-  buyer: string
-  area: string
-  mode: Mode
-  items: string
-  total: number
-  you?: boolean
-}
 
 export function Seller() {
   const navigate = useNavigate()
   const { order, sellerStep, setSellerStep, featureListing, showToast } = useApp()
-  const farm = getFarm(sellerView.farmId)
+  const seller = getSeller(sellerView.sellerId)
+  const market = marketOf(seller)
 
-  /* Joy's order joins the list when it includes something from this farm. */
-  const mine = order?.shipments.find((s) => s.farmId === farm.id)
-  const orders: SellerOrder[] = [
-    ...(mine
+  /* Joy's order joins the list when it includes something from this stall. */
+  const shipment = order?.shipments.find((s) => s.stalls.some((st) => st.sellerId === seller.id))
+  const mine = shipment?.stalls.find((st) => st.sellerId === seller.id)
+  const orders: (SellerOrder & { you?: boolean })[] = [
+    ...(shipment && mine
       ? [
           {
             buyer: `${user.firstName} ${user.fullName.split(' ')[1].charAt(0)}.`,
-            area: mine.mode === 'pickup' ? farm.pickup?.place ?? 'Pick-up' : user.address.area.split(',')[0],
-            mode: mine.mode,
+            area: user.address.area.split(',')[0],
+            mode: shipment.mode,
+            courier: shipment.courier,
+            slot: shipment.slot,
             items: mine.lines
               .map((l) => {
                 const listing = getListing(l.listingId)
@@ -64,31 +67,37 @@ export function Seller() {
     ...sellerView.orders,
   ]
   const stops = orders.filter((o) => o.mode === 'delivery')
+  const riders = `${stops.length} ${stops.length === 1 ? 'rider' : 'riders'}`
+  /* Harvested and packed - PresGo has booked the riders. */
+  const packed = sellerStep === 'ready' || sellerStep === 'handedOver'
   const sales = orders.reduce((sum, o) => sum + o.total, 0)
-  const earnings = Math.round(sellerView.thisWeekSales * farmerShare)
+  const earnings = Math.round(sellerView.thisWeekSales * sellerShare)
   const weeks = [...sellerView.pastWeeks, { label: 'This wk', amount: earnings }]
   const top = Math.max(...weeks.map((w) => w.amount))
-  const listings = allListings().filter((l) => l.farmId === farm.id)
+  const listings = allListings().filter((l) => l.sellerId === seller.id)
   const boosted = getListing(sellerView.boostListingId)
   const boostedItem = boosted && getProduce(boosted.produceId)
+  const bookedWith = listNames([
+    ...new Set(stops.flatMap((o) => (o.courier ? [getCourier(o.courier).name] : []))),
+  ])
 
   const next: Record<SellerStep, { label: string; run: () => void } | null> = {
     new: {
-      label: 'Mark all as harvested',
+      label: `Confirm ${orders.length} ${orders.length === 1 ? 'order' : 'orders'}`,
       run: () => {
-        setSellerStep('harvested')
-        showToast('Harvest logged')
+        setSellerStep('confirmed')
+        showToast('Confirmed. Buyers have been told.')
       },
     },
-    harvested: {
-      label: 'Mark packed',
+    confirmed: {
+      label: 'Mark harvested and packed',
       run: () => {
         setSellerStep('ready')
-        showToast('Packed. Buyers have been told.')
+        showToast(stops.length ? `Packed. ${riders} booked.` : 'Packed. Buyers have been told.')
       },
     },
     ready: {
-      label: `Hand over to ${stops.length} ${stops.length === 1 ? 'rider' : 'riders'}`,
+      label: `Hand over to ${riders}`,
       run: () => {
         setSellerStep('handedOver')
         showToast('Handed over to the riders')
@@ -129,11 +138,11 @@ export function Seller() {
           }
         />
         <div className="flex items-center gap-4 px-5 pt-1">
-          <Avatar initials={farm.initials} size={60} tone="onGreen" />
+          <Avatar initials={seller.initials} size={60} tone="onGreen" />
           <div className="min-w-0">
-            <h1 className="text-[28px] font-extrabold leading-tight tracking-tight text-on-dark">{farm.call}</h1>
+            <h1 className="text-[28px] font-extrabold leading-tight tracking-tight text-on-dark">{seller.call}</h1>
             <p className="truncate text-[14px] font-semibold text-on-dark-muted">
-              {farm.place} · ★ {farm.rating.toFixed(1)} · {farm.sold}
+              {stallNo(seller)}, {market.name} · ★ {seller.rating.toFixed(1)} · {seller.sold}
             </p>
           </div>
         </div>
@@ -144,7 +153,7 @@ export function Seller() {
         <div className="grid grid-cols-3 gap-2.5">
           <Stat label="Orders" value={String(orders.length)} />
           <Stat label="Sales" value={peso(sales)} />
-          <Stat label="You keep" value={`${Math.round(farmerShare * 100)}%`} strong />
+          <Stat label="You keep" value={`${Math.round(sellerShare * 100)}%`} strong />
         </div>
 
         {/* ---------------- Orders ---------------- */}
@@ -169,18 +178,21 @@ export function Seller() {
                 </div>
                 <span className="tabular shrink-0 text-[15px] font-extrabold text-ink">{peso(o.total)}</span>
               </div>
-              <div className="mt-2.5 flex items-center gap-2">
+              <div className="mt-2.5 flex items-center justify-between gap-2">
+                <span className="min-w-0 truncate text-[12.5px] font-bold text-ink-muted">{plan(o, market)}</span>
                 <OrderStatus step={sellerStep} mode={o.mode} />
               </div>
             </li>
           ))}
         </ul>
 
-        {/* ---------------- The riders, booked when buyers paid ---------------- */}
+        {/* ---------------- The riders, booked once packed ---------------- */}
         {stops.length > 0 && (
-          <p className="mt-3 flex items-center gap-2 rounded-md bg-primary-soft px-3 py-2.5 text-[13.5px] font-bold text-primary">
+          <p className="mt-3 flex items-center gap-2 rounded-md bg-primary-soft px-3 py-2.5 text-[13.5px] font-bold leading-snug text-primary">
             <Truck size={16} strokeWidth={2.6} className="shrink-0" />
-            {stops.length} {courier} riders booked for 9 AM
+            {packed
+              ? `${riders} booked: ${bookedWith}`
+              : `PresGo books each buyer's courier once you've packed`}
           </p>
         )}
 
@@ -207,7 +219,7 @@ export function Seller() {
                   <span className="rounded-pill bg-danger-soft px-2.5 py-1 text-[12px] font-extrabold text-danger">
                     Out of stock
                   </span>
-                ) : l.freshToday || sellerStep !== 'new' ? (
+                ) : l.freshToday || packed ? (
                   <FreshBadge size="sm" />
                 ) : null}
               </li>
@@ -218,6 +230,40 @@ export function Seller() {
           <Plus size={18} strokeWidth={2.8} />
           Add a listing
         </Button>
+
+        {/* ---------------- What sells, where and when ---------------- */}
+        <SectionTitle
+          className="mt-7"
+          action={<span className="text-[13px] font-semibold text-ink-muted">Last 4 weeks</span>}
+        >
+          Plan your stock
+        </SectionTitle>
+        <div className="rounded-card border border-line bg-card px-4 pb-4 pt-3 shadow-card">
+          <p className="text-[13px] font-bold text-ink-muted">What sold, where and when</p>
+          <ul className="divide-y divide-line">
+            {sellerView.stockPlan.rows.map((r) => {
+              const item = getProduce(r.produceId)
+              return (
+                <li key={r.produceId} className="flex items-center gap-3 py-3">
+                  <ProducePicture item={item} className="h-11 w-11 shrink-0 rounded-md" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[15px] font-bold text-ink">{item.name}</p>
+                    <p className="truncate text-[13px] font-semibold text-ink-muted">
+                      {r.days} · {r.areas}
+                    </p>
+                  </div>
+                  <span className="tabular shrink-0 text-[15px] font-extrabold text-ink">
+                    {qtyText(item, r.qty)}
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+          <p className="mt-1 flex items-start gap-2.5 rounded-md bg-secondary-soft px-3 py-2.5 text-[13.5px] font-semibold leading-snug text-on-secondary">
+            <Sprout size={16} strokeWidth={2.5} className="mt-[1px] shrink-0 text-primary" />
+            {sellerView.stockPlan.tip}
+          </p>
+        </div>
 
         {/* ---------------- Paid extras ---------------- */}
         <SectionTitle className="mt-7">Grow your sales</SectionTitle>
@@ -255,14 +301,14 @@ export function Seller() {
               )}
             </div>
           )}
-          {farm.sukiDeal && (
+          {seller.sukiDeal && (
             <div className="py-4">
               <p className="flex items-center gap-2 text-[16px] font-extrabold text-ink">
                 <BadgePercent size={18} strokeWidth={2.4} className="text-primary" />
                 Your suki deal
               </p>
               <p className="mt-1 text-[14px] font-medium leading-snug text-ink-muted">
-                {peso(farm.sukiDeal.off)} off {peso(farm.sukiDeal.minSpend)}+ for Direct Plus members.
+                {peso(seller.sukiDeal.off)} off {peso(seller.sukiDeal.minSpend)}+ for Direct Plus members.
                 You pay only when it's used.
               </p>
             </div>
@@ -311,31 +357,42 @@ export function Seller() {
   )
 }
 
+/** What the buyer chose: "Maxim · 11 AM – 1 PM", or "Pick-up · 1 – 6 PM". */
+function plan(o: SellerOrder, market: Market) {
+  if (o.mode === 'pickup') return `Pick-up · ${market.hours}`
+  return [o.courier && getCourier(o.courier).name, o.slot && slotText(o.slot)].filter(Boolean).join(' · ')
+}
+
 function OrderStatus({ step, mode }: { step: SellerStep; mode: Mode }) {
   if (step === 'new') {
-    return <span className="rounded-pill bg-surface px-2.5 py-1 text-[12px] font-extrabold text-ink-muted">To harvest</span>
+    return (
+      <span className="shrink-0 rounded-pill bg-surface px-2.5 py-1 text-[12px] font-extrabold text-ink-muted">
+        To confirm
+      </span>
+    )
   }
-  if (step === 'harvested') return <FreshBadge size="sm" />
+  if (step === 'confirmed') {
+    return (
+      <span className="inline-flex shrink-0 items-center gap-1 rounded-pill bg-primary-soft px-2.5 py-1 text-[12px] font-extrabold text-primary">
+        <Check size={13} strokeWidth={3} />
+        Confirmed
+      </span>
+    )
+  }
   if (step === 'handedOver' && mode === 'delivery') {
     return (
-      <span className="inline-flex items-center gap-1 rounded-pill bg-primary-soft px-2.5 py-1 text-[12px] font-extrabold text-primary">
+      <span className="inline-flex shrink-0 items-center gap-1 rounded-pill bg-primary-soft px-2.5 py-1 text-[12px] font-extrabold text-primary">
         <Truck size={13} strokeWidth={2.6} />
         With rider
       </span>
     )
   }
-  return mode === 'pickup' ? (
-    <>
-      <ReadyBadge size="sm" />
-      <span className="text-[12px] font-semibold text-ink-muted">Buyer collects</span>
-    </>
-  ) : (
-    <ReadyBadge size="sm" />
-  )
+  /* Packed: waiting for the rider, or for the buyer to collect. */
+  return <ReadyBadge size="sm" />
 }
 
 function StepChip({ step }: { step: SellerStep }) {
-  const n = { new: 1, harvested: 2, ready: 3, handedOver: 4 }[step]
+  const n = { new: 1, confirmed: 2, ready: 3, handedOver: 4 }[step]
   return (
     <span className="inline-flex items-center gap-1.5 text-[13px] font-bold text-ink-muted">
       <PackageCheck size={15} strokeWidth={2.4} className="text-primary" />

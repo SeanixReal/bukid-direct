@@ -88,7 +88,7 @@ const BOX = { x: +boxMatch[1], y: +boxMatch[2], w: +boxMatch[3], h: +boxMatch[4]
    background. */
 function markSvg(color, size = 10) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${BOX.x} ${BOX.y} ${BOX.w} ${BOX.h}" width="${BOX.w * size}" height="${BOX.h * size}">
-  <title>Bukid Direct</title>
+  <title>PresGo</title>
   <path fill="${color}" fill-rule="evenodd" d="${PIN} ${SPROUT}"/>
 </svg>
 `
@@ -102,7 +102,7 @@ const ICON = 512
 const iconMarkH = ICON * 0.6
 const iconMarkW = (iconMarkH * BOX.w) / BOX.h
 const appIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${ICON} ${ICON}" width="${ICON}" height="${ICON}">
-  <title>Bukid Direct</title>
+  <title>PresGo</title>
   <rect width="${ICON}" height="${ICON}" rx="${ICON * 0.225}" fill="${v('primary')}"/>
   <svg x="${(ICON - iconMarkW) / 2}" y="${(ICON - iconMarkH) / 2 + ICON * 0.01}" width="${iconMarkW}" height="${iconMarkH}" viewBox="${BOX.x} ${BOX.y} ${BOX.w} ${BOX.h}">
     <path fill="${v('on-primary')}" fill-rule="evenodd" d="${PIN} ${SPROUT}"/>
@@ -113,7 +113,7 @@ const appIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${ICON}
 /* Browser-tab icon: green mark, white when the browser is in dark mode. */
 const square = { x: 24 - BOX.h / 2, y: BOX.y, s: BOX.h }
 const faviconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${square.x.toFixed(1)} ${square.y} ${square.s} ${square.s}">
-  <title>Bukid Direct</title>
+  <title>PresGo</title>
   <style>
     path { fill: ${v('primary')}; }
     @media (prefers-color-scheme: dark) { path { fill: ${v('on-primary')}; } }
@@ -141,7 +141,7 @@ function findBrowser() {
 }
 
 const BROWSER = findBrowser()
-const WORK = mkdtempSync(join(tmpdir(), 'bukid-brand-'))
+const WORK = mkdtempSync(join(tmpdir(), 'presgo-brand-'))
 
 /* A throwaway profile, so this never touches a Chrome window already open. */
 const baseArgs = [
@@ -229,17 +229,16 @@ const markPage = (svg) => page(`<div id="art" style="width:${markW}px;height:${m
 screenshot(markPage(markGreen), 'logo-mark.png', markW, markH)
 screenshot(markPage(markWhite), 'logo-mark-white.png', markW, markH)
 
-/* Wordmark: "Bukid" bold, "Direct" regular, all in the mark's colour. */
+/* Wordmark: "PresGo" in ExtraBold, in the mark's colour. */
 const wordmark = (svg, color) =>
   page(
     `<div id="art" class="lockup">
       <div class="mark">${fill(svg)}</div>
-      <div class="name"><b>Bukid</b> Direct</div>
+      <div class="name">PresGo</div>
     </div>`,
     `.lockup { display: inline-flex; align-items: center; gap: 30px; padding: 12px 16px; color: ${color}; }
      .mark { width: ${(BOX.w / BOX.h) * 150}px; height: 150px; }
-     .name { font-size: 112px; font-weight: 400; letter-spacing: -0.02em; line-height: 1; white-space: nowrap; }
-     .name b { font-weight: 800; }`,
+     .name { font-size: 112px; font-weight: 800; letter-spacing: -0.02em; line-height: 1; white-space: nowrap; }`,
   )
 
 for (const [file, html] of [
@@ -277,7 +276,7 @@ const sheet = page(
   `<div id="art" class="sheet">
     <header>
       <div class="mark">${fill(markGreen)}</div>
-      <div><h1><b>Bukid</b> Direct</h1><p>Your suki, one tap away &middot; Colour palette &middot; Typeface: Plus Jakarta Sans</p></div>
+      <div><h1>PresGo</h1><p>Preskong Lokal, On the Go &middot; Colour palette &middot; Typeface: Plus Jakarta Sans</p></div>
     </header>
     ${palette
       .map((g) => `<h2>${g.group}</h2><div class="row">${g.items.map(swatch).join('')}</div>`)
@@ -294,8 +293,7 @@ const sheet = page(
   `.sheet { width: 1440px; box-sizing: border-box; padding: 56px 60px 44px; background: ${v('canvas')}; color: ${v('ink')}; }
    header { display: flex; align-items: center; gap: 22px; margin-bottom: 18px; }
    header .mark { width: ${(BOX.w / BOX.h) * 64}px; height: 64px; }
-   h1 { margin: 0; font-size: 42px; font-weight: 400; letter-spacing: -0.02em; color: ${v('primary')}; }
-   h1 b { font-weight: 800; }
+   h1 { margin: 0; font-size: 42px; font-weight: 800; letter-spacing: -0.02em; color: ${v('primary')}; }
    header p { margin: 4px 0 0; font-size: 17px; font-weight: 600; color: ${v('ink-muted')}; }
    h2 { margin: 30px 0 12px; font-size: 15px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: ${v('ink-muted')}; }
    .row { display: flex; flex-wrap: wrap; gap: 18px; }
@@ -313,9 +311,9 @@ screenshot(sheet, 'color-palette.png', 1440, measure(sheet).h, false)
 
 /* Plain hex list, for typing into a Canva Brand Kit. */
 const lines = [
-  'Bukid Direct - colour palette (from src/theme.css)',
-  'Your suki, one tap away',
-  'Typeface: Plus Jakarta Sans (ExtraBold for headings and "Bukid", Regular for "Direct")',
+  'PresGo - colour palette (from src/theme.css)',
+  'Preskong Lokal, On the Go',
+  'Typeface: Plus Jakarta Sans (ExtraBold for headings and the "PresGo" wordmark)',
   '',
   ...palette.flatMap((g) => [
     g.group.toUpperCase(),

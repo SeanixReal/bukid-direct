@@ -2,15 +2,20 @@ import { useNavigate } from 'react-router-dom'
 import { Check, Navigation, Package, PackageCheck, Repeat, Ticket } from 'lucide-react'
 import { Screen, SectionTitle } from '../components/Screen'
 import { ProducePicture } from '../components/ProduceArt'
-import { FulfilmentRow } from '../components/FarmBits'
+import { FulfilmentRow, MarketBadge, whenText } from '../components/StallBits'
 import { Avatar, Button } from '../components/ui'
 import { useApp, type Shipment } from '../state/AppState'
 import { getListing } from '../state/catalog'
+import { arrivalAt } from '../state/eta'
 import { regularTotal, type Line } from '../state/pricing'
 import {
+  clockText,
   fillText,
-  getFarm,
+  getCourier,
+  getMarket,
   getProduce,
+  getSeller,
+  listNames,
   pastOrders,
   peso,
   schedule,
@@ -51,7 +56,7 @@ export function Orders() {
               Order by {schedule.cutoff} and it's yours {schedule.day.toLowerCase()}.
             </p>
             <Button variant="secondary" size="md" className="mt-5" onClick={() => navigate('/shop')}>
-              Shop this week's harvest
+              Shop today's market
             </Button>
           </div>
         )}
@@ -68,11 +73,12 @@ export function Orders() {
 }
 
 /* --------------------------------------------------------------------------
-   One farm's part of the order, and where it is.
+   One market's part of the order, and where it is.
    -------------------------------------------------------------------------- */
 
 const chipStyle: Record<StageId, string> = {
   placed: 'bg-surface text-ink-muted',
+  confirmed: 'bg-primary-soft text-primary',
   packing: 'bg-surface text-ink-muted',
   ready: 'bg-accent text-on-accent',
   onTheWay: 'bg-primary-soft text-primary',
@@ -82,28 +88,33 @@ const chipStyle: Record<StageId, string> = {
 function ShipmentCard({ shipment: s, code }: { shipment: Shipment; code: string }) {
   const navigate = useNavigate()
   const { stageOf } = useApp()
-  const farm = getFarm(s.farmId)
+  const market = getMarket(s.marketId)
+  const who = listNames(s.stalls.map((st) => getSeller(st.sellerId).call))
   const stage = stageOf(s)
   const copy = stageText[s.mode][stage]
   const steps = stagesFor[s.mode]
+  /* The rider is booked once the stalls have packed. */
+  const booked = s.mode === 'delivery' && (stage === 'ready' || stage === 'onTheWay')
+  const rider = market.rider
 
   return (
     <div className="rounded-card border border-line bg-card p-4 shadow-card">
       <div className="flex items-center gap-3">
-        <Avatar initials={farm.initials} size={44} />
+        <MarketBadge size={44} />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[17px] font-extrabold text-ink">{farm.call}</p>
-          <FulfilmentRow farm={farm} mode={s.mode} wrap />
+          <p className="truncate text-[17px] font-extrabold text-ink">{market.name}</p>
+          <FulfilmentRow market={market} mode={s.mode} courier={s.courier} slot={s.slot} wrap />
         </div>
       </div>
+      <p className="mt-2 truncate text-[13px] font-semibold text-ink-muted">From {who}</p>
 
       {/* Progress */}
-      <div className="mt-3.5 flex items-center justify-between gap-3">
+      <div className="mt-3 flex items-center justify-between gap-3">
         <span
           className={`inline-flex items-center gap-1.5 rounded-pill px-3 py-[5px] text-[13px] font-extrabold ${chipStyle[stage]}`}
         >
           {stage === 'ready' && <PackageCheck size={14} strokeWidth={2.6} />}
-          {stage === 'done' && <Check size={14} strokeWidth={3} />}
+          {(stage === 'confirmed' || stage === 'done') && <Check size={14} strokeWidth={3} />}
           {copy.label}
         </span>
         <div className="flex flex-1 gap-1">
@@ -117,7 +128,22 @@ function ShipmentCard({ shipment: s, code }: { shipment: Shipment; code: string 
           ))}
         </div>
       </div>
-      <p className="mt-2 text-[14px] font-medium leading-snug text-ink-muted">{fillText(copy.detail, farm)}</p>
+      <p className="mt-2 text-[14px] font-medium leading-snug text-ink-muted">
+        {fillText(copy.detail, { who, market, courier: s.courier, time: whenText(market, s.mode, s.slot) })}
+      </p>
+
+      {/* Booked: who is coming, and when */}
+      {booked && (
+        <div className="mt-3 flex items-center gap-3 rounded-md bg-surface px-3 py-2.5">
+          <Avatar initials={rider.name.charAt(0)} size={34} tone="primary" />
+          <p className="min-w-0 flex-1 truncate text-[13.5px] font-semibold text-ink-muted">
+            <b className="font-bold text-ink">{rider.name}</b> · {getCourier(s.courier).name}
+          </p>
+          <span className="tabular shrink-0 text-[13px] font-extrabold text-ink">
+            ETA {clockText(arrivalAt(s.marketId, s.slot))}
+          </span>
+        </div>
+      )}
 
       {/* What and how much */}
       <div className="mt-3 flex items-center gap-3 border-t border-line pt-3">
@@ -150,7 +176,7 @@ function ShipmentCard({ shipment: s, code }: { shipment: Shipment; code: string 
 
 function PastOrderCard({ id, when, lines }: { id: string; when: string; lines: Line[] }) {
   const { addToBasket, showToast } = useApp()
-  const farmIds = [...new Set(lines.map((l) => getListing(l.listingId)?.farmId ?? ''))].filter(Boolean)
+  const sellerIds = [...new Set(lines.map((l) => getListing(l.listingId)?.sellerId ?? ''))].filter(Boolean)
 
   const reorder = () => {
     const available = lines.filter((l) => !getListing(l.listingId)?.outOfStock)
@@ -164,9 +190,9 @@ function PastOrderCard({ id, when, lines }: { id: string; when: string; lines: L
         <p className="text-[16px] font-extrabold text-ink">{when}</p>
         <p className="tabular text-[16px] font-extrabold text-ink">{peso(regularTotal(lines))}</p>
       </div>
-      <p className="text-[13px] font-semibold text-ink-muted">
-        {id} · {farmIds.length} {farmIds.length === 1 ? 'farm' : 'farms'} ·{' '}
-        {farmIds.map((f) => getFarm(f).call).join(', ')}
+      <p className="truncate text-[13px] font-semibold text-ink-muted">
+        {id} · {sellerIds.length} {sellerIds.length === 1 ? 'stall' : 'stalls'} ·{' '}
+        {sellerIds.map((s) => getSeller(s).call).join(', ')}
       </p>
       <div className="mt-3 flex items-center justify-between gap-3">
         <Thumbs lines={lines} />

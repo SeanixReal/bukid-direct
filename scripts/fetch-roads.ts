@@ -1,5 +1,5 @@
 /* ==========================================================================
-   One-time road fetch for the Bukid Direct city map.
+   One-time road fetch for the PresGo city map.
 
      npm run fetch:roads
 
@@ -41,7 +41,7 @@ const HEADERS = {
   'Content-Type': 'application/x-www-form-urlencoded',
   Accept: 'application/json',
   'User-Agent':
-    'BukidDirect-prototype/0.1 (university project; one-time road export)',
+    'PresGo-prototype/0.1 (university project; one-time road export)',
 }
 
 /* Cebu City proper. `admin_level=6` is the city boundary in PH OSM data. */

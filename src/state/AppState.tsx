@@ -12,27 +12,33 @@ import {
   demoBasket,
   demoModes,
   demoOrder,
-  getFarm,
+  getMarket,
   getProduce,
   stageAt,
   stagesFor,
   type ChannelId,
+  type CourierId,
+  type HandoffId,
   type LanguageId,
   type Listing,
+  type MarketId,
   type Mode,
   type PaymentId,
+  type Slot,
   type StageId,
 } from '../data/sample'
 import { addListing, featureListing, getListing, resetListings } from './catalog'
-import { priceBasket, type FarmGroup, type Line, type Priced, type Totals } from './pricing'
+import { priceBasket, type Line, type MarketGroup, type Priced, type Totals } from './pricing'
 
 /* --------------------------------------------------------------------------
    One small store for the whole prototype. No backend, no persistence - the
    presenter can reset it at any time from the demo panel (D).
 
-   An order is split into one "shipment" per farm, because each farm packs
-   its own part and hands it to a Lalamove rider, or to the buyer at its
-   pickup point. Each shipment walks through stagesFor[mode].
+   An order is split into one "shipment" per market: the stalls in a market
+   each pack their own part, and one rider - from the courier the buyer
+   picked - collects them all, or the buyer picks them up. Each shipment
+   walks through stagesFor[mode]: the stalls confirm, pack, then it is
+   delivered or picked up.
    -------------------------------------------------------------------------- */
 
 interface Profile {
@@ -40,10 +46,23 @@ interface Profile {
   language: LanguageId
 }
 
+/* One stall's part of a shipment - what its Seller Center shows. */
+export interface ShipmentStall {
+  sellerId: string
+  lines: Line[]
+  /* What the buyer pays for this stall's food. */
+  subtotal: number
+}
+
 export interface Shipment {
   id: string
-  farmId: string
+  marketId: MarketId
   mode: Mode
+  /* What the buyer chose and the stalls confirm: the courier and the time.
+     Only used for deliveries. */
+  courier: CourierId
+  slot: Slot
+  stalls: ShipmentStall[]
   lines: Line[]
   subtotal: number
   fee: number
@@ -53,10 +72,12 @@ export interface Shipment {
 
 export interface Order {
   id: string
-  /* Shown at a pickup point. */
+  /* Shown at the stalls on pick-up. */
   code: string
   placedAt: string
   payment: PaymentId
+  /* How the rider hands deliveries over. */
+  handoff: HandoffId
   member: boolean
   shipments: Shipment[]
   totals: Totals
@@ -68,8 +89,9 @@ export interface Toast {
   action?: { label: string; to: string }
 }
 
-/* Nong Romy's side of tomorrow: harvest, pack, hand over to the riders. */
-export type SellerStep = 'new' | 'harvested' | 'ready' | 'handedOver'
+/* Nong Romy's side of tomorrow: confirm the orders, harvest and pack, hand
+   over to the riders. */
+export type SellerStep = 'new' | 'confirmed' | 'ready' | 'handedOver'
 
 interface AppStateValue {
   /* Buyer ---------------------------------------------------------------- */
@@ -81,15 +103,26 @@ interface AppStateValue {
   toggleFavorite: (listingId: string) => void
 
   /* Delivery or Pick-up, like Grab and foodpanda. `prefMode` is the switch
-     on the shop; each farm in the basket can differ. */
+     on the shop; each market in the basket can differ. */
   prefMode: Mode
   setPrefMode: (mode: Mode) => void
-  modeOf: (farmId: string) => Mode
-  setFarmMode: (farmId: string, mode: Mode) => void
+  modeOf: (marketId: MarketId) => Mode
+  setMarketMode: (marketId: MarketId, mode: Mode) => void
+
+  /* Choose your delivery option: for each market the buyer picks a courier
+     and a time (the market's usual courier and first time to start with),
+     and for the order how the rider hands it over. The stalls confirm. */
+  courierOf: (marketId: MarketId) => CourierId
+  setMarketCourier: (marketId: MarketId, courier: CourierId) => void
+  /* Index into the market's slots. */
+  slotOf: (marketId: MarketId) => number
+  setMarketSlot: (marketId: MarketId, index: number) => void
+  handoff: HandoffId
+  setHandoff: (handoff: HandoffId) => void
 
   /* Basket ----------------------------------------------------------------- */
   basket: Line[]
-  groups: FarmGroup[]
+  groups: MarketGroup[]
   basketTotals: Totals
   /* The Direct Plus welcome voucher (free delivery once) is still unused. */
   welcomeLeft: boolean
@@ -114,10 +147,10 @@ interface AppStateValue {
   /* Seller ------------------------------------------------------------------ */
   sellerStep: SellerStep
   setSellerStep: (step: SellerStep) => void
-  /* Bumped when a farmer publishes, so lists re-read the catalog. */
+  /* Bumped when a seller publishes, so lists re-read the catalog. */
   listingsVersion: number
   publishListing: (listing: Omit<Listing, 'id'>) => Listing
-  /* A farm pays to put a listing in the shop's Featured row. */
+  /* A stall pays to put a listing in the shop's Featured row. */
   featureListing: (listingId: string) => void
 
   /* Little confirmation pill over the bottom of the screen. */
@@ -163,7 +196,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile>(defaultProfile)
   const [favorites, setFavorites] = useState<string[]>([])
   const [prefMode, setPrefModeState] = useState<Mode>('delivery')
-  const [farmModes, setFarmModes] = useState<Record<string, Mode>>({})
+  const [marketModes, setMarketModes] = useState<Partial<Record<MarketId, Mode>>>({})
+  const [marketCouriers, setMarketCouriers] = useState<Partial<Record<MarketId, CourierId>>>({})
+  const [marketSlots, setMarketSlots] = useState<Partial<Record<MarketId, number>>>({})
+  const [handoff, setHandoff] = useState<HandoffId>('hand')
   const [basket, setBasket] = useState<Line[]>([])
   const [order, setOrder] = useState<Order | null>(null)
   const [simRunning, setSimRunning] = useState(false)
@@ -207,18 +243,34 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   /* --- Delivery or pick-up -------------------------------------------------- */
 
   const modeOf = useCallback(
-    (farmId: string): Mode =>
-      getFarm(farmId).pickup ? (farmModes[farmId] ?? prefMode) : 'delivery',
-    [farmModes, prefMode],
+    (marketId: MarketId): Mode => marketModes[marketId] ?? prefMode,
+    [marketModes, prefMode],
   )
 
   const setPrefMode = useCallback((mode: Mode) => {
     setPrefModeState(mode)
-    setFarmModes({})
+    setMarketModes({})
   }, [])
 
-  const setFarmMode = useCallback((farmId: string, mode: Mode) => {
-    setFarmModes((m) => ({ ...m, [farmId]: mode }))
+  const setMarketMode = useCallback((marketId: MarketId, mode: Mode) => {
+    setMarketModes((m) => ({ ...m, [marketId]: mode }))
+  }, [])
+
+  /* --- Courier, time and handoff ----------------------------------------------- */
+
+  const courierOf = useCallback(
+    (marketId: MarketId): CourierId => marketCouriers[marketId] ?? getMarket(marketId).usual,
+    [marketCouriers],
+  )
+
+  const setMarketCourier = useCallback((marketId: MarketId, courier: CourierId) => {
+    setMarketCouriers((c) => ({ ...c, [marketId]: courier }))
+  }, [])
+
+  const slotOf = useCallback((marketId: MarketId) => marketSlots[marketId] ?? 0, [marketSlots])
+
+  const setMarketSlot = useCallback((marketId: MarketId, index: number) => {
+    setMarketSlots((s) => ({ ...s, [marketId]: index }))
   }, [])
 
   /* --- Basket ---------------------------------------------------------------- */
@@ -253,14 +305,16 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const fillDemoBasket = useCallback(() => {
     setBasket(demoBasket.map((l) => ({ ...l })))
     setPrefModeState('delivery')
-    setFarmModes({ ...demoModes })
+    setMarketModes({ ...demoModes })
+    setMarketCouriers({})
+    setMarketSlots({})
   }, [])
 
   const priced = useMemo(
-    () => priceBasket(basket, member, modeOf, welcomeLeft),
+    () => priceBasket(basket, member, modeOf, welcomeLeft, courierOf),
     // listingsVersion: a newly published listing can be in the basket.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [basket, member, modeOf, welcomeLeft, listingsVersion],
+    [basket, member, modeOf, welcomeLeft, courierOf, listingsVersion],
   )
   const groups = priced.groups
   const basketTotals = priced.totals
@@ -274,16 +328,23 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         code: demoOrder.code,
         placedAt: clockTime(),
         payment,
+        handoff,
         member,
-        shipments: orderGroups.map((g) => ({
-          id: `${demoOrder.id}-${getFarm(g.farmId).initials}`,
-          farmId: g.farmId,
-          mode: g.mode,
-          lines: g.lines,
-          subtotal: g.subtotal,
-          fee: g.fee,
-          stage: 0,
-        })),
+        shipments: orderGroups.map((g) => {
+          const market = getMarket(g.marketId)
+          return {
+            id: `${demoOrder.id}-${market.id}`,
+            marketId: g.marketId,
+            mode: g.mode,
+            courier: g.courier,
+            slot: market.slots[slotOf(g.marketId)] ?? market.slots[0],
+            stalls: g.stalls.map((s) => ({ sellerId: s.sellerId, lines: s.lines, subtotal: s.regular - s.suki })),
+            lines: g.lines,
+            subtotal: g.subtotal,
+            fee: g.fee,
+            stage: 0,
+          }
+        }),
         totals: orderTotals,
       }
       setSimRunning(false)
@@ -293,7 +354,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       if (usedWelcome) setWelcomeLeft(false)
       return placed
     },
-    [member],
+    [member, handoff, slotOf],
   )
 
   const placeOrder = useCallback(
@@ -302,13 +363,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   )
 
   /* For the presenter: an order straight away, from whatever is in the
-     basket or else the demo basket (three farms, one of them pick-up). */
+     basket or else the demo basket (two markets, one of them pick-up). */
   const placeDemoOrder = useCallback(() => {
     if (basket.length) return startOrder(priced, 'gcash')
-    const demoModeOf = (farmId: string): Mode =>
-      getFarm(farmId).pickup ? (demoModes[farmId] ?? 'delivery') : 'delivery'
-    return startOrder(priceBasket(demoBasket, member, demoModeOf, welcomeLeft), 'gcash')
-  }, [basket.length, priced, member, welcomeLeft, startOrder])
+    const demoModeOf = (marketId: MarketId): Mode => demoModes[marketId] ?? 'delivery'
+    return startOrder(priceBasket(demoBasket, member, demoModeOf, welcomeLeft, courierOf), 'gcash')
+  }, [basket.length, priced, member, welcomeLeft, courierOf, startOrder])
 
   const stageOf = useCallback((s: Shipment) => stagesFor[s.mode][s.stage], [])
 
@@ -332,7 +392,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       setElapsed(next)
       return
     }
-    /* Past the last delivery: hand over anything waiting at a pickup point. */
+    /* Past the last delivery: hand over anything waiting at the stalls. */
     setOrder((o) =>
       o
         ? {
@@ -382,7 +442,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   /* --- Seller ----------------------------------------------------------------------- */
 
   const publishListing = useCallback((draft: Omit<Listing, 'id'>) => {
-    const listing: Listing = { ...draft, id: `${draft.farmId}-${draft.produceId}-${Date.now()}` }
+    const listing: Listing = { ...draft, id: `${draft.sellerId}-${draft.produceId}-${Date.now()}` }
     addListing(listing)
     setListingsVersion((v) => v + 1)
     return listing
@@ -418,7 +478,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setProfile(defaultProfile)
     setFavorites([])
     setPrefModeState('delivery')
-    setFarmModes({})
+    setMarketModes({})
+    setMarketCouriers({})
+    setMarketSlots({})
+    setHandoff('hand')
     setBasket([])
     setOrder(null)
     setSellerStep('new')
@@ -439,7 +502,13 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       prefMode,
       setPrefMode,
       modeOf,
-      setFarmMode,
+      setMarketMode,
+      courierOf,
+      setMarketCourier,
+      slotOf,
+      setMarketSlot,
+      handoff,
+      setHandoff,
       basket,
       groups,
       basketTotals,
@@ -478,7 +547,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       prefMode,
       setPrefMode,
       modeOf,
-      setFarmMode,
+      setMarketMode,
+      courierOf,
+      setMarketCourier,
+      slotOf,
+      setMarketSlot,
+      handoff,
       basket,
       groups,
       basketTotals,

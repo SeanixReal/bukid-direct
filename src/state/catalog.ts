@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Everything for sale right now: the sample listings plus anything a farmer
+   Everything for sale right now: the sample listings plus anything a stall
    publishes during the demo from the Seller Center. Reset puts it back to
    the sample listings.
    ========================================================================== */
@@ -23,7 +23,7 @@ export function addListing(listing: Listing) {
   index.set(listing.id, listing)
 }
 
-/** Puts a listing in the shop's Featured row - a farm paid for it. */
+/** Puts a listing in the shop's Featured row - a stall paid for it. */
 export function featureListing(id: string) {
   const listing = index.get(id)
   if (!listing || listing.featured) return

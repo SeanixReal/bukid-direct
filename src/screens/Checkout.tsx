@@ -1,12 +1,27 @@
 import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
-import { Banknote, Check, CreditCard, MessageSquare, Wallet, type LucideIcon } from 'lucide-react'
+import { Banknote, Check, CreditCard, Handshake, MessageSquare, Wallet, type LucideIcon } from 'lucide-react'
 import { Screen, ScreenFooter, SectionTitle, TopBar } from '../components/Screen'
 import { CityMap } from '../components/CityMap'
-import { FulfilmentRow } from '../components/FarmBits'
-import { Avatar, Button, PlusTag, SumRow } from '../components/ui'
+import { FulfilmentRow, MarketBadge } from '../components/StallBits'
+import { Button, ModeSwitch, PlusTag, Segmented, SumRow } from '../components/ui'
 import { useApp } from '../state/AppState'
-import { getFarm, homeAt, paymentMethods, peso, user, type PaymentId } from '../data/sample'
+import type { MarketGroup } from '../state/pricing'
+import {
+  couriers,
+  fareFor,
+  getMarket,
+  getSeller,
+  handoffs,
+  homeAt,
+  paymentMethods,
+  peso,
+  schedule,
+  slotText,
+  stallNo,
+  user,
+  type PaymentId,
+} from '../data/sample'
 
 const paymentIcon: Record<PaymentId, LucideIcon> = {
   gcash: Wallet,
@@ -16,7 +31,7 @@ const paymentIcon: Record<PaymentId, LucideIcon> = {
 
 export function Checkout() {
   const navigate = useNavigate()
-  const { basket, groups, basketTotals: t, member, placeOrder } = useApp()
+  const { basket, groups, basketTotals: t, member, handoff, setHandoff, placeOrder } = useApp()
   const [payment, setPayment] = useState<PaymentId>('gcash')
 
   if (basket.length === 0) return <Navigate to="/basket" replace />
@@ -44,7 +59,7 @@ export function Checkout() {
     >
       <TopBar
         title="Checkout"
-        subtitle={`${t.count} items from ${t.farmCount} ${t.farmCount === 1 ? 'farm' : 'farms'}`}
+        subtitle={`${t.count} items from ${t.stallCount} ${t.stallCount === 1 ? 'stall' : 'stalls'}`}
         fallback="/basket"
       />
 
@@ -73,41 +88,34 @@ export function Checkout() {
           </>
         )}
 
-        {/* ---------------- Each farm ---------------- */}
-        <SectionTitle className={delivering ? 'mt-6' : ''}>
-          {t.farmCount === 1 ? 'Your farm' : `Your ${t.farmCount} farms`}
-        </SectionTitle>
-        <ul className="divide-y divide-line rounded-card border border-line bg-card px-4 shadow-card">
-          {groups.map((g) => {
-            const farm = getFarm(g.farmId)
-            return (
-              <li key={g.farmId} className="flex items-center gap-3 py-3.5">
-                <Avatar initials={farm.initials} size={40} />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-baseline justify-between gap-2">
-                    <p className="truncate text-[16px] font-bold text-ink">{farm.call}</p>
-                    <p className="tabular shrink-0 text-[15px] font-extrabold text-ink">
-                      {g.suki > 0 && (
-                        <span className="mr-1.5 text-[13px] font-semibold text-ink-faint line-through">
-                          {peso(g.regular)}
-                        </span>
-                      )}
-                      {peso(g.subtotal)}
-                    </p>
-                  </div>
-                  <div className="flex items-center justify-between gap-2">
-                    <FulfilmentRow farm={farm} mode={g.mode} wrap />
-                    <span
-                      className={`shrink-0 text-[13px] font-bold ${g.fee > 0 ? 'text-ink-muted' : 'text-primary'}`}
-                    >
-                      {g.voucher ? 'Free · voucher' : g.fee > 0 ? `+${peso(g.fee)}` : 'Free'}
-                    </span>
-                  </div>
-                </div>
-              </li>
-            )
-          })}
-        </ul>
+        {/* ---------------- Each market: courier and time ---------------- */}
+        <SectionTitle className={delivering ? 'mt-6' : ''}>Choose your delivery option</SectionTitle>
+        <div className="space-y-3">
+          {groups.map((g) => (
+            <DeliveryOption key={g.marketId} group={g} />
+          ))}
+        </div>
+
+        {/* ---------------- Handoff ---------------- */}
+        {delivering && (
+          <div className="mt-3 rounded-card border border-line bg-card p-4 shadow-card">
+            <p className="text-[16px] font-bold text-ink">Handoff</p>
+            <p className="text-[13px] font-semibold text-ink-muted">How the rider gives you your order</p>
+            <div className="mt-3">
+              <Segmented options={handoffs} value={handoff} onChange={setHandoff} />
+            </div>
+          </div>
+        )}
+
+        {/* ---------------- The stalls agree ---------------- */}
+        <div className="mt-3 flex items-start gap-3 rounded-card bg-secondary-soft p-4">
+          <Handshake size={21} strokeWidth={2.3} className="mt-0.5 shrink-0 text-primary" />
+          <p className="text-[14px] font-semibold leading-snug text-on-secondary">
+            {t.stallCount === 1 ? 'The stall' : 'Each stall'} confirms{' '}
+            {delivering ? 'the courier, time and handoff' : 'your pick-up time'} before packing.
+            {delivering && " Once a rider is booked, you'll see their name and arrival time."}
+          </p>
+        </div>
 
         {/* ---------------- Payment ---------------- */}
         <SectionTitle className="mt-6">Payment</SectionTitle>
@@ -138,13 +146,7 @@ export function Checkout() {
                     </span>
                     <span className="block truncate text-[13px] font-medium text-ink-muted">{m.detail}</span>
                   </span>
-                  <span
-                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
-                      active ? 'border-primary bg-primary text-on-primary' : 'border-line'
-                    }`}
-                  >
-                    {active && <Check size={14} strokeWidth={3.2} />}
-                  </span>
+                  <CheckCircle active={active} />
                 </button>
               </li>
             )
@@ -160,10 +162,10 @@ export function Checkout() {
 
         {/* ---------------- Sums ---------------- */}
         <div className="mt-4 space-y-2 rounded-card border border-line bg-card p-4 shadow-card">
-          <SumRow label="Produce" value={peso(t.regular)} />
+          <SumRow label="Food" value={peso(t.regular)} />
           {t.sukiOff > 0 && <SumRow label="Suki deals" value={`−${peso(t.sukiOff)}`} tone="primary" />}
           <SumRow
-            label="Delivery · Lalamove's price"
+            label="Delivery · couriers' own fares"
             value={delivery > 0 ? peso(delivery) : 'Free'}
             tone={delivery > 0 ? 'ink' : 'primary'}
           />
@@ -187,5 +189,129 @@ export function Checkout() {
         </div>
       </div>
     </Screen>
+  )
+}
+
+/* --------------------------------------------------------------------------
+   One market's part of the order: Delivery or Pick-up and, for a delivery,
+   which courier brings it and when - what the stalls then confirm. One
+   rider collects from every stall in the market, so each courier is shown
+   once, at its own fare for the trip.
+   -------------------------------------------------------------------------- */
+
+function DeliveryOption({ group: g }: { group: MarketGroup }) {
+  const { setMarketMode, setMarketCourier, slotOf, setMarketSlot } = useApp()
+  const market = getMarket(g.marketId)
+  const fares = couriers.map((courier) => ({ courier, fare: fareFor(market, courier.id) }))
+  const cheapest = Math.min(...fares.map((f) => f.fare))
+  const slots = market.slots.map((slot, i) => ({ id: String(i), label: slotText(slot) }))
+  const stallList = g.stalls.map((s) => stallNo(getSeller(s.sellerId))).join(', ')
+
+  return (
+    <section className="overflow-hidden rounded-card border border-line bg-card shadow-card">
+      <div className="flex items-center gap-3 px-4 py-3">
+        <MarketBadge size={40} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[16px] font-bold text-ink">{market.name}</p>
+          <p className="truncate text-[13px] font-semibold text-ink-muted">
+            {g.stalls.length} {g.stalls.length === 1 ? 'stall' : 'stalls'} · {g.lines.length}{' '}
+            {g.lines.length === 1 ? 'item' : 'items'}
+          </p>
+        </div>
+        <p className="tabular shrink-0 text-[15px] font-extrabold text-ink">
+          {g.suki > 0 && (
+            <span className="mr-1.5 text-[13px] font-semibold text-ink-faint line-through">{peso(g.regular)}</span>
+          )}
+          {peso(g.subtotal)}
+        </p>
+      </div>
+
+      <div className="border-t border-line px-4 py-2.5">
+        <ModeSwitch size="sm" value={g.mode} onChange={(m) => setMarketMode(market.id, m)} />
+      </div>
+
+      {g.mode === 'delivery' ? (
+        <>
+          <div role="radiogroup" aria-label={`Courier from ${market.name}`} className="border-t border-line px-2 py-1.5">
+            {fares.map(({ courier, fare }) => {
+              const active = courier.id === g.courier
+              /* One tag a row, so a long courier name never gets cut off. */
+              const tag = fare === cheapest ? 'Cheapest' : courier.id === market.usual ? 'Usual' : null
+              return (
+                <button
+                  key={courier.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => setMarketCourier(market.id, courier.id)}
+                  className={`tappable flex w-full items-center gap-2.5 rounded-md px-2.5 py-2.5 text-left ${
+                    active ? 'bg-primary-soft' : ''
+                  }`}
+                >
+                  <CheckCircle active={active} />
+                  <span className={`min-w-0 flex-1 truncate text-[15px] font-bold ${active ? 'text-primary' : 'text-ink'}`}>
+                    {courier.name}
+                  </span>
+                  {tag && <Tag tone={tag === 'Cheapest' ? 'leaf' : 'plain'}>{tag}</Tag>}
+                  <span className="tabular w-[42px] shrink-0 text-right text-[15px] font-extrabold text-ink">
+                    {peso(fare)}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="border-t border-line px-4 pb-3.5 pt-3">
+            <p className="mb-2 text-[13px] font-bold text-ink-muted">{schedule.day}, between</p>
+            <Segmented
+              options={slots}
+              value={String(slotOf(market.id))}
+              onChange={(id) => setMarketSlot(market.id, Number(id))}
+            />
+          </div>
+
+          <p className="border-t border-line px-4 py-2.5 text-[13px] font-semibold leading-snug text-ink-muted">
+            {g.voucher ? (
+              <b className="font-bold text-primary">Free: your welcome voucher pays this delivery.</b>
+            ) : g.stalls.length > 1 ? (
+              `One rider collects from all ${g.stalls.length} stalls at ${market.handover}.`
+            ) : (
+              `The rider collects at ${market.handover}.`
+            )}
+          </p>
+        </>
+      ) : (
+        <div className="space-y-1 border-t border-line px-4 py-3">
+          <FulfilmentRow market={market} mode="pickup" wrap />
+          <p className="pl-6 text-[13px] font-bold text-primary">
+            Free · show your code at {stallList}
+          </p>
+        </div>
+      )}
+    </section>
+  )
+}
+
+function CheckCircle({ active }: { active: boolean }) {
+  return (
+    <span
+      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
+        active ? 'border-primary bg-primary text-on-primary' : 'border-line'
+      }`}
+    >
+      {active && <Check size={14} strokeWidth={3.2} />}
+    </span>
+  )
+}
+
+function Tag({ children, tone = 'plain' }: { children: string; tone?: 'plain' | 'leaf' }) {
+  return (
+    <span
+      className={`shrink-0 rounded-pill px-2 py-[2px] text-[11.5px] font-extrabold ${
+        tone === 'leaf' ? 'bg-secondary-soft text-primary' : 'bg-surface text-ink-muted'
+      }`}
+    >
+      {children}
+    </span>
   )
 }

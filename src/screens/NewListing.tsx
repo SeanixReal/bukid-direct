@@ -6,17 +6,28 @@ import { ProducePicture } from '../components/ProduceArt'
 import { Button, FreshBadge } from '../components/ui'
 import { useApp } from '../state/AppState'
 import { allListings } from '../state/catalog'
-import { farmerShare, getFarm, getProduce, peso, perUnit, produce, sellerView, type ProduceId } from '../data/sample'
+import {
+  brand,
+  getProduce,
+  getSeller,
+  marketOf,
+  peso,
+  perUnit,
+  produce,
+  sellerShare,
+  sellerView,
+  type ProduceId,
+} from '../data/sample'
 
 /* --------------------------------------------------------------------------
-   A farmer puts something up for sale. Publishing adds it to the shop
+   A stall puts something up for sale. Publishing adds it to the shop
    straight away, so the room sees the marketplace work end to end.
    -------------------------------------------------------------------------- */
 
 export function NewListing() {
   const navigate = useNavigate()
   const { publishListing, showToast } = useApp()
-  const farm = getFarm(sellerView.farmId)
+  const seller = getSeller(sellerView.sellerId)
   const [produceId, setProduceId] = useState<ProduceId>('squash')
   const [price, setPrice] = useState('48')
   const [harvested, setHarvested] = useState(true)
@@ -24,7 +35,7 @@ export function NewListing() {
   const item = getProduce(produceId)
   const amount = Number(price)
   const valid = Number.isFinite(amount) && amount > 0
-  /* What other farms ask, as a guide. */
+  /* What other stalls ask, as a guide. */
   const market = allListings()
     .filter((l) => l.produceId === produceId && !l.outOfStock)
     .map((l) => l.price)
@@ -38,12 +49,12 @@ export function NewListing() {
   const publish = () => {
     const listing = publishListing({
       produceId,
-      farmId: farm.id,
+      sellerId: seller.id,
       price: Math.round(amount),
       freshToday: harvested,
-      about: `Fresh from ${farm.call}'s farm in ${farm.place}. Listed today.`,
+      about: `Fresh from ${seller.call}'s stall at ${marketOf(seller).name}. Listed today.`,
     })
-    showToast(`Your ${item.name.toLowerCase()} is live on Bukid Direct`, {
+    showToast(`Your ${item.name.toLowerCase()} is live on ${brand.name}`, {
       label: 'See it',
       to: `/listing/${listing.id}`,
     })
@@ -61,7 +72,7 @@ export function NewListing() {
         </ScreenFooter>
       }
     >
-      <TopBar title="New listing" subtitle={`Selling as ${farm.call}`} fallback="/seller" />
+      <TopBar title="New listing" subtitle={`Selling as ${seller.call}`} fallback="/seller" />
 
       <div className="px-5 pb-6">
         {/* ---------------- What ---------------- */}
@@ -106,12 +117,12 @@ export function NewListing() {
         <p className="mt-2 text-[14px] font-semibold text-ink-muted">
           {range ? (
             <>
-              Other farms are asking <b className="font-extrabold text-ink">{range}</b>.
+              Other stalls are asking <b className="font-extrabold text-ink">{range}</b>.
             </>
           ) : (
             'No one else is selling this yet - you set the price.'
           )}{' '}
-          You keep {Math.round(farmerShare * 100)}% of every sale.
+          You keep {Math.round(sellerShare * 100)}% of every sale.
         </p>
 
         {/* ---------------- Fresh today ---------------- */}
@@ -126,7 +137,7 @@ export function NewListing() {
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-[16px] font-bold text-ink">Fresh today</span>
-            <span className="block text-[13px] font-medium text-ink-muted">Picked this morning</span>
+            <span className="block text-[13px] font-medium text-ink-muted">Picked, caught or dressed this morning</span>
           </span>
           <span
             className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${harvested ? 'bg-primary' : 'bg-surface-2'}`}
@@ -144,7 +155,7 @@ export function NewListing() {
           <div className="min-w-0 flex-1">
             {harvested && <FreshBadge size="sm" />}
             <p className="mt-1 truncate text-[16px] font-bold text-ink">{item.name}</p>
-            <p className="text-[13px] font-semibold text-ink-muted">{farm.call}</p>
+            <p className="text-[13px] font-semibold text-ink-muted">{seller.call}</p>
             <p className="mt-1 text-[18px] font-extrabold leading-none text-ink">
               {valid ? peso(amount) : '₱ -'}
               <span className="ml-1 text-[12.5px] font-semibold text-ink-muted">/ {perUnit(item)}</span>

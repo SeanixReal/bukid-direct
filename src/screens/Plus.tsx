@@ -6,7 +6,6 @@ import {
   PiggyBank,
   Sparkles,
   Ticket,
-  Tractor,
   Truck,
   type LucideIcon,
 } from 'lucide-react'
@@ -15,14 +14,13 @@ import { Logo } from '../components/Logo'
 import { Avatar, Button } from '../components/ui'
 import { useApp } from '../state/AppState'
 import { plusSavingsOver } from '../state/pricing'
-import { farms, pastOrders, peso, plusPlan } from '../data/sample'
+import { marketOf, pastOrders, peso, plusPlan, sellers } from '../data/sample'
 
 const perkIcon: Record<string, LucideIcon> = {
   fee: Ticket,
   welcome: Truck,
   suki: BadgePercent,
   early: Sparkles,
-  visit: Tractor,
 }
 
 export function Plus() {
@@ -30,7 +28,7 @@ export function Plus() {
   const { member, setMember, showToast } = useApp()
   /* Oldest first, so the welcome voucher lands where it would have. */
   const saved = plusSavingsOver([...pastOrders].reverse().map((o) => o.lines))
-  const deals = farms.flatMap((farm) => (farm.sukiDeal ? [{ farm, deal: farm.sukiDeal }] : []))
+  const deals = sellers.flatMap((seller) => (seller.sukiDeal ? [{ seller, deal: seller.sukiDeal }] : []))
 
   return (
     <Screen
@@ -106,19 +104,22 @@ export function Plus() {
           })}
         </ul>
 
-        {/* ---------------- The farms' own deals ---------------- */}
+        {/* ---------------- The stalls' own deals ---------------- */}
         <div className="rounded-card border border-line bg-card px-4 pb-1.5 pt-4 shadow-card">
           <p className="text-[16px] font-extrabold text-ink">This week's suki deals</p>
           <ul className="mt-1 divide-y divide-line">
-            {deals.map(({ farm, deal }) => (
-              <li key={farm.id}>
+            {deals.map(({ seller, deal }) => (
+              <li key={seller.id}>
                 <button
                   type="button"
-                  onClick={() => navigate(`/farm/${farm.id}`)}
+                  onClick={() => navigate(`/stall/${seller.id}`)}
                   className="tappable flex w-full items-center gap-3 py-3 text-left"
                 >
-                  <Avatar initials={farm.initials} size={38} />
-                  <span className="min-w-0 flex-1 truncate text-[15px] font-bold text-ink">{farm.call}</span>
+                  <Avatar initials={seller.initials} size={38} />
+                  <span className="min-w-0 flex-1 truncate text-[15px] font-bold text-ink">
+                    {seller.call}{' '}
+                    <span className="font-semibold text-ink-muted">· {marketOf(seller).short}</span>
+                  </span>
                   <span className="shrink-0 text-[14px] font-extrabold text-primary">
                     {peso(deal.off)} off {peso(deal.minSpend)}+
                   </span>

@@ -1,42 +1,57 @@
 import { Navigate, useParams } from 'react-router-dom'
-import { BadgePercent, MapPin, Star, Store, Truck } from 'lucide-react'
+import { BadgePercent, MapPin, Sprout, Star, Store, Truck } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Screen, SectionTitle, TopBar } from '../components/Screen'
-import { Hills } from '../components/ProduceArt'
+import { Logo } from '../components/Logo'
 import { ListingCard } from '../components/ListingCard'
-import { deliveryLine } from '../components/FarmBits'
 import { Avatar, Rating } from '../components/ui'
 import { useApp } from '../state/AppState'
 import { allListings } from '../state/catalog'
-import { farms, peso, plusPlan, schedule, type Farm } from '../data/sample'
+import {
+  cheapestFare,
+  courierNames,
+  marketOf,
+  peso,
+  plusPlan,
+  schedule,
+  sellers,
+  slotText,
+  type Seller,
+} from '../data/sample'
 
-export function FarmScreen() {
+/* One stall's page: where it is in which market, how its food gets to you,
+   its listings and what buyers say. */
+export function StallScreen() {
   const { id } = useParams()
   /* Subscribes to the store, so a newly published listing shows up here. */
   useApp()
-  const farm = farms.find((f) => f.id === id)
-  if (!farm) return <Navigate to="/farms" replace />
+  const seller = sellers.find((s) => s.id === id)
+  if (!seller) return <Navigate to="/markets" replace />
 
-  const forSale = allListings().filter((l) => l.farmId === farm.id)
+  const market = marketOf(seller)
+  const forSale = allListings().filter((l) => l.sellerId === seller.id)
 
   return (
     <Screen tone="light" statusClass="bg-primary">
-      {/* ---------------- Header over the hills ---------------- */}
+      {/* ---------------- Header ---------------- */}
       <header className="bg-grad-brand relative overflow-hidden pb-24">
-        <Hills className="pointer-events-none absolute inset-x-0 bottom-0 h-[120px] w-full" />
-        <TopBar tone="light" fallback="/farms" />
+        <Logo
+          size={230}
+          className="pointer-events-none absolute -right-14 -top-4 text-on-dark opacity-[0.08]"
+        />
+        <TopBar tone="light" fallback="/markets" />
         <div className="relative flex items-center gap-4 px-5 pt-2">
-          <Avatar initials={farm.initials} size={68} tone="onGreen" className="shadow-float" />
+          <Avatar initials={seller.initials} size={68} tone="onGreen" className="shadow-float" />
           <div className="min-w-0">
             <h1 className="text-[30px] font-extrabold leading-tight tracking-tight text-on-dark">
-              {farm.call}
+              {seller.call}
             </h1>
-            <p className="text-[15px] font-semibold text-on-dark-muted">{farm.farmer}</p>
+            <p className="text-[15px] font-semibold text-on-dark-muted">{seller.owner}</p>
             <p className="mt-1 flex items-center gap-1.5 text-[14px] font-bold text-on-dark">
               <Star size={15} strokeWidth={0} fill="currentColor" />
-              {farm.rating.toFixed(1)}
+              {seller.rating.toFixed(1)}
               <span className="font-semibold text-on-dark-muted">
-                · {farm.reviewCount} reviews · {farm.sold}
+                · {seller.reviewCount} reviews · {seller.sold}
               </span>
             </p>
           </div>
@@ -46,28 +61,39 @@ export function FarmScreen() {
       <div className="relative -mt-14 px-5 pb-6">
         <div className="rounded-card border border-line bg-card p-4 shadow-card">
           <ul className="space-y-3">
-            <Fact Icon={MapPin}>{farm.place}</Fact>
+            <Fact Icon={MapPin}>
+              {seller.stall}
+              <Sub>
+                {market.name} · {market.area}
+              </Sub>
+            </Fact>
+            {seller.own && (
+              <Fact Icon={Sprout}>
+                {seller.own}
+                <Sub>Sells their own, straight to you</Sub>
+              </Fact>
+            )}
             <Fact Icon={Truck}>
-              Delivery {peso(farm.delivery.fee)} · free over {peso(farm.delivery.freeOver)}
-              <Sub>{deliveryLine(farm)}</Sub>
+              Delivery from {peso(cheapestFare(market))} · one rider from {market.short}
+              <Sub>
+                {courierNames} · {schedule.day.toLowerCase()} {market.slots.map(slotText).join(' or ')}
+              </Sub>
             </Fact>
             <Fact Icon={Store}>
-              {farm.pickup ? `Pick up at ${farm.pickup.place}` : 'Delivery only'}
-              {farm.pickup && (
-                <Sub>
-                  Free · {schedule.day.toLowerCase()} {farm.pickup.hours}
-                </Sub>
-              )}
+              Pick up at the stall
+              <Sub>
+                Free · {schedule.day.toLowerCase()} {market.hours}
+              </Sub>
             </Fact>
-            {farm.sukiDeal && (
+            {seller.sukiDeal && (
               <Fact Icon={BadgePercent}>
-                Suki deal: {peso(farm.sukiDeal.off)} off {peso(farm.sukiDeal.minSpend)}+
+                Suki deal: {peso(seller.sukiDeal.off)} off {peso(seller.sukiDeal.minSpend)}+
                 <Sub>For {plusPlan.name} members</Sub>
               </Fact>
             )}
           </ul>
           <p className="mt-4 border-t border-line pt-4 text-[16px] font-medium leading-relaxed text-ink">
-            {farm.story}
+            {seller.story}
           </p>
         </div>
 
@@ -75,7 +101,7 @@ export function FarmScreen() {
           className="mt-7"
           action={<span className="text-[13px] font-semibold text-ink-muted">{forSale.length} listings</span>}
         >
-          Shop from {farm.call}
+          Shop from {seller.call}
         </SectionTitle>
         <div className="grid grid-cols-2 gap-3">
           {forSale.map((l) => (
@@ -83,20 +109,23 @@ export function FarmScreen() {
           ))}
         </div>
 
-        <Reviews farm={farm} />
+        <Reviews seller={seller} />
       </div>
     </Screen>
   )
 }
 
-function Reviews({ farm }: { farm: Farm }) {
+function Reviews({ seller }: { seller: Seller }) {
   return (
     <>
-      <SectionTitle className="mt-7" action={<Rating value={farm.rating} count={farm.reviewCount} className="text-[14px]" />}>
+      <SectionTitle
+        className="mt-7"
+        action={<Rating value={seller.rating} count={seller.reviewCount} className="text-[14px]" />}
+      >
         What buyers say
       </SectionTitle>
       <ul className="space-y-2.5">
-        {farm.reviews.map((r) => (
+        {seller.reviews.map((r) => (
           <li key={r.name} className="rounded-card border border-line bg-card p-4 shadow-card">
             <div className="flex items-center justify-between">
               <span className="text-[15px] font-bold text-ink">{r.name}</span>

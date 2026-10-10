@@ -5,14 +5,14 @@ import { DemoHint, DemoPanel, ShotToast, type ShotStatus } from './components/De
 import { Toast } from './components/Toast'
 import { useApp } from './state/AppState'
 import { savePhoneScreenshot } from './screenshot'
-import { getFarm, type StageId } from './data/sample'
+import { getCourier, getMarket, getSeller, type StageId } from './data/sample'
 
 import { Splash } from './screens/Splash'
 import { Onboarding } from './screens/Onboarding'
 import { Shop } from './screens/Shop'
 import { ListingScreen } from './screens/Listing'
-import { FarmScreen } from './screens/Farm'
-import { Farms } from './screens/Farms'
+import { StallScreen } from './screens/Stall'
+import { Markets } from './screens/Markets'
 import { Basket } from './screens/Basket'
 import { Checkout } from './screens/Checkout'
 import { Confirmed } from './screens/Confirmed'
@@ -114,8 +114,11 @@ function usePhoneScreenshot() {
    Push-notification moments, as screen takeovers:
      - a rider sets off with a delivery  ->  the live map opens
      - a Pick-up order is packed         ->  orange "Ready for pickup"
-       (as a toast instead when another farm's rider is also coming, so
+       (as a toast instead when another market's rider is also coming, so
        the two moments never fight over the screen)
+   and as toasts:
+     - the stalls confirm the order
+     - a delivery is packed and its rider booked
    The short delay lets the room see the step tick over first.
    -------------------------------------------------------------------------- */
 function useTakeovers() {
@@ -138,16 +141,34 @@ function useTakeovers() {
     const arrived = (id: string, stage: StageId) => before[id] !== undefined && before[id] !== stage && now[id] === stage
     const riding = order.shipments.find((s) => s.mode === 'delivery' && arrived(s.id, 'onTheWay'))
     const waiting = order.shipments.find((s) => s.mode === 'pickup' && arrived(s.id, 'ready'))
+    const booked = order.shipments.filter((s) => s.mode === 'delivery' && arrived(s.id, 'ready'))
+    const confirmed = order.shipments.filter((s) => arrived(s.id, 'confirmed'))
     const anyDelivery = order.shipments.some((s) => s.mode === 'delivery')
 
     let to: string | null = null
     if (riding) to = `/track/${riding.id}`
     else if (waiting && !anyDelivery) to = `/ready/${waiting.id}`
     else if (waiting) {
-      showToast(`${getFarm(waiting.farmId).call}: ready for pickup`, {
+      showToast(`${getMarket(waiting.marketId).short}: ready for pickup`, {
         label: 'View',
         to: `/ready/${waiting.id}`,
       })
+    } else if (booked.length) {
+      const first = booked[0]
+      const rider = getMarket(first.marketId).rider.name
+      showToast(
+        booked.length === 1
+          ? `Rider booked: ${rider}, ${getCourier(first.courier).name}`
+          : `${booked.length} riders booked`,
+        { label: 'Track', to: `/track/${first.id}` },
+      )
+    } else if (confirmed.length) {
+      const stalls = confirmed.flatMap((s) => s.stalls)
+      showToast(
+        stalls.length === 1
+          ? `${getSeller(stalls[0].sellerId).call} confirmed your order`
+          : `${stalls.length} stalls confirmed your order`,
+      )
     }
     if (!to) return
     const target = to
@@ -169,8 +190,8 @@ function AppRoutes() {
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/shop" element={<Shop />} />
         <Route path="/listing/:id" element={<ListingScreen />} />
-        <Route path="/farms" element={<Farms />} />
-        <Route path="/farm/:id" element={<FarmScreen />} />
+        <Route path="/markets" element={<Markets />} />
+        <Route path="/stall/:id" element={<StallScreen />} />
         <Route path="/basket" element={<Basket />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/confirmed" element={<Confirmed />} />

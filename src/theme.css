@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Bukid Direct - design tokens
+   PresGo - design tokens
    --------------------------------------------------------------------------
    THIS IS THE ONLY FILE IN THE APP THAT CONTAINS COLOR VALUES.
    Change a value here and it changes everywhere: screens, logo, produce art,
@@ -83,6 +83,26 @@
   --art-sack: #E3D3B1;
   --art-sack-dark: #C7B088;
   --art-twine: #B5864F;
+  /* Fish and seafood */
+  --art-fish: #B8C3BB;
+  --art-fish-dark: #8D9C92;
+  --art-fish-belly: #EEF2EE;
+  --art-squid: #EFCDBD;
+  --art-squid-dark: #D49E8B;
+  --art-shrimp: #F0896A;
+  --art-shrimp-dark: #CF6649;
+  --art-dried: #D9A766;      /* danggit and dried squid                   */
+  --art-dried-dark: #B47E3E;
+  /* Meat */
+  --art-pork: #E58E86;
+  --art-pork-dark: #C96A63;
+  --art-fat: #F6E7DA;
+  --art-skin: #E9C29A;
+  --art-chicken: #F1CF9F;
+  --art-chicken-dark: #D9A96B;
+  --art-beef: #C2554C;
+  --art-beef-dark: #9E3F38;
+  --art-marrow: #E8C37A;
   --art-shadow: rgb(27 42 33 / 0.09);
 
   /* Picture backgrounds behind the produce art. */

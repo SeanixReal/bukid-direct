@@ -3,10 +3,10 @@ import { Minus, Plus, Star } from 'lucide-react'
 import { ProducePicture } from './ProduceArt'
 import { FreshBadge, SoldOutBadge } from './ui'
 import { useApp } from '../state/AppState'
-import { getFarm, getProduce, peso, perUnit, qtyText, type Listing } from '../data/sample'
+import { getProduce, getSeller, peso, perUnit, qtyText, type Listing } from '../data/sample'
 
 /* --------------------------------------------------------------------------
-   The big listing card: a strong picture, what it is, which farm sells it
+   The big listing card: a strong picture, what it is, which stall sells it
    and a bold price. The add button sits on the picture and turns into a
    stepper once the item is in the basket.
    -------------------------------------------------------------------------- */
@@ -23,13 +23,13 @@ export function ListingCard({
   const navigate = useNavigate()
   const { qtyOf, setQty, addToBasket, showToast } = useApp()
   const item = getProduce(listing.produceId)
-  const farm = getFarm(listing.farmId)
+  const seller = getSeller(listing.sellerId)
   const qty = qtyOf(listing.id)
   const open = () => navigate(`/listing/${listing.id}`)
 
   const add = () => {
     addToBasket(listing.id)
-    showToast(`Added ${item.name.toLowerCase()} from ${farm.call}`, {
+    showToast(`Added ${item.name.toLowerCase()} from ${seller.call}`, {
       label: 'View',
       to: '/basket',
     })
@@ -43,7 +43,7 @@ export function ListingCard({
         <button
           type="button"
           onClick={open}
-          aria-label={`Open ${item.name} from ${farm.call}`}
+          aria-label={`Open ${item.name} from ${seller.call}`}
           className="absolute inset-0"
         />
         {listing.freshToday && (
@@ -94,9 +94,9 @@ export function ListingCard({
       <button type="button" onClick={open} className="block w-full px-3.5 pb-3.5 pt-3 text-left">
         <span className="block truncate text-[16px] font-bold leading-tight text-ink">{item.name}</span>
         <span className="mt-0.5 flex items-center gap-1 truncate text-[12.5px] font-semibold text-ink-muted">
-          <span className="truncate">{farm.call}</span>
+          <span className="truncate">{seller.call}</span>
           <Star size={12} strokeWidth={0} fill="currentColor" className="shrink-0 text-primary" />
-          <span className="shrink-0 text-ink">{farm.rating.toFixed(1)}</span>
+          <span className="shrink-0 text-ink">{seller.rating.toFixed(1)}</span>
         </span>
         <span className="mt-2 flex items-baseline gap-1">
           <span

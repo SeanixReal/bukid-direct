@@ -17,7 +17,7 @@ import {
 } from 'lucide-react'
 import { useApp } from '../state/AppState'
 import { moneySplit, type Totals } from '../state/pricing'
-import { getFarm, peso, stagesFor } from '../data/sample'
+import { brand, getMarket, peso, stagesFor } from '../data/sample'
 
 /* --------------------------------------------------------------------------
    Presenter controls. Live OUTSIDE the phone frame, so they never appear in a
@@ -70,7 +70,7 @@ export function DemoPanel({ onClose }: { onClose: () => void }) {
             return (
               <div key={s.id}>
                 <p className="text-[12px] font-bold text-on-dark">
-                  {getFarm(s.farmId).call} · {s.mode === 'pickup' ? 'Pick-up' : 'Delivery'}
+                  {getMarket(s.marketId).name} · {s.mode === 'pickup' ? 'Pick-up' : 'Delivery'}
                 </p>
                 <div className="mt-1 flex gap-1">
                   {list.map((id, i) => (
@@ -114,8 +114,8 @@ export function DemoPanel({ onClose }: { onClose: () => void }) {
         </div>
       )}
       <p className="mb-3 text-[11px] font-medium leading-snug text-on-dark-muted">
-        Packing and delivery in about 25 seconds. The live map opens by itself when a
-        rider sets off.
+        The stalls confirm, pack and hand over in about 25 seconds. The live map opens
+        by itself when a rider sets off.
       </p>
 
       {/* --- Buyer -------------------------------------------------------------- */}
@@ -203,9 +203,9 @@ function OrderMoney({ totals }: { totals: Totals }) {
     <div className="mt-3">
       <Label>This order's money</Label>
       <div className="space-y-1 rounded-md bg-on-dark/8 p-2.5 text-[12px] font-bold text-on-dark-muted">
-        <MoneyRow label="Farms" value={peso(m.farms)} />
-        <MoneyRow label="Lalamove" value={peso(m.delivery)} />
-        <MoneyRow label="Bukid Direct" value={signed(m.us)} strong />
+        <MoneyRow label="Stalls" value={peso(m.sellers)} />
+        <MoneyRow label="Couriers" value={peso(m.delivery)} />
+        <MoneyRow label={brand.name} value={signed(m.us)} strong />
         <p className="pt-1 text-[11px] font-medium leading-snug">
           5% commission {peso(m.commission)}
           {m.serviceFee > 0 && ` + service fee ${peso(m.serviceFee)}`}

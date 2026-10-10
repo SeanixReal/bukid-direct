@@ -4,18 +4,19 @@ import { MapPin, Search, Sprout, Store, X, ChevronRight } from 'lucide-react'
 import { Screen, SectionTitle } from '../components/Screen'
 import { Wordmark } from '../components/Logo'
 import { ListingCard } from '../components/ListingCard'
-import { FarmChip } from '../components/FarmBits'
+import { StallChip } from '../components/StallBits'
 import { Avatar, Chip, ModeSwitch } from '../components/ui'
 import { useApp } from '../state/AppState'
 import { allListings } from '../state/catalog'
 import {
   categories,
-  farms,
-  getFarm,
   getProduce,
+  getSeller,
   greeting,
+  marketOf,
   peso,
   plusPlan,
+  sellers,
   user,
   type CategoryId,
   type Listing,
@@ -28,9 +29,7 @@ export function Shop() {
   const [query, setQuery] = useState('')
 
   const pickup = prefMode === 'pickup'
-  /* Pick-up shows only farms that have a pickup point, like foodpanda. */
-  const sellers = farms.filter((f) => !pickup || f.pickup)
-  const forSale = allListings().filter((l) => !pickup || getFarm(l.farmId).pickup)
+  const forSale = allListings()
   const q = query.trim().toLowerCase()
   const browsing = category === 'all' && !q
   const list = forSale.filter(
@@ -42,7 +41,7 @@ export function Shop() {
   const listTitle = q
     ? `Results for “${query.trim()}”`
     : category === 'all'
-      ? 'All produce'
+      ? 'Everything at the market'
       : categories.find((c) => c.id === category)?.label
 
   return (
@@ -67,7 +66,7 @@ export function Shop() {
           {pickup ? (
             <>
               <Store size={15} strokeWidth={2.5} className="text-primary" />
-              Collect from farm stalls and farm gates near you
+              Collect from the stalls on your way home
             </>
           ) : (
             <>
@@ -82,7 +81,7 @@ export function Shop() {
           {greeting()}, {user.firstName}!
         </p>
         <h1 className="mt-0.5 text-[28px] font-extrabold leading-[1.12] tracking-tight text-ink">
-          Fresh from the farm. No middlemen.
+          Fresh from the market. No market trip.
         </h1>
 
         <label className="mt-4 flex h-[52px] items-center gap-2.5 rounded-pill bg-card px-4 shadow-card ring-1 ring-inset ring-line focus-within:ring-2 focus-within:ring-primary">
@@ -90,7 +89,7 @@ export function Shop() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search food or farms"
+            placeholder="Search food, stalls or markets"
             className="min-w-0 flex-1 bg-transparent text-[16px] font-semibold outline-none"
           />
           {query && (
@@ -115,7 +114,7 @@ export function Shop() {
         ))}
       </div>
 
-      {/* ---------------- The farms ---------------- */}
+      {/* ---------------- The stalls ---------------- */}
       {browsing && (
         <section className="mt-6">
           <SectionTitle
@@ -123,18 +122,18 @@ export function Shop() {
             action={
               <button
                 type="button"
-                onClick={() => navigate('/farms')}
+                onClick={() => navigate('/markets')}
                 className="tappable text-[14px] font-bold text-primary"
               >
-                See all
+                See markets
               </button>
             }
           >
-            {pickup ? 'Farms with pick-up' : 'Selling this week'}
+            Stalls selling today
           </SectionTitle>
           <div className="no-scrollbar flex gap-3 overflow-x-auto px-5 pb-2">
-            {sellers.map((f) => (
-              <FarmChip key={f.id} farm={f} mode={pickup ? 'pickup' : 'delivery'} />
+            {sellers.map((s) => (
+              <StallChip key={s.id} seller={s} mode={prefMode} />
             ))}
           </div>
         </section>
@@ -157,7 +156,7 @@ export function Shop() {
         </section>
       )}
 
-      {/* ---------------- Featured: farms pay for this row ---------------- */}
+      {/* ---------------- Featured: stalls pay for this row ---------------- */}
       {browsing && featured.length > 0 && (
         <section className="mt-5">
           <SectionTitle
@@ -216,11 +215,9 @@ export function Shop() {
           </div>
         ) : (
           <div className="rounded-card border border-dashed border-line bg-card p-6 text-center">
-            <p className="text-[16px] font-bold text-ink">
-              {q ? `Nothing matches “${query.trim()}”` : 'Nothing here for pick-up yet'}
-            </p>
+            <p className="text-[16px] font-bold text-ink">Nothing matches “{query.trim()}”</p>
             <p className="mt-1 text-[14px] font-medium text-ink-muted">
-              {q ? "Try “tomatoes”, “mango” or a farmer's name." : 'Switch to Delivery to see every farm.'}
+              Try “liempo”, “bangus”, “Carbon” or a seller's name.
             </p>
           </div>
         )}
@@ -230,9 +227,9 @@ export function Shop() {
 }
 
 function matches(l: Listing, q: string) {
-  const farm = getFarm(l.farmId)
+  const seller = getSeller(l.sellerId)
   const item = getProduce(l.produceId)
-  return [item.name, item.local ?? '', farm.call, farm.farmer, farm.place].some((s) =>
+  return [item.name, item.local ?? '', seller.call, seller.owner, seller.sells, marketOf(seller).name].some((s) =>
     s.toLowerCase().includes(q),
   )
 }

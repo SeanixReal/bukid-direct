@@ -1,5 +1,5 @@
 /* --------------------------------------------------------------------------
-   THE BUKID DIRECT LOGO
+   THE PRESGO LOGO
    A location pin with a two-leaf sprout cut out of it. One colour only: the
    sprout is a hole, so the mark works on any background - green on light
    screens, white on green or dark ones.
@@ -31,7 +31,7 @@ interface LogoProps {
   title?: string
 }
 
-export function Logo({ size = 48, className, title = 'Bukid Direct' }: LogoProps) {
+export function Logo({ size = 48, className, title = 'PresGo' }: LogoProps) {
   const titleId = useId()
   return (
     <svg
@@ -50,8 +50,8 @@ export function Logo({ size = 48, className, title = 'Bukid Direct' }: LogoProps
 }
 
 /* --------------------------------------------------------------------------
-   Wordmark: "Bukid" in bold, "Direct" in regular weight, both in the same
-   colour as the mark. `size` is the type size in px; the mark scales with it.
+   Wordmark: "PresGo" in ExtraBold, in the same colour as the mark - as on
+   the pitch deck. `size` is the type size in px; the mark scales with it.
    -------------------------------------------------------------------------- */
 
 export function Wordmark({
@@ -88,11 +88,10 @@ export function Wordmark({
 function WordmarkText({ size, className = '' }: { size: number; className?: string }) {
   return (
     <span
-      className={`whitespace-nowrap leading-none tracking-[-0.02em] ${className}`}
+      className={`whitespace-nowrap font-extrabold leading-none tracking-[-0.02em] ${className}`}
       style={{ fontSize: size }}
     >
-      <span className="font-extrabold">Bukid</span>
-      <span className="font-normal"> Direct</span>
+      PresGo
     </span>
   )
 }

@@ -1,10 +1,10 @@
 import { Navigate, useNavigate } from 'react-router-dom'
 import { Check } from 'lucide-react'
 import { Screen, ScreenFooter } from '../components/Screen'
-import { FulfilmentRow } from '../components/FarmBits'
-import { Avatar, Button } from '../components/ui'
+import { FulfilmentRow, MarketBadge } from '../components/StallBits'
+import { Button } from '../components/ui'
 import { useApp } from '../state/AppState'
-import { getFarm, listNames, paymentMethods, peso, schedule, user } from '../data/sample'
+import { getMarket, getSeller, handoffs, listNames, paymentMethods, peso, schedule, user } from '../data/sample'
 
 /* --------------------------------------------------------------------------
    Order confirmation. "Salamat!" is Bisaya for thank you.
@@ -15,9 +15,13 @@ export function Confirmed() {
   const { order } = useApp()
   if (!order) return <Navigate to="/shop" replace />
 
-  const farmers = listNames(order.shipments.map((s) => getFarm(s.farmId).call))
+  const names = order.shipments.flatMap((s) => s.stalls.map((st) => getSeller(st.sellerId).call))
+  const who = names.length <= 4 ? listNames(names) : `${names.length} stalls`
+  const one = names.length === 1
   const payment = paymentMethods.find((m) => m.id === order.payment)
   const collecting = order.shipments.some((s) => s.mode === 'pickup')
+  const delivering = order.shipments.some((s) => s.mode === 'delivery')
+  const handoff = handoffs.find((h) => h.id === order.handoff)
 
   return (
     <Screen
@@ -50,28 +54,29 @@ export function Confirmed() {
             Your order is in, {user.firstName}.
           </p>
           <p
-            className="animate-rise-in mt-1 max-w-[310px] text-[16px] font-medium leading-snug text-ink-muted"
+            className="animate-rise-in mt-1 max-w-[320px] text-[16px] font-medium leading-snug text-ink-muted"
             style={{ animationDelay: '140ms' }}
           >
-            {farmers} will pack it fresh {schedule.day.toLowerCase()} morning.
+            {who} {one ? 'confirms' : 'confirm'} it tonight and {one ? 'packs' : 'pack'} it fresh{' '}
+            {schedule.day.toLowerCase()} morning.
           </p>
         </div>
 
-        {/* ---------------- Each farm's part ---------------- */}
+        {/* ---------------- Each market's part ---------------- */}
         <ul className="mt-6 divide-y divide-line rounded-card border border-line bg-card px-4 shadow-card">
           {order.shipments.map((s) => {
-            const farm = getFarm(s.farmId)
+            const market = getMarket(s.marketId)
             return (
               <li key={s.id} className="flex items-center gap-3 py-3.5">
-                <Avatar initials={farm.initials} size={40} />
+                <MarketBadge size={40} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline justify-between gap-2">
-                    <p className="truncate text-[16px] font-bold text-ink">{farm.call}</p>
-                    <p className="text-[13px] font-bold text-ink-muted">
-                      {s.lines.length} {s.lines.length === 1 ? 'item' : 'items'}
+                    <p className="truncate text-[16px] font-bold text-ink">{market.name}</p>
+                    <p className="shrink-0 text-[13px] font-bold text-ink-muted">
+                      {s.stalls.length} {s.stalls.length === 1 ? 'stall' : 'stalls'}
                     </p>
                   </div>
-                  <FulfilmentRow farm={farm} mode={s.mode} wrap />
+                  <FulfilmentRow market={market} mode={s.mode} courier={s.courier} slot={s.slot} wrap />
                 </div>
               </li>
             )
@@ -92,7 +97,7 @@ export function Confirmed() {
                 </span>
               ))}
             </div>
-            <p className="mt-2.5 text-[14px] font-semibold text-ink-muted">Show it when you collect.</p>
+            <p className="mt-2.5 text-[14px] font-semibold text-ink-muted">Show it at each stall when you collect.</p>
           </div>
         )}
 
@@ -100,6 +105,7 @@ export function Confirmed() {
         <dl className="mt-3 divide-y divide-line rounded-card border border-line bg-card px-4 shadow-card">
           <Detail label="Order" value={order.id} />
           <Detail label="Placed" value={`Today, ${order.placedAt}`} />
+          {delivering && handoff && <Detail label="Handoff" value={handoff.label} sub={user.address.note} />}
           <Detail
             label={order.payment === 'cash' ? 'To pay' : 'Paid'}
             value={peso(order.totals.total)}

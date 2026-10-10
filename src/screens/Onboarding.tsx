@@ -1,12 +1,22 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowRight, HandCoins, MapPin, Store, Sunrise, Truck, Users, type LucideIcon } from 'lucide-react'
+import {
+  ArrowRight,
+  HandCoins,
+  Handshake,
+  MapPin,
+  Smartphone,
+  Sprout,
+  Store,
+  Truck,
+  type LucideIcon,
+} from 'lucide-react'
 import { BackButton, Screen, ScreenFooter } from '../components/Screen'
 import { Button, ModeSwitch } from '../components/ui'
 import { Logo } from '../components/Logo'
 import { CityMap } from '../components/CityMap'
 import { useApp } from '../state/AppState'
-import { farmerShare, farms, homeAt, user } from '../data/sample'
+import { courierNames, homeAt, markets, sellerShare, user } from '../data/sample'
 
 const STEPS = 2
 
@@ -53,54 +63,51 @@ export function Onboarding() {
       </div>
 
       <div key={step} className="animate-screen-in px-5 pb-6">
-        {step === 0 ? <HowItWorks /> : <WhereToDeliver />}
+        {step === 0 ? <HowItHelps /> : <WhereToDeliver />}
       </div>
     </Screen>
   )
 }
 
-/* --- 1. How it works ------------------------------------------------------- */
+/* --- 1. How it helps - the pitch deck's three promises ----------------------- */
 
-const steps: { Icon: LucideIcon; title: string; detail: string }[] = [
+const promises: { Icon: LucideIcon; title: string; detail: string }[] = [
   {
-    Icon: Users,
-    title: 'Order with a tap',
-    detail: 'No market trip. One basket, many farms.',
+    Icon: Handshake,
+    title: 'No middlemen',
+    detail: 'Stalls and local growers sell straight to you.',
   },
   {
-    Icon: Sunrise,
-    title: 'Straight from the farm',
-    detail: 'No middlemen. Picked fresh for you.',
+    Icon: Smartphone,
+    title: 'Tap to order',
+    detail: 'One basket from many stalls. No market trip.',
   },
   {
-    Icon: Truck,
-    title: 'Delivered, or pick it up',
-    detail: 'By Lalamove, or from their stall.',
+    Icon: HandCoins,
+    title: 'Fair prices',
+    detail: 'Market prices upfront, plus the delivery fare.',
   },
 ]
 
-function HowItWorks() {
+function HowItHelps() {
   return (
     <>
       <Logo size={44} className="text-primary" />
       <h1 className="mt-4 text-[30px] font-extrabold leading-[1.12] tracking-tight text-ink">
-        Fresh from the farm, straight to you
+        Fresh from the market.
       </h1>
       <p className="mt-2 text-[16px] font-medium leading-snug text-ink-muted">
-        Fruit and vegetables from Cebu farmers.
+        Cebu's public markets on your phone: fresher food, fair prices, no market trip.
       </p>
 
-      <ol className="mt-6 space-y-3">
-        {steps.map(({ Icon, title, detail }, i) => (
+      <ul className="mt-6 space-y-3">
+        {promises.map(({ Icon, title, detail }) => (
           <li
             key={title}
             className="flex items-start gap-3.5 rounded-card border border-line bg-card p-4 shadow-card"
           >
-            <span className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
               <Icon size={22} strokeWidth={2.3} />
-              <span className="absolute -right-1 -top-1 flex h-[22px] w-[22px] items-center justify-center rounded-full bg-primary text-[12px] font-extrabold text-on-primary ring-2 ring-card">
-                {i + 1}
-              </span>
             </span>
             <span className="min-w-0 pt-0.5">
               <span className="block text-[17px] font-bold leading-snug text-ink">{title}</span>
@@ -110,13 +117,13 @@ function HowItWorks() {
             </span>
           </li>
         ))}
-      </ol>
+      </ul>
 
       <div className="mt-4 flex items-center gap-3 rounded-card bg-secondary-soft p-4">
-        <HandCoins size={22} strokeWidth={2.3} className="shrink-0 text-primary" />
+        <Sprout size={22} strokeWidth={2.3} className="shrink-0 text-primary" />
         <p className="text-[14px] font-semibold leading-snug text-on-secondary">
-          <b className="font-extrabold">{Math.round(farmerShare * 100)}%</b> of what you pay for food goes
-          straight to the farmer.
+          <b className="font-extrabold">{Math.round(sellerShare * 100)}%</b> of what you pay for food goes
+          straight to the stall. Many grow or catch it themselves.
         </p>
       </div>
     </>
@@ -127,7 +134,6 @@ function HowItWorks() {
 
 function WhereToDeliver() {
   const { prefMode, setPrefMode } = useApp()
-  const withPickup = farms.filter((f) => f.pickup).length
 
   return (
     <>
@@ -135,7 +141,7 @@ function WhereToDeliver() {
         Delivery or pick-up?
       </h1>
       <p className="mt-1.5 text-[16px] font-medium leading-snug text-ink-muted">
-        You can switch any time, even per farm.
+        You can switch any time, even per market.
       </p>
 
       <ModeSwitch value={prefMode} onChange={setPrefMode} className="mt-4" />
@@ -169,8 +175,8 @@ function WhereToDeliver() {
         )}
         <p className="text-[14px] font-semibold leading-snug text-ink-muted">
           {prefMode === 'pickup'
-            ? `${withPickup} farms have a stall or gate to collect from. Always free.`
-            : "Lalamove brings it, at Lalamove's own price. Follow your rider live."}
+            ? `Collect at the stalls in any of the ${markets.length} markets, on your way home. Always free.`
+            : `Pick ${courierNames}, at the courier's own fare. One rider brings everything from the same market.`}
         </p>
       </div>
     </>

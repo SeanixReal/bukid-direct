@@ -1,6 +1,6 @@
-Bukid Direct - colour palette (from src/theme.css)
-Your suki, one tap away
-Typeface: Plus Jakarta Sans (ExtraBold for headings and "Bukid", Regular for "Direct")
+PresGo - colour palette (from src/theme.css)
+Preskong Lokal, On the Go
+Typeface: Plus Jakarta Sans (ExtraBold for headings and the "PresGo" wordmark)
 
 BRAND GREENS
   #1F7A4D  Emerald         Main brand colour. Logo, headers, primary buttons.

@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Check, Clock, PackageCheck, Sunrise } from 'lucide-react'
+import { ArrowLeft, Check, Clock, PackageCheck } from 'lucide-react'
 import { Screen } from '../components/Screen'
 import { CityMap } from '../components/CityMap'
 import { ProducePicture } from '../components/ProduceArt'
@@ -8,13 +8,13 @@ import { Button } from '../components/ui'
 import { useApp } from '../state/AppState'
 import { getListing } from '../state/catalog'
 import { route } from '../data/route'
-import { distanceKm, distanceText, getFarm, getProduce, homeAt } from '../data/sample'
+import { distanceKm, distanceText, getMarket, getProduce, getSeller, homeAt, stallNo } from '../data/sample'
 
 /* --------------------------------------------------------------------------
    "Ready for pickup" - takes over the screen when a Pick-up order is packed
-   and waiting at the farm's pickup point. Orange is reserved for exactly
-   this (and "Harvested today"), which is why it reads as news the instant
-   it appears. "Andam na!" is Bisaya for "It's ready!".
+   and waiting at the market's stalls. Orange is reserved for exactly this
+   (and "Fresh today"), which is why it reads as news the instant it appears.
+   "Andam na!" is Bisaya for "It's ready!".
    -------------------------------------------------------------------------- */
 
 export function Ready() {
@@ -30,10 +30,9 @@ function ReadyForPickup({ id }: { id: string }) {
   const navigate = useNavigate()
   const { order, markPickedUp, showToast, stageOf } = useApp()
   const shipment = order!.shipments.find((s) => s.id === id)!
-  const farm = getFarm(shipment.farmId)
-  const pickup = farm.pickup!
+  const market = getMarket(shipment.marketId)
   const collected = stageOf(shipment) === 'done'
-  const directions = useMemo(() => route(homeAt, pickup.at), [pickup])
+  const directions = useMemo(() => route(homeAt, market.at), [market])
 
   return (
     <Screen
@@ -45,7 +44,7 @@ function ReadyForPickup({ id }: { id: string }) {
             disabled={collected}
             onClick={() => {
               markPickedUp(shipment.id)
-              showToast(`Enjoy your harvest from ${farm.call}. Salamat!`)
+              showToast(`Enjoy your food from ${market.short}. Salamat!`)
               navigate('/orders')
             }}
           >
@@ -69,7 +68,7 @@ function ReadyForPickup({ id }: { id: string }) {
             <ArrowLeft size={20} strokeWidth={2.4} />
           </button>
           <span className="text-[13px] font-extrabold uppercase tracking-[0.14em] text-on-accent/75">
-            Pick-up · {farm.call}
+            Pick-up · {market.short}
           </span>
         </div>
 
@@ -83,55 +82,60 @@ function ReadyForPickup({ id }: { id: string }) {
             <h1 className="mt-0.5 text-balance text-[30px] font-extrabold leading-[1.1] tracking-tight text-on-accent">
               Your order is ready for pickup
             </h1>
-            <p className="mt-1.5 text-[17px] font-bold text-on-accent/80">at {pickup.place}</p>
+            <p className="mt-1.5 text-[17px] font-bold text-on-accent/80">at {market.name}</p>
           </div>
 
-          {/* Code and what is waiting */}
+          {/* Code, and the stalls to collect from */}
           <div className="mt-4 rounded-card bg-card p-4 text-center shadow-float">
             <p className="text-[13px] font-extrabold uppercase tracking-wide text-ink-muted">Pick-up code</p>
             <p className="mt-1 text-[44px] font-extrabold leading-none tracking-[0.12em] text-ink">{order!.code}</p>
-            <div className="mt-3.5 flex items-center gap-3 border-t border-line pt-3 text-left">
-              <div className="flex shrink-0 -space-x-2">
-                {shipment.lines.slice(0, 4).map((l) => {
-                  const listing = getListing(l.listingId)
-                  return listing ? (
-                    <ProducePicture
-                      key={l.listingId}
-                      item={getProduce(listing.produceId)}
-                      className="h-9 w-9 rounded-full ring-2 ring-card"
-                    />
-                  ) : null
-                })}
-              </div>
-              <p className="min-w-0 text-[13.5px] font-semibold leading-snug text-ink">
-                <span className="inline-flex items-center gap-1 font-extrabold text-accent-strong">
-                  <Sunrise size={14} strokeWidth={2.8} />
-                  Harvested today
-                </span>{' '}
-                by {farm.call}.
-              </p>
-            </div>
+            <ul className="mt-3.5 space-y-2.5 border-t border-line pt-3 text-left">
+              {shipment.stalls.map((st) => {
+                const seller = getSeller(st.sellerId)
+                return (
+                  <li key={st.sellerId} className="flex items-center gap-3">
+                    <div className="flex shrink-0 -space-x-2">
+                      {st.lines.slice(0, 3).map((l) => {
+                        const listing = getListing(l.listingId)
+                        return listing ? (
+                          <ProducePicture
+                            key={l.listingId}
+                            item={getProduce(listing.produceId)}
+                            className="h-9 w-9 rounded-full ring-2 ring-card"
+                          />
+                        ) : null
+                      })}
+                    </div>
+                    <p className="min-w-0 truncate text-[14px] font-semibold text-ink">
+                      <b className="font-extrabold">{stallNo(seller)}</b> · {seller.call}
+                    </p>
+                  </li>
+                )
+              })}
+            </ul>
           </div>
 
           {/* Where */}
           <div className="mt-3 overflow-hidden rounded-card bg-card shadow-float">
             <CityMap
-              frame={[homeAt, pickup.at]}
+              frame={[homeAt, market.at]}
               route={directions}
               markers={[
                 { id: 'home', at: homeAt, kind: 'home', label: 'You' },
-                { id: 'pickup', at: pickup.at, kind: 'pin' },
+                { id: 'pickup', at: market.at, kind: 'pin' },
               ]}
-              padding={{ top: 44, right: 30, bottom: 26, left: 30 }}
-              className="h-[112px]"
+              padding={{ top: 32, right: 30, bottom: 14, left: 30 }}
+              className="h-[124px]"
               attributionClassName="bottom-1 right-1.5"
             />
             <div className="flex items-center gap-3 px-4 py-3">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[15px] font-bold text-ink">{pickup.detail}</p>
+                <p className="truncate text-[15px] font-bold text-ink">
+                  {market.name} · {market.area}
+                </p>
                 <p className="flex items-center gap-1.5 text-[13px] font-semibold text-ink-muted">
                   <Clock size={14} strokeWidth={2.5} />
-                  Open {pickup.hours} · {distanceText(distanceKm(pickup.at))} from you
+                  Open {market.hours} · {distanceText(distanceKm(market.at))} from you
                 </p>
               </div>
             </div>

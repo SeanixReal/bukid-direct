@@ -38,7 +38,7 @@ export async function savePhoneScreenshot(node: HTMLElement, pathname: string) {
   /* A Blob URL, not a data: URL. At 3x the PNG runs to several megabytes,
      and Chrome silently cancels downloads of data: URLs over 2 MB. */
   const url = URL.createObjectURL(blob)
-  const file = `bukid-direct-${screenName(pathname)}-${timeStamp()}.png`
+  const file = `presgo-${screenName(pathname)}-${timeStamp()}.png`
   const link = document.createElement('a')
   link.href = url
   link.download = file

@@ -117,7 +117,7 @@ const badgeSize = {
   md: 'h-[30px] gap-1.5 px-3 text-[13px]',
 }
 
-/** "Fresh today" - picked or laid today. A quiet white pill with an
+/** "Fresh today" - picked, caught or dressed today. A quiet white pill with an
     orange sunrise: one of the two places the accent is allowed. */
 export function FreshBadge({
   size = 'md',
@@ -216,7 +216,7 @@ export function Stepper({
         <Minus size={icon} strokeWidth={2.8} />
       </button>
       <span
-        className={`tabular min-w-[56px] px-1.5 text-center font-extrabold text-ink ${
+        className={`tabular min-w-[56px] whitespace-nowrap px-1.5 text-center font-extrabold text-ink ${
           size === 'sm' ? 'text-[13px]' : 'text-[16px]'
         }`}
       >

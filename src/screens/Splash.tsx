@@ -32,11 +32,10 @@ export function Splash() {
         </div>
 
         <h1
-          className="animate-rise-in mt-7 whitespace-nowrap text-[44px] leading-none tracking-[-0.02em] text-on-dark"
+          className="animate-rise-in mt-7 whitespace-nowrap text-[52px] font-extrabold leading-none tracking-[-0.02em] text-on-dark"
           style={{ animationDelay: '120ms' }}
         >
-          <span className="font-extrabold">Bukid</span>
-          <span className="font-normal"> Direct</span>
+          {brand.name}
         </h1>
 
         <p
