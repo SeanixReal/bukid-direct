@@ -79,17 +79,17 @@ const gradients = [
 
 const logoSrc = readFileSync(join(ROOT, 'src', 'components', 'Logo.tsx'), 'utf8')
 const PIN = logoSrc.match(/MARK_PIN =\s*'([^']+)'/)?.[1]
-const SPROUT = logoSrc.match(/MARK_SPROUT =\s*'([^']+)'/)?.[1]
+const MARKET = logoSrc.match(/MARK_MARKET =\s*'([^']+)'/)?.[1]
 const boxMatch = logoSrc.match(/MARK_BOX = \{ x: ([\d.]+), y: ([\d.]+), w: ([\d.]+), h: ([\d.]+) \}/)
-if (!PIN || !SPROUT || !boxMatch) throw new Error('Could not read the mark from Logo.tsx')
+if (!PIN || !MARKET || !boxMatch) throw new Error('Could not read the mark from Logo.tsx')
 const BOX = { x: +boxMatch[1], y: +boxMatch[2], w: +boxMatch[3], h: +boxMatch[4] }
 
-/* One colour, sprout cut out of the pin (evenodd), so the mark works on any
+/* One colour, market stall cut out of the pin (evenodd), so the mark works on any
    background. */
 function markSvg(color, size = 10) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${BOX.x} ${BOX.y} ${BOX.w} ${BOX.h}" width="${BOX.w * size}" height="${BOX.h * size}">
   <title>PresGo</title>
-  <path fill="${color}" fill-rule="evenodd" d="${PIN} ${SPROUT}"/>
+  <path fill="${color}" fill-rule="evenodd" d="${PIN} ${MARKET}"/>
 </svg>
 `
 }
@@ -97,7 +97,7 @@ function markSvg(color, size = 10) {
 const markGreen = markSvg(v('primary'))
 const markWhite = markSvg(v('on-primary'))
 
-/* App icon: flat green rounded square, white pin-and-sprout mark. */
+/* App icon: flat green rounded square, white pin-and-market mark. */
 const ICON = 512
 const iconMarkH = ICON * 0.6
 const iconMarkW = (iconMarkH * BOX.w) / BOX.h
@@ -105,7 +105,7 @@ const appIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${ICON}
   <title>PresGo</title>
   <rect width="${ICON}" height="${ICON}" rx="${ICON * 0.225}" fill="${v('primary')}"/>
   <svg x="${(ICON - iconMarkW) / 2}" y="${(ICON - iconMarkH) / 2 + ICON * 0.01}" width="${iconMarkW}" height="${iconMarkH}" viewBox="${BOX.x} ${BOX.y} ${BOX.w} ${BOX.h}">
-    <path fill="${v('on-primary')}" fill-rule="evenodd" d="${PIN} ${SPROUT}"/>
+    <path fill="${v('on-primary')}" fill-rule="evenodd" d="${PIN} ${MARKET}"/>
   </svg>
 </svg>
 `
@@ -118,7 +118,7 @@ const faviconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${square.x.
     path { fill: ${v('primary')}; }
     @media (prefers-color-scheme: dark) { path { fill: ${v('on-primary')}; } }
   </style>
-  <path fill-rule="evenodd" d="${PIN} ${SPROUT}"/>
+  <path fill-rule="evenodd" d="${PIN} ${MARKET}"/>
 </svg>
 `
 
@@ -254,6 +254,25 @@ screenshot(
   'app-icon.png',
   ICON,
   ICON,
+)
+
+/* Brand preview: show both lockups on their intended backgrounds. */
+const previewRow = (svg, background, color) =>
+  `<div class="preview-row" style="background:${background};color:${color}">
+    <div class="preview-mark">${fill(svg)}</div><span>PresGo</span>
+  </div>`
+screenshot(
+  page(
+    `<div id="art">${previewRow(markGreen, v('canvas'), v('primary'))}${previewRow(markWhite, v('primary'), v('on-primary'))}</div>`,
+    `#art { width: 800px; height: 400px; }
+     .preview-row { height: 200px; display: flex; align-items: center; justify-content: center; gap: 24px; }
+     .preview-mark { height: 96px; width: ${(BOX.w / BOX.h) * 96}px; }
+     .preview-row span { font-size: 68px; font-weight: 800; letter-spacing: -0.02em; line-height: 1; }`,
+  ),
+  'logo-preview.png',
+  800,
+  400,
+  false,
 )
 
 /* Palette sheet: one image to drop into a slide or eyedrop from in Canva. */

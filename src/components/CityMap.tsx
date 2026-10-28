@@ -3,7 +3,7 @@ import { Navigation2 } from 'lucide-react'
 import { roadAttribution, roads } from '../data/roads'
 import { splitAt } from '../data/route'
 import type { LatLng } from '../data/sample'
-import { MARK_BOX, MARK_PIN, MARK_SPROUT } from './Logo'
+import { MARK_BOX, MARK_PIN, MARK_MARKET } from './Logo'
 
 /* --------------------------------------------------------------------------
    The city map.
@@ -207,7 +207,7 @@ export function CityMap({
   )
 }
 
-/* The logo mark as a map pin: green pin, white sprout, white outline so it
+/* The logo mark as a map pin: green pin, white market stall, white outline so it
    stands off the streets. The tip sits on the spot. */
 function PinGlyph({ height }: { height: number }) {
   const box = { x: MARK_BOX.x - 1.6, y: MARK_BOX.y - 1.6, w: MARK_BOX.w + 3.2, h: MARK_BOX.h + 1.2 }
@@ -220,7 +220,7 @@ function PinGlyph({ height }: { height: number }) {
       style={{ filter: 'drop-shadow(0 3px 3px rgb(var(--shadow-rgb) / 0.28))' }}
     >
       <path d={MARK_PIN} fill="var(--primary)" stroke="var(--card)" strokeWidth={2.6} />
-      <path d={MARK_SPROUT} fill="var(--card)" />
+      <path d={MARK_MARKET} fill="var(--card)" />
     </svg>
   )
 }

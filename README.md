@@ -279,8 +279,9 @@ prices against DA-7's market price monitoring.
 
 ### The logo
 
-A location pin with a two-leaf sprout cut out of it - one colour, flat shapes
-only, legible at 24px. Green on light backgrounds, white on green or dark ones.
+A location pin with a market stall cut out of it: three tapered awning panels and an open
+counter represent the whole local market, including fishers, produce sellers
+and other vendors. One colour, flat shapes only, legible at 24px. Green on light backgrounds, white on green or dark ones.
 The wordmark is **PresGo** in ExtraBold, in the same green - as on the pitch
 deck. The same mark is the pin on the map.
 
@@ -299,6 +300,7 @@ writes `public/logo.svg` (the browser-tab icon) and everything in `brand/`:
 | `logo-mark-white.svg` / `.png` | The mark in white, for dark backgrounds |
 | `logo-wordmark.png` / `-white.png` | Mark + "PresGo" |
 | `app-icon.svg` / `.png` | Green rounded square, white mark |
+| `logo-preview.png` | Green and white wordmarks on the intended brand backgrounds |
 | `color-palette.png` | The palette as one sheet, for slides |
 | `colors.txt` | Hex codes, for typing into a Canva Brand Kit |
 

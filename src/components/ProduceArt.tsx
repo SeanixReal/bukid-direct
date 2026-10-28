@@ -10,7 +10,7 @@
 
 import type { ReactNode } from 'react'
 import type { Produce, ProduceId, Tint } from '../data/sample'
-import { MARK_PIN, MARK_SPROUT } from './Logo'
+import { MARK_PIN, MARK_MARKET } from './Logo'
 
 type P = [number, number]
 
@@ -682,7 +682,7 @@ const ART: Record<ProduceId, () => ReactNode> = {
       <rect x={44} y={34} width={32} height={6} rx={3} fill="var(--art-twine)" />
       <rect x={41} y={55} width={38} height={20} rx={5} fill={C.leafDark} />
       <g transform="translate(60 65) scale(0.34) translate(-24 -23.8)">
-        <path fill="var(--card)" fillRule="evenodd" d={`${MARK_PIN} ${MARK_SPROUT}`} />
+        <path fill="var(--card)" fillRule="evenodd" d={`${MARK_PIN} ${MARK_MARKET}`} />
       </g>
       <g fill="var(--art-brown)">
         <ellipse cx={93} cy={86} rx={2.2} ry={1.3} transform="rotate(20 93 86)" />
